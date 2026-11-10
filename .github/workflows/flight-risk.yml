@@ -5,6 +5,10 @@ on:
     # config.json "alert_times" - edit those (or use Settings on the site), not this.
     - cron: "7,37 * * * *"
   workflow_dispatch:
+  # redeploy whenever the code or settings change (the bot's own data commits don't trigger this)
+  push:
+    branches: [main]
+    paths-ignore: ["data/**", "docs/history/img/**", "README.md"]
 permissions:
   contents: write
   pages: write
@@ -29,7 +33,8 @@ jobs:
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
           ALERT_EMAILS: ${{ secrets.ALERT_EMAILS }}
-        run: python run.py ${{ github.event_name == 'schedule' && '--scheduled' || '' }}
+        # only a manual "Run workflow" emails right away; schedule/push runs email at alert_times
+        run: python run.py ${{ github.event_name != 'workflow_dispatch' && '--scheduled' || '' }}
       - name: Save alert memory and history
         run: |
           git config user.name "flight-risk-bot"
