@@ -1,11 +1,15 @@
 name: Flight risk check
 on:
   schedule:
-    - cron: "0 3 * * *"    # ~7pm Pacific: tomorrow's heads-up
-    - cron: "30 14 * * *"  # ~6:30am Pacific: catch same-day cancellations
+    # Wakes every 30 min; run.py only does a real check (and emails) at the
+    # times set in config.json "alert_times". Edit those, not this file.
+    - cron: "7,37 * * * *"
   workflow_dispatch:
 permissions:
   contents: write
+concurrency:
+  group: flight-risk
+  cancel-in-progress: false
 jobs:
   run:
     runs-on: ubuntu-latest
@@ -18,11 +22,13 @@ jobs:
           AERODATABOX_KEY: ${{ secrets.AERODATABOX_KEY }}
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
-        run: python run.py
+        run: python run.py ${{ github.event_name == 'schedule' && '--scheduled' || '' }}
       - name: Save results
         run: |
           git config user.name "flight-risk-bot"
           git config user.email "bot@users.noreply.github.com"
           git add docs/latest.json data/
-          git diff --staged --quiet || git commit -m "Update flight risk"
+          if git diff --staged --quiet; then exit 0; fi
+          git commit -m "Update flight risk"
+          git pull --rebase origin main
           git push

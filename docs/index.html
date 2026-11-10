@@ -3,56 +3,249 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Kootenay Flight Risk</title>
 <style>
-:root{--bg:#f6f5f1;--card:#fff;--ink:#1c2321;--mute:#6b746f;--line:#e3e1d9;
+:root{--bg:#f6f5f1;--card:#fff;--ink:#1c2321;--mute:#6b746f;--line:#e3e1d9;--accent:#1f5f8b;
 --low:#2f7d4f;--watch:#b7791f;--high:#c2410c;--severe:#b91c1c}
-@media(prefers-color-scheme:dark){:root{--bg:#141816;--card:#1d2321;--ink:#eef1ee;--mute:#98a39d;--line:#2e3633;
+@media(prefers-color-scheme:dark){:root{--bg:#141816;--card:#1d2321;--ink:#eef1ee;--mute:#98a39d;--line:#2e3633;--accent:#7cb8e4;
 --low:#5ec48a;--watch:#e0a73c;--high:#f07a45;--severe:#f26b6b}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,sans-serif;padding:16px;max-width:720px;margin:auto}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,sans-serif;padding:16px;max-width:760px;margin:auto}
 h1{font-size:1.3rem;margin:4px 0}h2{font-size:1rem;margin:22px 0 8px;color:var(--mute);text-transform:uppercase;letter-spacing:.05em}
 .sub{color:var(--mute);font-size:.85rem}.banner{background:#fde68a;color:#422;padding:8px 12px;border-radius:8px;margin:10px 0;font-size:.9rem}
+.tools{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+button{font:inherit;font-size:.9rem;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:7px 12px;cursor:pointer}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button:disabled{opacity:.55;cursor:default}
+#msg{font-size:.85rem;color:var(--mute);min-height:1.2em}
+.week{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:6px;margin:10px 0}
+.day{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:6px 8px;text-decoration:none;color:var(--ink);border-top-width:5px}
+.day b{display:block;font-size:.8rem}.day span{font-size:1.1rem;font-weight:700}
+.day.LOW{border-top-color:var(--low)}.day.WATCH{border-top-color:var(--watch)}.day.HIGH{border-top-color:var(--high)}.day.SEVERE{border-top-color:var(--severe)}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:8px 0;border-left-width:6px}
 .card.LOW{border-left-color:var(--low)}.card.WATCH{border-left-color:var(--watch)}.card.HIGH{border-left-color:var(--high)}.card.SEVERE{border-left-color:var(--severe)}
 .row{display:flex;justify-content:space-between;align-items:baseline;gap:8px}.big{font-size:1.5rem;font-weight:700}
-.LOW .big{color:var(--low)}.WATCH .big{color:var(--watch)}.HIGH .big{color:var(--high)}.SEVERE .big{color:var(--severe)}
+.LOW .big,.LOW span{color:var(--low)}.WATCH .big,.WATCH span{color:var(--watch)}.HIGH .big,.HIGH span{color:var(--high)}.SEVERE .big,.SEVERE span{color:var(--severe)}
 .tag{font-size:.75rem;border:1px solid var(--line);border-radius:99px;padding:1px 8px;color:var(--mute);margin-right:4px;display:inline-block;margin-top:4px}
-.bar{height:6px;background:var(--line);border-radius:3px;margin-top:8px;overflow:hidden}.bar i{display:block;height:100%;background:currentColor}
+.bar{height:6px;background:var(--line);border-radius:3px;margin-top:8px;overflow:hidden}.bar i{display:block;height:100%}
+.LOW .bar i{background:var(--low)}.WATCH .bar i{background:var(--watch)}.HIGH .bar i{background:var(--high)}.SEVERE .bar i{background:var(--severe)}
 table{width:100%;border-collapse:collapse;font-size:.9rem}td,th{text-align:left;padding:6px 4px;border-bottom:1px solid var(--line)}
+#settings{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin:8px 0}
+#settings[hidden]{display:none}
+label{display:block;font-size:.85rem;font-weight:600;margin:12px 0 4px}
+input{font:inherit;font-size:.95rem;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);max-width:100%}
+input[type=text],input[type=password]{width:100%}
+.times{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.times span{display:inline-flex;gap:2px;align-items:center}
+.x{padding:3px 8px}
+.hint{font-size:.8rem;color:var(--mute);margin-top:3px}
+.hint a{color:var(--accent)}
 .foot{color:var(--mute);font-size:.8rem;margin:24px 0}
 </style></head><body>
 <h1>Kootenay flight risk</h1>
 <div class="sub" id="meta">Loading…</div>
 <div id="demo"></div>
+<div class="tools">
+  <button id="refresh">↻ Refresh</button>
+  <button id="runnow">Run check now</button>
+  <button id="toggleSettings">⚙ Settings</button>
+</div>
+<div id="msg"></div>
+
+<form id="settings" hidden>
+  <label>Email check times (Pacific)</label>
+  <div class="times" id="times"></div>
+  <div class="hint">At each time it checks the forecast and emails you about risky flights in the next 30 hours.</div>
+
+  <label for="days">Days to show</label>
+  <input id="days" type="number" min="1" max="14" step="1" style="width:6em">
+  <div class="hint">Forecasts more than 3 days out are rough.</div>
+
+  <label for="thresh">Email me when risk is at least (%)</label>
+  <input id="thresh" type="number" min="5" max="95" step="5" style="width:6em">
+
+  <label for="emails">Send emails to (separate with commas)</label>
+  <input id="emails" type="text" autocomplete="off">
+
+  <label for="token">GitHub access key (stays in this browser only)</label>
+  <input id="token" type="password" autocomplete="off" placeholder="github_pat_…">
+  <div class="hint">Needed to save settings or run a check from this page.
+    <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Create one</a>:
+    choose “Only select repositories” → this repo, then Permissions → <b>Contents</b> and <b>Actions</b>: Read and write.</div>
+
+  <div class="tools" style="margin-top:14px">
+    <button type="submit" class="primary" id="save">Save settings</button>
+    <button type="button" id="cancel">Close</button>
+  </div>
+</form>
+
+<div id="week" class="week"></div>
 <div id="app"></div>
 <h2>What past cancellations looked like</h2>
 <div id="hist" class="sub">Builds up once flight history is loaded.</div>
 <p class="foot">Estimate from weather forecasts and past cancellations. Not an airline notice — always confirm with the airline.</p>
-<script id="seed" type="application/json">{"generated": "2026-11-10T16:11+00:00", "demo": true, "model": "starting-weights", "model_info": null, "flights": [{"airport": "YZZ", "airport_name": "Trail Regional", "airline": "Pacific Coastal", "flight": "8P452", "date": "2026-11-10", "dep_local": "10:55", "status": "Scheduled", "risk": 0.027, "level": "LOW", "reasons": [], "schedule_source": "static", "flags": []}, {"airport": "YZZ", "airport_name": "Trail Regional", "airline": "Pacific Coastal", "flight": "8P458", "date": "2026-11-10", "dep_local": "17:05", "status": "Scheduled", "risk": 0.027, "level": "LOW", "reasons": [], "schedule_source": "static", "flags": []}, {"airport": "YZZ", "airport_name": "Trail Regional", "airline": "Pacific Coastal", "flight": "8P452", "date": "2026-11-11", "dep_local": "10:55", "status": "Scheduled", "risk": 0.168, "level": "WATCH", "reasons": ["Reduced visibility (under 4.8 km)", "Heavy low cloud", "Gusts over 35 km/h"], "schedule_source": "static", "flags": ["vis_lt_4_8", "lowcloud_90", "gust_35"]}, {"airport": "YZZ", "airport_name": "Trail Regional", "airline": "Pacific Coastal", "flight": "8P458", "date": "2026-11-11", "dep_local": "17:05", "status": "Scheduled", "risk": 0.027, "level": "LOW", "reasons": [], "schedule_source": "static", "flags": []}, {"airport": "YCG", "airport_name": "Castlegar (West Kootenay Regional)", "airline": "Air Canada Express (Jazz)", "flight": "AC8465", "date": "2026-11-10", "dep_local": "11:05", "status": "Scheduled", "risk": 0.027, "level": "LOW", "reasons": [], "schedule_source": "static", "flags": []}, {"airport": "YCG", "airport_name": "Castlegar (West Kootenay Regional)", "airline": "Air Canada Express (Jazz)", "flight": "AC8465", "date": "2026-11-11", "dep_local": "11:05", "status": "Scheduled", "risk": 0.818, "level": "SEVERE", "reasons": ["Visibility under 1.6 km", "Fog", "Reduced visibility (under 4.8 km)", "Heavy low cloud", "Snow falling"], "schedule_source": "static", "flags": ["vis_lt_1_6", "vis_lt_4_8", "lowcloud_90", "snow_03", "fog"]}], "history_stats": []}</script>
+<script id="seed" type="application/json">null</script>
 <script>
+const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const seed=JSON.parse(document.getElementById('seed').textContent);
-fetch('latest.json?'+Date.now()).then(r=>r.json()).catch(()=>{if(seed)return seed;throw 0}).then(d=>{
+const seed=JSON.parse($('seed').textContent);
+const store={get(k){try{return localStorage.getItem(k)||''}catch(e){return ''}},set(k,v){try{v?localStorage.setItem(k,v):localStorage.removeItem(k)}catch(e){}}};
+const LEVELS=['LOW','WATCH','HIGH','SEVERE'];
+let current=null;
+
+// owner/repo from the Pages address, e.g. osd2nd.github.io/Flightcancelations
+function repoName(){
+  const m=location.hostname.match(/^([^.]+)\.github\.io$/);
+  const path=location.pathname.split('/').filter(Boolean)[0];
+  return m&&path?m[1]+'/'+path:'OSD2nd/Flightcancelations';
+}
+const API='https://api.github.com/repos/'+repoName();
+function gh(path,opts={}){
+  const t=store.get('kfa.token');
+  const headers={'Accept':'application/vnd.github+json'};
+  if(t)headers.Authorization='Bearer '+t;
+  return fetch(API+path,{...opts,headers:{...headers,...(opts.headers||{})}});
+}
+const msg=(t)=>{$('msg').textContent=t};
+
+function dayLabel(d,today,i){
+  if(i===0&&d===today)return 'Today';
+  const dt=new Date(d+'T12:00:00');
+  const t=new Date(today+'T12:00:00');t.setDate(t.getDate()+1);
+  if(dt.toDateString()===t.toDateString())return 'Tomorrow';
+  return dt.toLocaleDateString(undefined,{weekday:'long'});
+}
+function shortDay(d){return new Date(d+'T12:00:00').toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'})}
+
+function render(d){
+  current=d;
   const g=new Date(d.generated);
-  document.getElementById('meta').textContent='Updated '+g.toLocaleString()+' · model: '+
-    (d.model==='learned'?'learned from '+d.model_info.cancellations+' cancellations in '+d.model_info.flights+' flights':'starting estimates (no history yet)');
-  if(d.demo)document.getElementById('demo').innerHTML='<div class="banner">Demo data — not real conditions.</div>';
+  const s=d.settings||{};
+  $('meta').textContent='Updated '+g.toLocaleString()+' · model: '+
+    (d.model==='learned'?'learned from '+d.model_info.cancellations+' cancellations in '+d.model_info.flights+' flights':'starting estimates (no history yet)')+
+    (s.alert_times?' · email checks at '+s.alert_times.join(', '):'');
+  $('demo').innerHTML=d.demo?'<div class="banner">Demo data — not real conditions.</div>':'';
+  const today=d.today||d.flights.map(f=>f.date).sort()[0];
   const days=[...new Set(d.flights.map(f=>f.date))].sort();
-  const names={};names[days[0]]='Today';if(days[1])names[days[1]]='Tomorrow';
-  let html='';
-  for(const day of days.reverse()){
-    html+='<h2>'+names[day]+' · '+day+'</h2>';
-    d.flights.filter(f=>f.date===day).sort((a,b)=>b.risk-a.risk).forEach(f=>{
+  let week='',html='';
+  days.forEach((day,i)=>{
+    const fl=d.flights.filter(f=>f.date===day).sort((a,b)=>a.dep_local.localeCompare(b.dep_local));
+    const top=fl.reduce((m,f)=>f.risk>m.risk?f:m,fl[0]);
+    const id='d-'+day;
+    week+=`<a class="day ${top.level}" href="#${id}"><b>${esc(i<2?dayLabel(day,today,i):shortDay(day).split(',')[0])}</b><span>${Math.round(top.risk*100)}%</span></a>`;
+    html+=`<h2 id="${id}">${esc(dayLabel(day,today,i))} · ${esc(shortDay(day))}</h2>`;
+    if(i>=3)html+='<div class="sub">Further out — treat as a rough early look.</div>';
+    fl.forEach(f=>{
       const pct=Math.round(f.risk*100);
       html+=`<div class="card ${f.level}"><div class="row"><div><b>${esc(f.flight)}</b> ${esc(f.airport)} → YVR · ${esc(f.dep_local)}<div class="sub">${esc(f.airline)}</div></div>
       <div class="big">${pct}%</div></div>
-      <div class="bar" style="color:inherit"><i style="width:${pct}%"></i></div>
+      <div class="bar"><i style="width:${Math.max(pct,2)}%"></i></div>
       <div>${f.reasons.map(r=>'<span class="tag">'+esc(r)+'</span>').join('')||'<span class="tag">Nothing unusual in the forecast</span>'}</div>
-      <div class="sub" style="margin-top:6px">${esc(f.level)} · status: ${esc(f.status)}${f.schedule_source==='static'?' · schedule from config (no flight API)':''}</div></div>`;
+      <div class="sub" style="margin-top:6px">${esc(f.level)} · status: ${esc(f.status)}${f.schedule_source==='static'?' · schedule from config':''}</div></div>`;
     });
-  }
-  document.getElementById('app').innerHTML=html;
+  });
+  $('week').innerHTML=week;
+  $('app').innerHTML=html;
   if(d.history_stats&&d.history_stats.length){
-    document.getElementById('hist').innerHTML='<table><tr><th>Condition</th><th>Flights</th><th>Cancelled</th></tr>'+
+    $('hist').innerHTML='<table><tr><th>Condition</th><th>Flights</th><th>Cancelled</th></tr>'+
       d.history_stats.map(s=>`<tr><td>${esc(s.condition)}</td><td>${s.flights}</td><td>${s.cancelled} (${Math.round(s.rate*100)}%)</td></tr>`).join('')+'</table>';
   }
-}).catch(e=>document.getElementById('meta').textContent='Could not load latest.json');
+}
+
+function load(){
+  return fetch('latest.json?'+Date.now()).then(r=>{if(!r.ok)throw 0;return r.json()})
+    .catch(()=>{if(seed)return seed;throw 0})
+    .then(d=>{render(d);return d})
+    .catch(()=>{$('meta').textContent='Could not load latest.json'});
+}
+
+$('refresh').onclick=()=>{msg('Refreshing…');load().then(()=>msg('Up to date.'))};
+
+// ---- run a fresh check (starts the GitHub workflow, then waits for new results) ----
+async function runNow(){
+  if(!store.get('kfa.token')){
+    msg('Add a GitHub access key in Settings first — or start it from the Actions tab on GitHub.');
+    $('settings').hidden=false;openSettings();return;
+  }
+  $('runnow').disabled=true;
+  try{
+    const r=await gh('/actions/workflows/flight-risk.yml/dispatches',{method:'POST',body:JSON.stringify({ref:'main'})});
+    if(r.status!==204)throw new Error(r.status===401||r.status===403?'access key was refused — check it has Actions: Read and write':'GitHub said '+r.status);
+    const before=current&&current.generated;
+    msg('Check started. New results usually appear in 2–4 minutes…');
+    for(let i=0;i<24;i++){
+      await new Promise(res=>setTimeout(res,15000));
+      const d=await fetch('latest.json?'+Date.now()).then(r=>r.json()).catch(()=>null);
+      if(d&&d.generated!==before){render(d);msg('Updated with a fresh check.');return}
+    }
+    msg('Still waiting — the check may still be running. Tap Refresh in a minute.');
+  }catch(e){msg('Could not start the check: '+e.message)}
+  finally{$('runnow').disabled=false}
+}
+$('runnow').onclick=runNow;
+
+// ---- settings: read and write config.json in the repo ----
+let cfg=null,cfgSha=null;
+const b64dec=s=>new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\s/g,'')),c=>c.charCodeAt(0)));
+const b64enc=s=>{const b=new TextEncoder().encode(s);let o='';b.forEach(x=>o+=String.fromCharCode(x));return btoa(o)};
+
+function timeRow(v){
+  const span=document.createElement('span');
+  span.innerHTML='<input type="time" required> <button type="button" class="x" title="Remove">✕</button>';
+  span.querySelector('input').value=v;
+  span.querySelector('button').onclick=()=>{if($('times').querySelectorAll('input').length>1)span.remove()};
+  $('times').insertBefore(span,$('addTime'));
+}
+function fillForm(c){
+  $('times').innerHTML='<button type="button" id="addTime">+ add time</button>';
+  $('addTime').onclick=()=>timeRow('12:00');
+  (c.alert_times||['19:00','06:30']).forEach(timeRow);
+  $('days').value=c.days_ahead||7;
+  $('thresh').value=Math.round((c.alert_threshold||0.3)*100);
+  $('emails').value=(c.email_to||[]).join(', ');
+  $('token').value=store.get('kfa.token');
+}
+async function openSettings(){
+  fillForm((current&&current.settings)||{});
+  try{
+    const r=await gh('/contents/config.json?ref=main');
+    if(!r.ok)throw 0;
+    const j=await r.json();
+    cfg=JSON.parse(b64dec(j.content));cfgSha=j.sha;fillForm(cfg);
+  }catch(e){cfg=null}
+}
+$('toggleSettings').onclick=()=>{const f=$('settings');f.hidden=!f.hidden;if(!f.hidden)openSettings()};
+$('cancel').onclick=()=>{$('settings').hidden=true};
+$('token').onchange=()=>store.set('kfa.token',$('token').value.trim());
+
+$('settings').onsubmit=async e=>{
+  e.preventDefault();
+  store.set('kfa.token',$('token').value.trim());
+  if(!store.get('kfa.token')){msg('Add a GitHub access key to save settings.');return}
+  const times=[...new Set([...$('times').querySelectorAll('input')].map(i=>i.value).filter(Boolean))].sort();
+  const days=Math.round(+$('days').value), th=+$('thresh').value;
+  const emails=$('emails').value.split(',').map(s=>s.trim()).filter(Boolean);
+  if(!times.length)return msg('Add at least one email check time.');
+  if(!(days>=1&&days<=14))return msg('Days to show must be 1–14.');
+  if(!(th>=5&&th<=95))return msg('Alert level must be between 5% and 95%.');
+  if(!emails.length||emails.some(x=>!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(x)))return msg('Check the email address(es).');
+  $('save').disabled=true;msg('Saving…');
+  try{
+    // always re-read so we don't overwrite a newer config
+    const r=await gh('/contents/config.json?ref=main');
+    if(!r.ok)throw new Error('could not read config ('+r.status+')');
+    const j=await r.json();
+    const c=JSON.parse(b64dec(j.content));
+    c.alert_times=times;c.days_ahead=days;c.alert_threshold=Math.round(th)/100;c.email_to=emails;
+    if(c.watch_threshold>=c.alert_threshold)c.watch_threshold=Math.round(c.alert_threshold*50)/100;
+    const w=await gh('/contents/config.json',{method:'PUT',body:JSON.stringify({
+      message:'Update settings from dashboard',branch:'main',sha:j.sha,
+      content:b64enc(JSON.stringify(c,null,2)+'\n')})});
+    if(!w.ok)throw new Error(w.status===401||w.status===403||w.status===404?'access key was refused — check it has Contents: Read and write for this repo':'GitHub said '+w.status);
+    cfg=c;
+    if(current){current.settings={alert_times:times,days_ahead:days,alert_threshold:c.alert_threshold,email_to:emails};}
+    $('settings').hidden=true;
+    msg('Saved. Email checks now run at '+times.join(', ')+'. Tap “Run check now” to see '+days+' days right away.');
+  }catch(e){msg('Not saved: '+e.message)}
+  finally{$('save').disabled=false}
+};
+
+load();
 </script></body></html>
