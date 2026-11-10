@@ -1,8 +1,8 @@
 {
   "timezone": "America/Vancouver",
   "alert_times": [
-    "19:00",
-    "06:30"
+    "06:30",
+    "19:00"
   ],
   "alert_window_hours": 30,
   "days_ahead": 7,
@@ -35,20 +35,44 @@
   "static_schedule_note": "Fallback schedule used only when no flight API key is set. Checked against the airport departure boards on 2026-11-10.",
   "static_schedule": {
     "YZZ": [
-      {"flight": "8P452", "dep": "10:50", "block_min": 75},
-      {"flight": "8P458", "dep": "17:05", "block_min": 75}
+      {
+        "flight": "8P452",
+        "dep": "10:50",
+        "block_min": 75
+      },
+      {
+        "flight": "8P458",
+        "dep": "17:05",
+        "block_min": 75
+      }
     ],
     "YCG": [
-      {"flight": "AC8377", "dep": "12:15", "block_min": 70}
+      {
+        "flight": "AC8377",
+        "dep": "12:15",
+        "block_min": 70
+      }
     ]
   },
   "static_arrivals": {
     "YZZ": [
-      {"flight": "8P451", "arr": "10:24", "block_min": 75},
-      {"flight": "8P457", "arr": "16:32", "block_min": 75}
+      {
+        "flight": "8P451",
+        "arr": "10:24",
+        "block_min": 75
+      },
+      {
+        "flight": "8P457",
+        "arr": "16:32",
+        "block_min": 75
+      }
     ],
     "YCG": [
-      {"flight": "AC8376", "arr": "11:43", "block_min": 70}
+      {
+        "flight": "AC8376",
+        "arr": "11:43",
+        "block_min": 70
+      }
     ]
   },
   "webcams": {
@@ -56,15 +80,41 @@
     "base": "https://wxdata.redresort.com/wxdata/",
     "live": "https://wxdata.redresort.com/cams/",
     "cams": [
-      {"id": "granite", "name": "Granite (down the valley)", "file": "granitecam"},
-      {"id": "paradise", "name": "Paradise", "file": "paradisecam"},
-      {"id": "grey", "name": "Grey", "file": "greycam"},
-      {"id": "red", "name": "Red", "file": "redcam"},
-      {"id": "greyline", "name": "Greyline", "file": "greyline"}
+      {
+        "id": "granite",
+        "name": "Granite (down the valley)",
+        "file": "granitecam"
+      },
+      {
+        "id": "paradise",
+        "name": "Paradise",
+        "file": "paradisecam"
+      },
+      {
+        "id": "grey",
+        "name": "Grey",
+        "file": "greycam"
+      },
+      {
+        "id": "red",
+        "name": "Red",
+        "file": "redcam"
+      },
+      {
+        "id": "greyline",
+        "name": "Greyline",
+        "file": "greyline"
+      }
     ]
   },
   "airport_cams": [
-    {"name": "Castlegar airport \u2014 north", "url": "https://webcams.castlegar.ca/north.jpg"},
-    {"name": "Castlegar airport \u2014 runway, south", "url": "https://webcams.castlegar.ca/south.jpg"}
+    {
+      "name": "Castlegar airport — north",
+      "url": "https://webcams.castlegar.ca/north.jpg"
+    },
+    {
+      "name": "Castlegar airport — runway, south",
+      "url": "https://webcams.castlegar.ca/south.jpg"
+    }
   ]
 }
