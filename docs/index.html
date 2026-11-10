@@ -18,6 +18,13 @@ button:disabled{opacity:.55;cursor:default}
 .week{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:6px;margin:10px 0}
 .day{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:6px 8px;text-decoration:none;color:var(--ink);border-top-width:5px}
 .day b{display:block;font-size:.8rem}.day span{font-size:1.1rem;font-weight:700}
+.day{cursor:pointer;text-align:left;font:inherit}.day.sel{outline:3px solid var(--accent);outline-offset:1px}
+.day small{display:block;font-size:.68rem;color:var(--mute);font-weight:400;line-height:1.25}
+.aphead{display:flex;align-items:center;gap:8px;margin:14px 0 4px;font-weight:700;font-size:.95rem}
+.apcode{font-size:.75rem;font-weight:700;color:#fff;border-radius:6px;padding:2px 7px}
+.ap-YCG{background:#1f5f8b}.ap-YZZ{background:#7a4fa3}
+.card.YCG{box-shadow:inset 0 3px 0 #1f5f8b33}.card.YZZ{box-shadow:inset 0 3px 0 #7a4fa333}
+#apfilter{margin:6px 0 0}#dayfilter{font-size:.85rem;color:var(--mute);margin:4px 0}
 .day.LOW{border-top-color:var(--low)}.day.WATCH{border-top-color:var(--watch)}.day.HIGH{border-top-color:var(--high)}.day.SEVERE{border-top-color:var(--severe)}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:8px 0;border-left-width:6px}
 .card.LOW{border-left-color:var(--low)}.card.WATCH{border-left-color:var(--watch)}.card.HIGH{border-left-color:var(--high)}.card.SEVERE{border-left-color:var(--severe)}
@@ -96,7 +103,13 @@ details summary{cursor:pointer;font-size:.85rem;color:var(--accent)}
 </form>
 
 <div id="notes"></div>
+<div class="seg" id="apfilter">
+  <button type="button" data-ap="all">Both airports</button>
+  <button type="button" data-ap="YCG">Castlegar (YCG)</button>
+  <button type="button" data-ap="YZZ">Trail (YZZ)</button>
+</div>
 <div id="week" class="week"></div>
+<div id="dayfilter"></div>
 <div id="app"></div>
 <h2>Airport weather now</h2>
 <div id="airportwx" class="wxgrid"><div class="sub">Official reports appear after the next check.</div></div>
@@ -167,34 +180,11 @@ function render(d){
     (s.alert_times?' · email checks at '+s.alert_times.join(', '):'')+
     (d.flight_status_checked?' · airline status checked '+new Date(d.flight_status_checked).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}):'');
   $('demo').innerHTML=d.demo?'<div class="banner">Demo data — not real conditions.</div>':'';
-  const today=d.today||d.flights.map(f=>f.date).sort()[0];
-  const days=[...new Set(d.flights.map(f=>f.date))].sort();
-  let week='',html='';
-  days.forEach((day,i)=>{
-    const fl=d.flights.filter(f=>f.date===day).sort((a,b)=>a.airport.localeCompare(b.airport)||a.dep_local.localeCompare(b.dep_local));
-    const top=fl.reduce((m,f)=>f.risk>m.risk?f:m,fl[0]);
-    const id='d-'+day;
-    week+=`<a class="day ${top.level}" href="#${id}"><b>${esc(i<2?dayLabel(day,today,i):shortDay(day).split(',')[0])}</b><span>${Math.round(top.risk*100)}%</span></a>`;
-    html+=`<h2 id="${id}">${esc(dayLabel(day,today,i))} · ${esc(shortDay(day))}</h2>`;
-    if(i>=3)html+='<div class="sub">Further out — treat as a rough early look.</div>';
-    fl.forEach(f=>{
-      const pct=Math.round(f.risk*100);
-      const arr=f.direction==='arr', canc=/^cancel/i.test(f.status), maybe=/uncertain/i.test(f.status);
-      const badge=canc?`<span class="badge">${maybe?'MAYBE CANCELLED':'CANCELLED'}</span>`:f.expected_local?`<span class="badge late">now ${esc(f.expected_local)}</span>`:'';
-      html+=`<div class="card ${f.level}"><div class="row"><div><span class="dir">${arr?'Arrives':'Departs'}</span><b>${esc(f.flight)}</b> ${esc(f.from||f.airport)} → ${esc(f.to||'YVR')} · ${esc(f.dep_local)}${badge}
-      <div class="sub">${esc(f.airline)}${f.inbound?' · plane comes in on '+esc(f.inbound):''}</div></div>
-      <div class="big">${pct}%</div></div>
-      <div class="bar"><i style="width:${Math.max(pct,2)}%"></i></div>
-      <div>${f.reasons.map(r=>'<span class="tag">'+esc(r)+'</span>').join('')||'<span class="tag">Nothing unusual in the forecast</span>'}</div>
-      <div class="sub" style="margin-top:6px">${esc(f.level)} · ${f.schedule_source==='live'?'airline status: <b>'+esc(STATUS[f.status]||f.status)+'</b>':'status not checked yet · schedule from config'}${f.airport_wx?' · uses '+esc(f.airport_wx)+(f.ceiling_ft!=null?', cloud base '+Number(f.ceiling_ft).toLocaleString()+' ft':', no low ceiling'):''}</div></div>`;
-    });
-  });
-  $('week').innerHTML=week;
+  renderFlights();
   $('notes').innerHTML=(d.notes||[]).map(n=>'<div class="banner">'+esc(n)+'</div>').join('');
   renderAirportWx(d.airport_wx||{});
   renderCams(d.webcams);
   renderApCams(d.airport_cams);
-  $('app').innerHTML=html;
   if(d.history_stats&&d.history_stats.length){
     $('hist').innerHTML='<table><tr><th>Condition</th><th>Flights</th><th>Cancelled</th></tr>'+
       d.history_stats.map(s=>`<tr><td>${esc(s.condition)}</td><td>${s.flights}</td><td>${s.cancelled} (${Math.round(s.rate*100)}%)</td></tr>`).join('')+'</table>';
@@ -209,6 +199,56 @@ const STATUS={Expected:'On schedule',Unknown:'Unknown',EnRoute:'In the air',Chec
   GateClosed:'Gate closed',Departed:'Departed',Delayed:'Delayed',Approaching:'Landing soon',Arrived:'Arrived',
   Canceled:'Cancelled',Diverted:'Diverted',CanceledUncertain:'Possibly cancelled',Scheduled:'On schedule'};
 const CAT={VFR:'Good flying weather',MVFR:'Marginal',IFR:'Poor — instruments only',LIFR:'Very poor'};
+// ---- flight list: airport filter + tap a day to see just that day ----
+const AP={YCG:'Castlegar',YZZ:'Trail'};
+let selDay=null, selAp=(()=>{try{return localStorage.getItem('kfa.ap')||'all'}catch(e){return 'all'}})();
+function card(f){
+  const pct=Math.round(f.risk*100);
+  const arr=f.direction==='arr', canc=/^cancel/i.test(f.status), maybe=/uncertain/i.test(f.status);
+  const badge=canc?`<span class="badge">${maybe?'MAYBE CANCELLED':'CANCELLED'}</span>`:f.expected_local?`<span class="badge late">now ${esc(f.expected_local)}</span>`:'';
+  const here=AP[f.airport]||f.airport;
+  return `<div class="card ${f.level} ${esc(f.airport)}"><div class="row"><div><span class="dir">${arr?'Arrives '+esc(here):'Departs '+esc(here)}</span><br><b>${esc(f.flight)}</b> ${esc(f.from||f.airport)} → ${esc(f.to||'YVR')} · ${esc(f.dep_local)}${badge}
+  <div class="sub">${esc(f.airline)}${f.inbound?' · plane comes in on '+esc(f.inbound):''}</div></div>
+  <div class="big">${pct}%</div></div>
+  <div class="bar"><i style="width:${Math.max(pct,2)}%"></i></div>
+  <div>${f.reasons.map(r=>'<span class="tag">'+esc(r)+'</span>').join('')||'<span class="tag">Nothing unusual in the forecast</span>'}</div>
+  <div class="sub" style="margin-top:6px">${esc(f.level)} · ${f.schedule_source==='live'?'airline status: <b>'+esc(STATUS[f.status]||f.status)+'</b>':'status not checked yet · schedule from config'}${f.airport_wx?' · uses '+esc(f.airport_wx)+(f.ceiling_ft!=null?', cloud base '+Number(f.ceiling_ft).toLocaleString()+' ft':', no low ceiling'):''}</div></div>`;
+}
+function renderFlights(){
+  const d=current;if(!d)return;
+  document.querySelectorAll('#apfilter button').forEach(b=>b.classList.toggle('on',b.dataset.ap===selAp));
+  const today=d.today||d.flights.map(f=>f.date).sort()[0];
+  const flights=d.flights.filter(f=>selAp==='all'||f.airport===selAp);
+  const days=[...new Set(d.flights.map(f=>f.date))].sort();
+  const aps=selAp==='all'?Object.keys(AP).filter(a=>flights.some(f=>f.airport===a)):[selAp];
+  let week='',html='';
+  days.forEach((day,i)=>{
+    const fl=flights.filter(f=>f.date===day);
+    if(!fl.length)return;
+    const top=fl.reduce((m,f)=>f.risk>m.risk?f:m,fl[0]);
+    const per=aps.map(a=>{const x=fl.filter(f=>f.airport===a);return x.length?`${AP[a]} ${Math.round(Math.max(...x.map(f=>f.risk))*100)}%`:''}).filter(Boolean);
+    week+=`<button type="button" class="day ${top.level}${selDay===day?' sel':''}" data-day="${day}"><b>${esc(i<2?dayLabel(day,today,i):shortDay(day).split(',')[0])}</b><span>${Math.round(top.risk*100)}%</span>${aps.length>1?'<small>'+per.map(esc).join('<br>')+'</small>':''}</button>`;
+    if(selDay&&selDay!==day)return;
+    html+=`<h2 id="d-${day}">${esc(dayLabel(day,today,i))} · ${esc(shortDay(day))}</h2>`;
+    if(i>=3)html+='<div class="sub">Further out — treat as a rough early look.</div>';
+    aps.forEach(a=>{
+      const x=fl.filter(f=>f.airport===a).sort((p,q)=>p.dep_local.localeCompare(q.dep_local));
+      if(!x.length)return;
+      html+=`<div class="aphead"><span class="apcode ap-${a}">${a}</span>${esc(x[0].airport_name)}</div>`+x.map(card).join('');
+    });
+  });
+  $('week').innerHTML=week;
+  $('app').innerHTML=html;
+  $('dayfilter').innerHTML=selDay?`Showing ${esc(dayLabel(selDay,today,days.indexOf(selDay)))} only · <a href="#" id="alldays">show all days</a>`:'Tap a day to see just that day.';
+  if(selDay)$('alldays').onclick=e=>{e.preventDefault();selDay=null;renderFlights();};
+  $('week').querySelectorAll('[data-day]').forEach(b=>b.onclick=()=>{
+    selDay=selDay===b.dataset.day?null:b.dataset.day;renderFlights();
+    if(selDay)$('app').scrollIntoView({behavior:'smooth',block:'start'});
+  });
+}
+document.querySelectorAll('#apfilter button').forEach(b=>b.onclick=()=>{
+  selAp=b.dataset.ap;try{localStorage.setItem('kfa.ap',selAp)}catch(e){}renderFlights();});
+
 function renderAirportWx(w){
   const ids=Object.keys(w);
   if(!ids.length)return;
