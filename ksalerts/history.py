@@ -31,6 +31,27 @@ def _save(rows):
         w.writerows(sorted(rows, key=lambda r: (r["date"], r["airport"], r["sched"])))
 
 
+FINAL = ("departed", "arrived", "cancel", "diverted")
+
+
+def record_outcomes(results, now):
+    """Add today's flights with a known outcome (live status) to the history file."""
+    rows = {(r["date"], r["airport"], r["flight"]): r for r in load()}
+    added = 0
+    for r in results:
+        if r["schedule_source"] != "live" or not str(r["status"]).lower().startswith(FINAL):
+            continue
+        k = (r["date"], r["airport"], r["flight"])
+        new = {"date": r["date"], "airport": r["airport"], "flight": r["flight"],
+               "sched": r["dep_local"], "status": r["status"]}
+        if rows.get(k) != new:
+            rows[k] = new
+            added += 1
+    if added:
+        _save(list(rows.values()))
+        print(f"history: recorded {added} flight outcome(s)")
+
+
 def is_cancelled(status):
     return str(status).lower().startswith("cancel")
 

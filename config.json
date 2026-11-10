@@ -1,10 +1,10 @@
 {
   "timezone": "America/Vancouver",
-  "alert_times": [
-    "06:30",
-    "19:00"
-  ],
+  "alert_times": ["06:30", "19:00"],
   "alert_window_hours": 30,
+  "status_times": ["06:30", "10:00", "16:45"],
+  "status_window": ["06:00", "17:59"],
+  "record_history": false,
   "days_ahead": 7,
   "alert_threshold": 0.3,
   "watch_threshold": 0.15,

@@ -9,7 +9,13 @@ flight in the next 30 hours looks risky. Dashboard: https://osd2nd.github.io/Fli
   thing that most often grounds Castlegar. Trail has no reports, so it uses Castlegar's.
 - **Weather-model forecast** (Open-Meteo, free): the 7-day outlook.
 - **Weather map**: embedded from Windy.com.
-- **Flights**: times in `config.json`, or live status if `AERODATABOX_KEY` is set.
+- **Flights**: timetable in `config.json` (`static_schedule`, `static_arrivals`). With an
+  `AERODATABOX_KEY` secret, real status (cancelled, delayed, new times) is checked at
+  `status_times` (default 06:30, 10:00, 16:45). Each check costs 4 API units
+  (Trail + Castlegar, arrivals and departures together), about 372 units a month,
+  under the free plan's 400. Credit to AeroDataBox is shown on the dashboard (required).
+  `record_history` (off by default) saves each day's real outcomes to `data/history.csv`;
+  check AeroDataBox's data-retention terms before turning it on.
 - **History**: `data/history.csv` (date,airport,flight,sched,status). The risk
   weights start as estimates and are retrained once there are ~30 flights and
   ~5 cancellations (`python3 run.py --train`).

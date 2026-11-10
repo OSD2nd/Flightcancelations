@@ -15,7 +15,6 @@ from . import alert, aviation, features as F, flights, history, weather, webcam
 
 OUT = "docs/latest.json"
 STATE = "data/state.json"
-LIVE_DAYS = 2      # days that use the flight API (if a key is set); later days use config times
 LATE_OK_HOURS = 3  # a scheduled check still runs if GitHub starts it up to this late
 
 
@@ -44,6 +43,7 @@ def load_state():
     if "alerts" not in s:  # older flat format
         s = {"alerts": {}, "runs": []}
     s.setdefault("runs", [])
+    s.setdefault("status_runs", [])
     return s
 
 
@@ -83,6 +83,16 @@ def main():
     if a.scheduled:
         slot = due_slot(now, cfg.get("alert_times", ["19:00", "06:30"]), state["runs"])
     may_email = slot is not None or not a.scheduled
+
+    # live flight status: only at config "status_times" (free API plan is ~400 units/month)
+    key = os.environ.get("AERODATABOX_KEY")
+    if key and not a.demo:
+        sslot = due_slot(now, cfg.get("status_times", ["06:30", "10:00", "16:45"]), state["status_runs"])
+        if sslot:
+            flights.fetch_status(cfg, today, key, now)
+            state["status_runs"].append(sslot)
+            print(f"checked live flight status ({sslot})")
+    live = {} if a.demo else flights.load_status()
 
     if a.backfill:
         history.backfill(cfg, a.backfill)
@@ -169,13 +179,12 @@ def main():
     for code, ap_cfg in cfg["airports"].items():
         for i, d in enumerate(days):
             for arriving in (False, True):
-                if a.demo or i >= LIVE_DAYS:
-                    fl, source = flights.departures_static(code, d, cfg, arriving), "static"
-                else:
-                    fl, source = flights.departures(code, d, cfg, arriving)
+                fl, source = flights.schedule(code, d, cfg, arriving, live)
                 for f in fl:
                     results.append(score(f, code, ap_cfg, d, arriving, source))
     link_aircraft(results)
+    if cfg.get("record_history") and live.get("date") == today.isoformat():
+        history.record_outcomes(results, now)
     cams = []
     if cfg.get("webcams") and not a.demo:
         try:
@@ -191,6 +200,7 @@ def main():
                "settings": {k: cfg.get(k) for k in ("alert_times", "days_ahead", "alert_threshold")},
                "airport_wx": {s: aviation.summary(mets.get(s), tafs.get(s)) for s in stations
                               if mets.get(s) or tafs.get(s)},
+               "flight_status_checked": live.get("checked") if live.get("date") == today.isoformat() else None,
                "notes": notes, "webcams": cams, "airport_cams": cfg.get("airport_cams", []),
                "flights": results, "history_stats": [] if a.demo else _safe_stats(cfg)}
     with open(OUT, "w") as f:
@@ -233,7 +243,8 @@ def main():
         state["runs"].append(slot)
     cutoff = (today - timedelta(days=2)).isoformat()
     state = {"alerts": {k: v for k, v in state["alerts"].items() if k.split("|")[0] >= today.isoformat()},
-             "runs": [s for s in state["runs"] if s >= cutoff]}
+             "runs": [s for s in state["runs"] if s >= cutoff],
+             "status_runs": [s for s in state["status_runs"] if s >= cutoff]}
     os.makedirs("data", exist_ok=True)
     with open(STATE, "w") as f:
         json.dump(state, f, indent=1)
