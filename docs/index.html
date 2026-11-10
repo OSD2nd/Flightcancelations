@@ -96,8 +96,8 @@ details summary{cursor:pointer;font-size:.85rem;color:var(--accent)}
 <div id="app"></div>
 <h2>Airport weather now</h2>
 <div id="airportwx" class="wxgrid"><div class="sub">Official reports appear after the next check.</div></div>
-<h2>Castlegar airport webcams</h2>
-<div id="apcams" class="wxgrid"><div class="sub">Webcams appear after the next check.</div></div>
+<h2>Airport webcams</h2>
+<div id="apcams"><div class="sub">Webcams appear after the next check.</div></div>
 <h2>Weather map</h2>
 <div class="seg" id="layers">
   <button type="button" data-o="satellite" class="on">Satellite</button>
@@ -139,7 +139,8 @@ function gh(path,opts={}){
   const t=store.get('kfa.token');
   const headers={'Accept':'application/vnd.github+json'};
   if(t)headers.Authorization='Bearer '+t;
-  return fetch(API+path,{...opts,headers:{...headers,...(opts.headers||{})}});
+  // no-store: a cached copy of config.json has an old version id, which makes saves fail (409)
+  return fetch(API+path,{cache:'no-store',...opts,headers:{...headers,...(opts.headers||{})}});
 }
 const msg=(t)=>{$('msg').textContent=t};
 
@@ -219,9 +220,20 @@ function renderAirportWx(w){
 let apTimer=null;
 function renderApCams(list){
   if(!list||!list.length)return;
-  $('apcams').innerHTML=list.map((c,i)=>`<div class="cam"><a href="${esc(c.url)}" target="_blank" rel="noopener"><img data-src="${esc(c.url)}" alt="${esc(c.name)}"></a><div class="sub">${esc(c.name)}</div></div>`).join('')+
-    '<div class="sub" style="grid-column:1/-1">Live photos from the <a href="https://www.wkrairport.ca/passengers/webcams/" target="_blank" rel="noopener">West Kootenay Regional Airport</a>, updated every few minutes. Tap to enlarge.</div>';
-  const tick=()=>$('apcams').querySelectorAll('img').forEach(im=>im.src=im.dataset.src+'?t='+Math.floor(Date.now()/60000));
+  const groups=[...new Set(list.map(c=>c.airport||'Airport'))];
+  $('apcams').innerHTML=groups.map(g=>{
+    const cs=list.filter(c=>(c.airport||'Airport')===g);
+    return `<h3 style="font-size:.95rem;margin:14px 0 6px">${esc(g)}</h3><div class="wxgrid">`+cs.map(c=>
+      `<div class="cam"><a href="${esc(c.url)}" target="_blank" rel="noopener"><img data-src="${esc(c.url)}" alt="${esc(g+' '+c.name)}"></a>
+       <div class="sub">${esc(c.name)} <span class="camerr" hidden>— not loading here, tap to open it directly</span></div></div>`).join('')+
+      `</div><div class="sub">Live photos from <a href="${esc(cs[0].credit||'#')}" target="_blank" rel="noopener">${esc(g)} airport</a>. Tap a photo to enlarge.</div>`;
+  }).join('');
+  $('apcams').querySelectorAll('img').forEach(im=>{
+    im.onerror=()=>{im.style.visibility='hidden';im.closest('.cam').querySelector('.camerr').hidden=false};
+    im.onload=()=>{im.style.visibility='';im.closest('.cam').querySelector('.camerr').hidden=true};
+  });
+  const tick=()=>$('apcams').querySelectorAll('img').forEach(im=>{
+    const u=im.dataset.src;im.src=u+(u.includes('?')?'&':'?')+'t='+Math.floor(Date.now()/60000);});
   tick();clearInterval(apTimer);apTimer=setInterval(tick,60000);
 }
 
@@ -345,16 +357,21 @@ $('settings').onsubmit=async e=>{
   if(emails.some(x=>!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(x)))return msg('Check the email address(es).');
   $('save').disabled=true;msg('Saving…');
   try{
-    // always re-read so we don't overwrite a newer config
-    const r=await gh('/contents/config.json?ref=main');
-    if(!r.ok)throw new Error('could not read config ('+r.status+')');
-    const j=await r.json();
-    const c=JSON.parse(b64dec(j.content));
-    c.alert_times=times;c.days_ahead=days;c.alert_threshold=Math.round(th)/100;delete c.email_to;
-    if(c.watch_threshold>=c.alert_threshold)c.watch_threshold=Math.round(c.alert_threshold*50)/100;
-    const w=await gh('/contents/config.json',{method:'PUT',body:JSON.stringify({
-      message:'Update settings from dashboard',branch:'main',sha:j.sha,
-      content:b64enc(JSON.stringify(c,null,2)+'\n')})});
+    // always re-read so we don't overwrite a newer config; retry once if it changed underneath us
+    let w,c;
+    for(let attempt=0;attempt<3;attempt++){
+      const r=await gh('/contents/config.json?ref=main&t='+Date.now());
+      if(!r.ok)throw new Error(r.status===401||r.status===403?'access key was refused — check it is pasted correctly':'could not read config ('+r.status+')');
+      const j=await r.json();
+      c=JSON.parse(b64dec(j.content));
+      c.alert_times=times;c.days_ahead=days;c.alert_threshold=Math.round(th)/100;delete c.email_to;
+      if(c.watch_threshold>=c.alert_threshold)c.watch_threshold=Math.round(c.alert_threshold*50)/100;
+      w=await gh('/contents/config.json',{method:'PUT',body:JSON.stringify({
+        message:'Update settings from dashboard',branch:'main',sha:j.sha,
+        content:b64enc(JSON.stringify(c,null,2)+'\n')})});
+      if(w.status!==409&&w.status!==422)break;
+      await new Promise(res=>setTimeout(res,1500));
+    }
     if(!w.ok)throw new Error(w.status===401||w.status===403||w.status===404?'access key was refused — check it has Contents: Read and write for this repo':'GitHub said '+w.status);
     cfg=c;
     if(current){current.settings={alert_times:times,days_ahead:days,alert_threshold:c.alert_threshold};}
@@ -371,7 +388,7 @@ $('settings').onsubmit=async e=>{
 function loadNacl(){
   return window.nacl?Promise.resolve(window.nacl):new Promise((ok,bad)=>{
     const sc=document.createElement('script');
-    sc.src='https://cdnjs.cloudflare.com/ajax/libs/tweetnacl/1.0.3/nacl-fast.min.js';
+    sc.src='nacl-fast.min.js'; // tweetnacl 1.0.3, kept in this repo
     sc.onload=()=>ok(window.nacl);sc.onerror=()=>bad(new Error('could not load encryption library'));
     document.head.appendChild(sc);});
 }
