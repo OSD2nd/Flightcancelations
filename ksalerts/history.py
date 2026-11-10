@@ -78,7 +78,7 @@ def backfill(cfg, days):
 
 def _build_dataset(cfg, rows):
     """Attach weather flags to each historical flight. Weather cached per airport per month."""
-    tz = cfg["timezone"]
+    tz = None
     cache = {}
 
     def wx(code, lat, lon, d):
@@ -86,7 +86,7 @@ def _build_dataset(cfg, rows):
         if k not in cache:
             first = date(d.year, d.month, 1)
             last = (first + timedelta(days=32)).replace(day=1) - timedelta(days=1)
-            cache[k] = weather.fetch_hourly(lat, lon, first, min(last, date.today()), True, tz)
+            cache[k] = weather.fetch_hourly(lat, lon, first, min(last, date.today()), True)
         return cache[k]
 
     hub = cfg["hub"]

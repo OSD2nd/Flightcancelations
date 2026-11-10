@@ -19,12 +19,14 @@ def _get(url, tries=3):
     raise RuntimeError(f"weather fetch failed: {last}")
 
 
-def fetch_hourly(lat, lon, start, end, historical=False, tz="America/Vancouver"):
-    """Return {naive local datetime (hour): {var: value}} for start..end dates inclusive."""
+def fetch_hourly(lat, lon, start, end, historical=False, tz=None):
+    """Return {naive local datetime (hour): {var: value}} for start..end dates inclusive.
+    Times come back in UTC and are shifted to local with clock.OFFSET (see clock.py)."""
+    from . import clock
     base = ("https://historical-forecast-api.open-meteo.com/v1/forecast" if historical
             else "https://api.open-meteo.com/v1/forecast")
-    q = dict(latitude=lat, longitude=lon, hourly=HOURLY, timezone=tz,
-             start_date=start.isoformat(), end_date=end.isoformat())
+    q = dict(latitude=lat, longitude=lon, hourly=HOURLY, timezone="GMT",
+             start_date=start.isoformat(), end_date=(end + timedelta(days=1)).isoformat())
     try:  # with cloud at valley/ridge height; fall back if the server refuses those
         data = _get(base + "?" + urllib.parse.urlencode({**q, "hourly": HOURLY + "," + LEVELS}))
     except RuntimeError:
@@ -33,7 +35,7 @@ def fetch_hourly(lat, lon, start, end, historical=False, tz="America/Vancouver")
     keys = [k for k in (HOURLY + "," + LEVELS).split(",") if k in h]
     out = {}
     for i, t in enumerate(h["time"]):
-        out[datetime.fromisoformat(t)] = {k: h[k][i] for k in keys}
+        out[datetime.fromisoformat(t) + timedelta(hours=clock.OFFSET)] = {k: h[k][i] for k in keys}
     return out
 
 

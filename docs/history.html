@@ -35,12 +35,18 @@ details summary{cursor:pointer;font-size:.85rem;color:var(--accent);margin-top:6
 </style></head><body>
 <div class="row"><h1>Flight history</h1><a href="./">← Back to forecast</a></div>
 <div class="sub">Cancellations and delays between Trail / Castlegar and Vancouver, with the weather and webcams at the time.</div>
-<div class="tabs"><button type="button" data-k="cancelled" class="on">Cancellations</button><button type="button" data-k="delayed">Delays</button></div>
+<div class="tabs"><button type="button" data-k="cancelled" class="on">Cancellations &amp; diversions</button><button type="button" data-k="delayed">Delays</button></div>
 <div id="stats" class="stats"></div>
 <div id="list"><div class="sub">Loading…</div></div>
 <p class="foot">Recorded automatically when the airline status shows a cancellation or a delay of 15+ minutes. Weather: official airport reports (aviationweather.gov, Iowa Environmental Mesonet archive). Trail has no weather station, so Castlegar's is shown. Webcams: West Kootenay Regional Airport, City of Trail, Red Mountain Resort. Flight status: AeroDataBox.</p>
 <script>
 const $=id=>document.getElementById(id);
+// Times: BC is on permanent UTC-7; many devices still use the old winter rule (UTC-8),
+// so times are shown in a fixed UTC-7 rather than the device's own zone.
+const KZ='Etc/GMT+7';
+const tUTC=(iso,o)=>new Date(iso).toLocaleString(undefined,{timeZone:KZ,...o});
+const tLocal=(naive,o)=>new Date(naive.slice(0,16)+':00Z').toLocaleString(undefined,{timeZone:'UTC',...o});
+const HM={hour:'numeric',minute:'2-digit'};
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const WXW={RA:'rain',SN:'snow',DZ:'drizzle',SH:'showers',TS:'thunderstorm',FZ:'freezing',BR:'mist',FG:'fog',HZ:'haze',FU:'smoke',GR:'hail',PL:'ice pellets',BL:'blowing',MI:'shallow',BC:'patches of',VC:'nearby'};
 function wxWords(s){if(!s)return '';return String(s).split(/\s+/).map(t=>{let p=t[0]==='-'?'light ':t[0]==='+'?'heavy ':'';t=t.replace(/^[-+]/,'');
@@ -51,14 +57,14 @@ let all=[],kind='cancelled';
 
 function wxDl(w,title){
   if(!w)return '';
-  const t=w.time?new Date(w.time).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}):'';
+  const t=w.time?(/[Z+]|-\d\d:\d\d$/.test(w.time)?tUTC(w.time,HM):tLocal(w.time,HM)):'';
   return `<div class="sub" style="margin-top:8px"><b>${esc(title)}</b>${t?' · report at '+esc(t):''}</div>
   <dl><dt>Cloud base</dt><dd>${esc(ft(w.ceiling_ft))}</dd><dt>Visibility</dt><dd>${w.vis_sm!=null?esc(w.vis_sm)+' mi':'—'}</dd>
   ${w.wx?`<dt>Weather</dt><dd>${esc(wxWords(w.wx))}</dd>`:''}</dl>${w.raw?`<div class="raw">${esc(w.raw)}</div>`:''}`;
 }
 function card(e){
   const arr=e.direction==='arr';
-  const badge=e.kind==='cancelled'?'<span class="badge">CANCELLED</span>':`<span class="badge delayed">${e.delay_min} min late${e.expected?' · '+esc(e.expected):''}</span>`;
+  const badge=e.kind==='cancelled'?'<span class="badge">CANCELLED</span>':e.kind==='diverted'?`<span class="badge">DIVERTED${e.diverted_to?' to '+esc(e.diverted_to):''}</span>`:`<span class="badge delayed">${e.delay_min} min late${e.expected?' · '+esc(e.expected):''}</span>`;
   const pred=e.predicted!=null?`<div class="pred">Our forecast said <b>${Math.round(e.predicted*100)}%</b> risk${e.predicted_reasons&&e.predicted_reasons.length?' ('+esc(e.predicted_reasons.slice(0,3).join(', '))+')':''}</div>`:'';
   const photos=(e.photos||[]).map(p=>`<figure><a href="${esc(p.src)}" target="_blank" rel="noopener"><img loading="lazy" src="${esc(p.src)}" alt="${esc(p.name)}"></a><figcaption>${esc(p.name)}</figcaption></figure>`).join('')+
     (e.red||[]).map(p=>`<figure><a href="${esc(p.src)}" target="_blank" rel="noopener"><img loading="lazy" src="${esc(p.src)}" alt="${esc(p.name)}"></a><figcaption>${esc(p.name)}</figcaption></figure>`).join('');
@@ -67,7 +73,7 @@ function card(e){
     ${pred}
     ${e.wx_at_time?wxDl(e.wx_at_time,'Weather at flight time (Castlegar)'):'<div class="sub" style="margin-top:8px">Weather at flight time: fills in once the airport report is available.</div>'}
     ${e.wx_note?`<div class="sub">${esc(e.wx_note)}</div>`:''}
-    ${e.wx_when_seen||e.taf_when_seen?`<details><summary>Weather when we first saw it${e.first_seen?' ('+esc(new Date(e.first_seen).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}))+')':''}</summary>${wxDl(e.wx_when_seen,'Airport report')}${e.taf_when_seen?`<div class="raw">${esc(e.taf_when_seen)}</div>`:''}</details>`:''}
+    ${e.wx_when_seen||e.taf_when_seen?`<details><summary>Weather when we first saw it${e.first_seen?' ('+esc(tLocal(e.first_seen,HM))+')':''}</summary>${wxDl(e.wx_when_seen,'Airport report')}${e.taf_when_seen?`<div class="raw">${esc(e.taf_when_seen)}</div>`:''}</details>`:''}
     ${photos?`<div class="photos">${photos}</div>`:''}
     ${e.red?'':`<div class="sub">Red Mountain photos are added once the flight time has passed.</div>`}
     <div class="sub" style="margin-top:6px">Source: ${esc(e.source||'')}</div></div>`;
@@ -88,7 +94,7 @@ function stats(list){
 }
 function render(){
   document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.k===kind));
-  const list=all.filter(e=>e.kind===kind);
+  const list=all.filter(e=>kind==='cancelled'?(e.kind==='cancelled'||e.kind==='diverted'):e.kind===kind);
   stats(list);
   if(!list.length){$('list').innerHTML=`<div class="empty">No ${kind==='cancelled'?'cancellations':'delays'} recorded yet. They're added automatically from the airline status checks.</div>`;return}
   let html='',last='';

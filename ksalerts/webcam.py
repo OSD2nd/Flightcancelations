@@ -5,7 +5,7 @@ We pick frames for a few cameras so the dashboard can play them as a time-lapse.
 Mountain-top cams in cloud = cloud is sitting on the ridges around Trail/Castlegar.
 """
 import re, urllib.request
-from datetime import datetime
+from datetime import datetime, timedelta
 
 TS = re.compile(r"_(\d\d)-(\d\d)-(\d\d)-(\d\d):(\d\d)")
 
@@ -15,7 +15,8 @@ def _when(name):
     if not m:
         return None
     y, mo, d, h, mi = map(int, m.groups())
-    return datetime(2000 + y, mo, d, h, mi)
+    # file names use UTC-8 (the resort's server never dropped the old clock change); local is UTC-7
+    return datetime(2000 + y, mo, d, h, mi) + timedelta(hours=1)
 
 
 def frames(cfg, every_min=15, hours=24):

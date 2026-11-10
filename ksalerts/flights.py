@@ -27,6 +27,26 @@ def _local(s):
     return datetime.fromisoformat(s.replace("Z", "+00:00")[:16].replace(" ", "T"))
 
 
+def _diverted_to(f):
+    """If the record names a diversion airport anywhere, return its code."""
+    def walk(o, under=False):
+        if isinstance(o, dict):
+            for k, v in o.items():
+                hit = under or "diver" in k.lower()  # diverted, diversion
+                if hit and isinstance(v, dict) and (v.get("iata") or v.get("icao")):
+                    return v.get("iata") or v.get("icao")
+                r = walk(v, hit)
+                if r:
+                    return r
+        elif isinstance(o, list):
+            for v in o:
+                r = walk(v, under)
+                if r:
+                    return r
+        return None
+    return walk(f)
+
+
 def _num(n):
     return (n or "").replace(" ", "").upper()
 
@@ -58,6 +78,7 @@ def airport_day(code, day, hub_code, key, window=("06:00", "17:59")):
                 "flight": _num(f.get("number")), "time": _local(sched).strftime("%H:%M"),
                 "expected": _local(best).strftime("%H:%M") if best else None,
                 "status": f.get("status") or "Unknown",
+                "diverted_to": _diverted_to(f) if "divert" in str(f.get("status", "")).lower() else None,
                 "airline": (f.get("airline") or {}).get("name", "")})
     return out
 
@@ -109,7 +130,8 @@ def schedule(code, day, cfg, arrivals=False, live=None):
                                 "dep": datetime(day.year, day.month, day.day, h, m),
                                 "expected": (datetime(day.year, day.month, day.day, *map(int, r["expected"].split(":")))
                                              if r.get("expected") else None),
-                                "status": r["status"], "airline": r["airline"] or base["airline"]}
+                                "status": r["status"], "diverted_to": r.get("diverted_to"),
+                                "airline": r["airline"] or base["airline"]}
         return sorted(out.values(), key=lambda f: f["dep"]), "live"
     return sorted(out.values(), key=lambda f: f["dep"]), "static"
 

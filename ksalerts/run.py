@@ -9,9 +9,8 @@ falling back to the sending address SMTP_USER. They are never written to the rep
 """
 import argparse, json, os, re
 from datetime import date, datetime, timedelta, timezone
-from zoneinfo import ZoneInfo
 
-from . import alert, aviation, events, features as F, flights, history, weather, webcam
+from . import alert, aviation, clock, events, features as F, flights, history, weather, webcam
 
 OUT = "docs/latest.json"
 STATE = "data/state.json"
@@ -73,9 +72,10 @@ def main():
 
     with open("config.json") as f:
         cfg = json.load(f)
-    tz = cfg["timezone"]
+    tz = None
+    clock.setup(cfg)
     now = (datetime.fromisoformat(a.now) if a.now
-           else datetime.now(ZoneInfo(tz)).replace(tzinfo=None, second=0, microsecond=0))
+           else clock.now())
     today = now.date()
     state = load_state()
 
@@ -123,8 +123,7 @@ def main():
         except Exception as e:
             print(f"[warn] airport weather failed: {e}")
             notes.append("Official airport weather unavailable this run.")
-    zone = ZoneInfo(tz)
-    to_utc = lambda t: t.replace(tzinfo=zone).astimezone(timezone.utc)
+    to_utc = clock.to_utc
     hub_st = cfg["hub"].get("wx_station")
 
     def score(f, code, ap_cfg, d, arriving, source):
@@ -141,6 +140,9 @@ def main():
         forecast_p, forecast_why = p, why
         if history.is_cancelled(f["status"]):
             p, why = 1.0, ["Airline already shows this flight as cancelled"]
+        elif "divert" in str(f["status"]).lower():
+            p, why = 1.0, ["Airline shows this flight as diverted" +
+                           (f" to {f['diverted_to']}" if f.get("diverted_to") else "")]
         hub = cfg["hub"]["code"]
         return {
             "airport": code, "airport_name": ap_cfg["name"], "airline": f["airline"],
@@ -148,7 +150,8 @@ def main():
             "from": hub if arriving else code, "to": code if arriving else hub,
             "dep_local": here.strftime("%H:%M"),  # time at the Kootenay airport (arrival time for arrivals)
             "expected_local": f["expected"].strftime("%H:%M") if f.get("expected") and f["expected"] != here else None,
-            "status": f["status"], "risk": round(p, 3), "own_risk": round(p, 3),
+            "status": f["status"], "diverted_to": f.get("diverted_to"),
+            "risk": round(p, 3), "own_risk": round(p, 3),
             "level": F.level(p, cfg["watch_threshold"], cfg["alert_threshold"]),
             "reasons": why, "schedule_source": source,
             "airport_wx": (o_av["source"] + (f" ({st})" if st != code and st else "")) if o_av else None,
@@ -209,6 +212,7 @@ def main():
                "airport_wx": {s: aviation.summary(mets.get(s), tafs.get(s)) for s in stations
                               if mets.get(s) or tafs.get(s)},
                "flight_status_checked": live.get("checked") if live.get("date") == today.isoformat() else None,
+               "utc_offset": clock.OFFSET, "day_wx": day_forecast(wx, days, cfg),
                "notes": notes, "webcams": cams, "airport_cams": cfg.get("airport_cams", []),
                "flights": results, "history_stats": [] if a.demo else _safe_stats(cfg)}
     with open(OUT, "w") as f:
@@ -272,6 +276,32 @@ def main():
 def recipients():
     raw = os.environ.get("ALERT_EMAILS") or os.environ.get("SMTP_USER") or ""
     return [e.strip() for e in raw.replace("\n", ",").split(",") if e.strip()]
+
+
+def day_forecast(wx, days, cfg, hours=range(7, 20)):
+    """Hourly forecast per day for the dashboard's day view: {date: {place: [row, ...]}}."""
+    places = {code: a["name"] for code, a in cfg["airports"].items()}
+    places["HUB"] = cfg["hub"]["name"]
+    rnd = lambda v, n=0: None if v is None else round(v, n)
+    out = {}
+    for d in days:
+        out[d.isoformat()] = day = {}
+        for code in places:
+            rows = []
+            for h in hours:
+                r = (wx.get(code) or {}).get(datetime(d.year, d.month, d.day, h))
+                if not r:
+                    continue
+                lv = [r.get(k) for k in ("cloud_cover_925hPa", "cloud_cover_900hPa") if r.get(k) is not None]
+                rows.append({"h": f"{h:02d}:00", "low": rnd(r.get("cloud_cover_low")),
+                             "valley": rnd(max(lv)) if lv else None, "ridge": rnd(r.get("cloud_cover_850hPa")),
+                             "vis": rnd((r.get("visibility") or 0) / 1000, 1) if r.get("visibility") is not None else None,
+                             "rain": rnd(r.get("precipitation"), 1), "snow": rnd(r.get("snowfall"), 1),
+                             "gust": rnd(r.get("wind_gusts_10m")), "temp": rnd(r.get("temperature_2m")),
+                             "code": r.get("weather_code")})
+            if rows:
+                day[code] = {"name": places[code], "rows": rows}
+    return out
 
 
 def _day_name(d, today):

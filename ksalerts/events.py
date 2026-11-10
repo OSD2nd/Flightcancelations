@@ -6,7 +6,7 @@ forecast at the time, small copies of the airport/Red Mountain webcams, and
 later the airport report closest to the scheduled time.
 """
 import io, json, os, urllib.request
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from . import aviation
 
@@ -17,6 +17,7 @@ RED_CAMS = [("granite", "granitecam", "Red Mountain, Granite"), ("greyline", "gr
 RED_PAGE = "https://wxdata.redresort.com/wxdata/weather.php"
 RED_BASE = "https://wxdata.redresort.com/wxdata/"
 _red_cache = {}
+RED_NAME_OFFSET_FIX = 1  # archive file names are UTC-8; local time is UTC-7
 DELAY_MIN = 15
 
 
@@ -99,8 +100,9 @@ def _red_frames():
                     m = re.search(r"_(\d\d)-(\d\d)-(\d\d)-(\d\d):(\d\d)", f)
                     if m:
                         y, mo, d, h, mi = map(int, m.groups())
+                        named = datetime(2000 + y, mo, d, h, mi)  # resort server still on UTC-8
                         out.setdefault(folder, []).append(
-                            (datetime(2000 + y, mo, d, h, mi), f"{RED_BASE}camArchive/24hr/{folder}/{f}"))
+                            (named + timedelta(hours=RED_NAME_OFFSET_FIX), f"{RED_BASE}camArchive/24hr/{folder}/{f}"))
         except Exception as e:
             print(f"[warn] Red Mountain archive unavailable: {e}")
         _red_cache["f"] = out
@@ -141,8 +143,9 @@ def record(results, cfg, now, mets, tafs, to_utc):
         if r["schedule_source"] != "live":
             continue
         cancelled = str(r["status"]).lower().startswith("cancel")
+        diverted = "divert" in str(r["status"]).lower()
         late = _minutes(r["dep_local"], r["expected_local"]) if r.get("expected_local") else 0
-        if not cancelled and late < DELAY_MIN:
+        if not cancelled and not diverted and late < DELAY_MIN:
             continue
         key = f"{r['date']}|{r['flight']}"
         st = cfg["airports"][r["airport"]].get("wx_station")
@@ -161,11 +164,12 @@ def record(results, cfg, now, mets, tafs, to_utc):
                  "source": "live"}
             evs[key] = e
             changed = True
-        if e.get("kind") == "cancelled" and not cancelled:
-            continue  # once cancelled, a later status never downgrades it
-        kind = "cancelled" if cancelled else "delayed"
+        if e.get("kind") in ("cancelled", "diverted") and not (cancelled or diverted):
+            continue  # once cancelled/diverted, a later status never downgrades it
+        kind = "cancelled" if cancelled else "diverted" if diverted else "delayed"
         upd = {"kind": kind, "status": r["status"], "expected": r.get("expected_local"),
-               "delay_min": late if not cancelled else None}
+               "diverted_to": r.get("diverted_to"),
+               "delay_min": late if kind == "delayed" else None}
         if any(e.get(k) != v for k, v in upd.items()):
             e.update(upd)
             changed = True

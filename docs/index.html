@@ -24,7 +24,14 @@ button:disabled{opacity:.55;cursor:default}
 .apcode{font-size:.75rem;font-weight:700;color:#fff;border-radius:6px;padding:2px 7px}
 .ap-YCG{background:#1f5f8b}.ap-YZZ{background:#7a4fa3}
 .card.YCG{box-shadow:inset 0 3px 0 #1f5f8b33}.card.YZZ{box-shadow:inset 0 3px 0 #7a4fa333}
-#apfilter{margin:6px 0 0}#dayfilter{font-size:.85rem;color:var(--mute);margin:4px 0}
+#apfilter{margin:6px 0 0}
+.fx{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0;overflow-x:auto}
+.fx table{width:100%;border-collapse:collapse;font-size:.85rem;min-width:420px}
+.fx th,.fx td{padding:3px 6px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+.fx th:first-child,.fx td:first-child{text-align:left}.fx th{color:var(--mute);font-weight:600;font-size:.75rem}
+.fx tr.fl td{font-weight:700;background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.fx td.bad{color:var(--severe);font-weight:700}.fx td.meh{color:var(--watch);font-weight:700}
+.fx h3{font-size:.9rem;margin:4px 0 6px}#dayfilter{font-size:.85rem;color:var(--mute);margin:4px 0}
 .day.LOW{border-top-color:var(--low)}.day.WATCH{border-top-color:var(--watch)}.day.HIGH{border-top-color:var(--high)}.day.SEVERE{border-top-color:var(--severe)}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:8px 0;border-left-width:6px}
 .card.LOW{border-left-color:var(--low)}.card.WATCH{border-left-color:var(--watch)}.card.HIGH{border-left-color:var(--high)}.card.SEVERE{border-left-color:var(--severe)}
@@ -111,7 +118,7 @@ details summary{cursor:pointer;font-size:.85rem;color:var(--accent)}
 <div id="week" class="week"></div>
 <div id="dayfilter"></div>
 <div id="app"></div>
-<h2>Airport weather now</h2>
+<h2 id="nowhead">Airport weather now</h2>
 <div id="airportwx" class="wxgrid"><div class="sub">Official reports appear after the next check.</div></div>
 <h2>Airport webcams</h2>
 <div id="apcams"><div class="sub">Webcams appear after the next check.</div></div>
@@ -140,6 +147,12 @@ Flight status data: <a href="https://aerodatabox.com" target="_blank" rel="noope
 <script id="seed" type="application/json">null</script>
 <script>
 const $=id=>document.getElementById(id);
+// Times: BC is on permanent UTC-7; many devices still use the old winter rule (UTC-8),
+// so times are shown in a fixed UTC-7 rather than the device's own zone.
+const KZ='Etc/GMT+7';
+const tUTC=(iso,o)=>new Date(iso).toLocaleString(undefined,{timeZone:KZ,...o});
+const tLocal=(naive,o)=>new Date(naive.slice(0,16)+':00Z').toLocaleString(undefined,{timeZone:'UTC',...o});
+const HM={hour:'numeric',minute:'2-digit'};
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const seed=JSON.parse($('seed').textContent);
 const store={get(k){try{return localStorage.getItem(k)||''}catch(e){return ''}},set(k,v){try{v?localStorage.setItem(k,v):localStorage.removeItem(k)}catch(e){}}};
@@ -175,10 +188,10 @@ function render(d){
   current=d;
   const g=new Date(d.generated);
   const s=d.settings||{};
-  $('meta').textContent='Updated '+g.toLocaleString()+' · model: '+
+  $('meta').textContent='Updated '+tUTC(d.generated,{weekday:'short',...HM})+' · model: '+
     (d.model==='learned'?'learned from '+d.model_info.cancellations+' cancellations in '+d.model_info.flights+' flights':'starting estimates (no history yet)')+
     (s.alert_times?' · email checks at '+s.alert_times.join(', '):'')+
-    (d.flight_status_checked?' · airline status checked '+new Date(d.flight_status_checked).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}):'');
+    (d.flight_status_checked?' · airline status checked '+tLocal(d.flight_status_checked,HM):'');
   $('demo').innerHTML=d.demo?'<div class="banner">Demo data — not real conditions.</div>':'';
   renderFlights();
   $('notes').innerHTML=(d.notes||[]).map(n=>'<div class="banner">'+esc(n)+'</div>').join('');
@@ -204,8 +217,8 @@ const AP={YCG:'Castlegar',YZZ:'Trail'};
 let selDay=null, selAp=(()=>{try{return localStorage.getItem('kfa.ap')||'all'}catch(e){return 'all'}})();
 function card(f){
   const pct=Math.round(f.risk*100);
-  const arr=f.direction==='arr', canc=/^cancel/i.test(f.status), maybe=/uncertain/i.test(f.status);
-  const badge=canc?`<span class="badge">${maybe?'MAYBE CANCELLED':'CANCELLED'}</span>`:f.expected_local?`<span class="badge late">now ${esc(f.expected_local)}</span>`:'';
+  const arr=f.direction==='arr', canc=/^cancel/i.test(f.status), maybe=/uncertain/i.test(f.status), div=/divert/i.test(f.status);
+  const badge=canc?`<span class="badge">${maybe?'MAYBE CANCELLED':'CANCELLED'}</span>`:div?`<span class="badge">DIVERTED${f.diverted_to?' to '+esc(f.diverted_to):''}</span>`:f.expected_local?`<span class="badge late">now ${esc(f.expected_local)}</span>`:'';
   const here=AP[f.airport]||f.airport;
   return `<div class="card ${f.level} ${esc(f.airport)}"><div class="row"><div><span class="dir">${arr?'Arrives '+esc(here):'Departs '+esc(here)}</span><br><b>${esc(f.flight)}</b> ${esc(f.from||f.airport)} → ${esc(f.to||'YVR')} · ${esc(f.dep_local)}${badge}
   <div class="sub">${esc(f.airline)}${f.inbound?' · plane comes in on '+esc(f.inbound):''}</div></div>
@@ -214,6 +227,27 @@ function card(f){
   <div>${f.reasons.map(r=>'<span class="tag">'+esc(r)+'</span>').join('')||'<span class="tag">Nothing unusual in the forecast</span>'}</div>
   <div class="sub" style="margin-top:6px">${esc(f.level)} · ${f.schedule_source==='live'?'airline status: <b>'+esc(STATUS[f.status]||f.status)+'</b>':'status not checked yet · schedule from config'}${f.airport_wx?' · uses '+esc(f.airport_wx)+(f.ceiling_ft!=null?', cloud base '+Number(f.ceiling_ft).toLocaleString()+' ft':', no low ceiling'):''}</div></div>`;
 }
+// hourly forecast table for one day (Castlegar, Trail, Vancouver)
+function dayForecast(d,day,fl){
+  const fx=(d.day_wx||{})[day];
+  if(!fx)return '<div class="sub">No hourly forecast saved for this day yet.</div>';
+  const places=(selAp==='all'?['YCG','YZZ']:[selAp]).concat('HUB').filter(p=>fx[p]);
+  const flightHours=p=>new Set(fl.filter(f=>p==='HUB'||f.airport===p).map(f=>{
+    const [h,m]=(p==='HUB'?(f.direction==='dep'?addMin(f.dep_local,75):subMin(f.dep_local,75)):f.dep_local).split(':').map(Number);
+    return String(m>=30?(h+1)%24:h).padStart(2,'0')+':00';}));
+  const cls=(v,bad,meh,lower)=>v==null?'':(lower?(v<bad?'bad':v<meh?'meh':''):(v>=bad?'bad':v>=meh?'meh':''));
+  const n=(v,u='')=>v==null?'—':v+u;
+  return '<div class="fx"><div class="sub" style="margin-bottom:6px">Hourly forecast for this day. ✈ = around a flight time. Red = the conditions that usually ground flights here.</div>'+
+    places.map(p=>{const fh=flightHours(p);return `<h3>${esc(fx[p].name)}${p==='HUB'?' (arrival/departure end)':''}</h3><table>
+    <tr><th>Time</th><th>Low cloud</th><th>Valley cloud</th><th>Visibility</th><th>Rain</th><th>Snow</th><th>Gusts</th></tr>`+
+    fx[p].rows.map(r=>`<tr class="${fh.has(r.h)?'fl':''}"><td>${fh.has(r.h)?'✈ ':''}${esc(r.h)}</td>
+      <td class="${cls(r.low,90,60)}">${n(r.low,'%')}</td><td class="${cls(r.valley,80,50)}">${n(r.valley,'%')}</td>
+      <td class="${cls(r.vis,1.6,4.8,true)}">${n(r.vis,' km')}</td><td class="${cls(r.rain,0.2,0.05)}">${n(r.rain,' mm')}</td>
+      <td class="${cls(r.snow,1,0.3)}">${n(r.snow,' cm')}</td><td class="${cls(r.gust,50,35)}">${n(r.gust,' km/h')}</td></tr>`).join('')+'</table>';}).join('')+'</div>';
+}
+const addMin=(t,m)=>{let[h,mm]=t.split(':').map(Number);let x=h*60+mm+m;x=(x+1440)%1440;return String(Math.floor(x/60)).padStart(2,'0')+':'+String(x%60).padStart(2,'0')};
+const subMin=(t,m)=>addMin(t,-m);
+
 function renderFlights(){
   const d=current;if(!d)return;
   document.querySelectorAll('#apfilter button').forEach(b=>b.classList.toggle('on',b.dataset.ap===selAp));
@@ -231,6 +265,7 @@ function renderFlights(){
     if(selDay&&selDay!==day)return;
     html+=`<h2 id="d-${day}">${esc(dayLabel(day,today,i))} · ${esc(shortDay(day))}</h2>`;
     if(i>=3)html+='<div class="sub">Further out — treat as a rough early look.</div>';
+    if(selDay===day)html+=dayForecast(d,day,fl);
     aps.forEach(a=>{
       const x=fl.filter(f=>f.airport===a).sort((p,q)=>p.dep_local.localeCompare(q.dep_local));
       if(!x.length)return;
@@ -239,6 +274,9 @@ function renderFlights(){
   });
   $('week').innerHTML=week;
   $('app').innerHTML=html;
+  // with a future day picked, its forecast replaces "weather now"
+  const future=selDay&&selDay!==today;
+  $('nowhead').hidden=$('airportwx').hidden=!!future;
   $('dayfilter').innerHTML=selDay?`Showing ${esc(dayLabel(selDay,today,days.indexOf(selDay)))} only · <a href="#" id="alldays">show all days</a>`:'Tap a day to see just that day.';
   if(selDay)$('alldays').onclick=e=>{e.preventDefault();selDay=null;renderFlights();};
   $('week').querySelectorAll('[data-day]').forEach(b=>b.onclick=()=>{
@@ -254,7 +292,7 @@ function renderAirportWx(w){
   if(!ids.length)return;
   $('airportwx').innerHTML=ids.map(id=>{
     const x=w[id];
-    const t=x.obs_time?new Date(x.obs_time).toLocaleString(undefined,{weekday:'short',hour:'numeric',minute:'2-digit'}):'—';
+    const t=x.obs_time?tUTC(x.obs_time,{weekday:'short',...HM}):'—';
     return `<div class="wx"><div class="row"><b>${esc(x.name||id)}</b>${x.category?`<span class="cat ${esc(x.category)}" title="${esc(CAT[x.category]||'')}">${esc(x.category)}</span>`:''}</div>
     <div class="sub">${esc(id)} report at ${esc(t)}${x.category?' · '+esc(CAT[x.category]||''):''}</div>
     <dl><dt>Cloud base</dt><dd>${x.ceiling_ft!=null?Number(x.ceiling_ft).toLocaleString()+' ft':'No low ceiling'}</dd>
@@ -305,7 +343,7 @@ function renderCams(list){
   if(!fr.length){$('camimg').src=c.live+'?'+Date.now();$('camtime').textContent='Latest photo';return;}
   fr.slice(0,6).forEach(f=>{new Image().src=f.url});
   const show=i=>{camIdx=i;$('camimg').src=fr[i].url;$('camslide').value=i;new Image().src=fr[(i+1)%fr.length].url;
-    $('camtime').textContent=new Date(fr[i].t).toLocaleString(undefined,{weekday:'short',hour:'numeric',minute:'2-digit'});};
+    $('camtime').textContent=tLocal(fr[i].t,{weekday:'short',...HM});};
   const play=()=>{clearInterval(camTimer);camTimer=setInterval(()=>show((camIdx+1)%fr.length),camRange==='24'?700:500);$('camplay').textContent='⏸ Pause'};
   $('camplay').onclick=()=>{if(camTimer){clearInterval(camTimer);camTimer=null;$('camplay').textContent='▶ Play'}else play()};
   $('camslide').oninput=e=>{clearInterval(camTimer);camTimer=null;$('camplay').textContent='▶ Play';show(+e.target.value)};
