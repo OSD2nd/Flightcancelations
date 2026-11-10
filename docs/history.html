@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1f5f8b">
+<link rel="icon" type="image/png" href="icons/favicon.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Flight Risk">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>Flight History</title>
 <style>
 :root{--in:#0d9488;--out:#4f46e5;--bg:#f6f5f1;--card:#fff;--ink:#1c2321;--mute:#6b746f;--line:#e3e1d9;--accent:#1f5f8b;
@@ -108,4 +116,5 @@ function render(){
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{kind=b.dataset.k;render()});
 fetch('history.json?'+Date.now()).then(r=>r.json()).then(d=>{all=d.events||[];render()})
   .catch(()=>{$('list').innerHTML='<div class="empty">Could not load the history.</div>'});
-</script></body></html>
+</script><script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});</script>
+</body></html>

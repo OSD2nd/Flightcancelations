@@ -1,0 +1,15 @@
+{
+  "name": "Kootenay Flight Risk",
+  "short_name": "Flight Risk",
+  "description": "Cancellation risk for Trail and Castlegar flights to Vancouver.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f5f1",
+  "theme_color": "#1f5f8b",
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
