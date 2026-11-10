@@ -453,5 +453,18 @@ async function saveEmails(list){
   if(!r.ok)throw new Error('settings saved, but the email list was not (GitHub said '+r.status+')');
 }
 
-load();
+// If GitHub's schedule hasn't run lately, start a fresh check when the owner opens the page.
+function autoRefresh(d){
+  try{
+    if(!d||!store.get('kfa.token'))return;
+    const age=(Date.now()-new Date(d.generated).getTime())/60000;
+    const last=+(store.get('kfa.autorun')||0);
+    if(age<40||Date.now()-last<20*60000)return;
+    store.set('kfa.autorun',String(Date.now()));
+    msg('Data is '+Math.round(age)+' minutes old — starting a fresh check…');
+    runNow();
+  }catch(e){}
+}
+
+load().then(autoRefresh);
 </script></body></html>
