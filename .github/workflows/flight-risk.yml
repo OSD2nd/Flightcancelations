@@ -35,6 +35,8 @@ jobs:
           ALERT_EMAILS: ${{ secrets.ALERT_EMAILS }}
         # only a manual "Run workflow" emails right away; schedule/push runs email at alert_times
         run: python run.py ${{ github.event_name != 'workflow_dispatch' && '--scheduled' || '' }}
+      - name: Read airport flight boards (about once an hour)
+        run: python -m ksalerts.boards || true
       - name: Save alert memory and history
         run: |
           git config user.name "flight-risk-bot"

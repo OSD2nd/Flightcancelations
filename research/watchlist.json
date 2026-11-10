@@ -123,5 +123,15 @@
     "name": "Kamloops"
    }
   ]
- }
+ },
+ "boards": [
+  {
+   "icao": "CYKA",
+   "iata": "YKA",
+   "name": "Kamloops",
+   "kind": "ch-flight-data",
+   "url": "https://kamloopsairport.com/wp-json/ch-flight-data/v1/stark/both",
+   "note": "The airport's own flight board feed. robots.txt allows ordinary readers (checked 2026-11-10)."
+  }
+ ]
 }
