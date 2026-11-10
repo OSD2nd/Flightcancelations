@@ -3,9 +3,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Flight History</title>
 <style>
-:root{--bg:#f6f5f1;--card:#fff;--ink:#1c2321;--mute:#6b746f;--line:#e3e1d9;--accent:#1f5f8b;
+:root{--in:#0d9488;--out:#4f46e5;--bg:#f6f5f1;--card:#fff;--ink:#1c2321;--mute:#6b746f;--line:#e3e1d9;--accent:#1f5f8b;
 --low:#2f7d4f;--watch:#b7791f;--high:#c2410c;--severe:#b91c1c}
-@media(prefers-color-scheme:dark){:root{--bg:#141816;--card:#1d2321;--ink:#eef1ee;--mute:#98a39d;--line:#2e3633;--accent:#7cb8e4;
+@media(prefers-color-scheme:dark){:root{--in:#2dd4bf;--out:#a5b4fc;--bg:#141816;--card:#1d2321;--ink:#eef1ee;--mute:#98a39d;--line:#2e3633;--accent:#7cb8e4;
 --low:#5ec48a;--watch:#e0a73c;--high:#f07a45;--severe:#f26b6b}}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,sans-serif;padding:16px;max-width:820px;margin:auto}
 a{color:var(--accent)}h1{font-size:1.3rem;margin:4px 0}
@@ -22,6 +22,9 @@ h2{font-size:1rem;margin:22px 0 8px;color:var(--mute);text-transform:uppercase;l
 .row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
 .badge{font-size:.72rem;font-weight:700;border-radius:6px;padding:1px 7px;color:#fff;background:var(--severe)}
 .badge.delayed{background:var(--watch)}
+.dir.in,.arrow.in{color:var(--in)}.dir.out,.arrow.out{color:var(--out)}
+.arrow{font-weight:800;font-size:1.15em;margin:0 3px}
+.route{white-space:nowrap}.card .route{color:var(--ink)}
 .dir{font-size:.72rem;font-weight:700;letter-spacing:.04em;color:var(--mute);text-transform:uppercase;margin-right:4px}
 dl{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;margin:8px 0;font-size:.9rem}dt{color:var(--mute)}
 .raw{font:12px/1.4 ui-monospace,monospace;color:var(--mute);white-space:pre-wrap;word-break:break-word;margin-top:4px}
@@ -68,7 +71,8 @@ function card(e){
   const pred=e.predicted!=null?`<div class="pred">Our forecast said <b>${Math.round(e.predicted*100)}%</b> risk${e.predicted_reasons&&e.predicted_reasons.length?' ('+esc(e.predicted_reasons.slice(0,3).join(', '))+')':''}</div>`:'';
   const photos=(e.photos||[]).map(p=>`<figure><a href="${esc(p.src)}" target="_blank" rel="noopener"><img loading="lazy" src="${esc(p.src)}" alt="${esc(p.name)}"></a><figcaption>${esc(p.name)}</figcaption></figure>`).join('')+
     (e.red||[]).map(p=>`<figure><a href="${esc(p.src)}" target="_blank" rel="noopener"><img loading="lazy" src="${esc(p.src)}" alt="${esc(p.name)}"></a><figcaption>${esc(p.name)}</figcaption></figure>`).join('');
-  return `<div class="card ${esc(e.kind)}"><div class="row"><div><span class="dir">${arr?'Arrival':'Departure'}</span><b>${esc(e.flight)}</b> ${esc(e.from)} → ${esc(e.to)} · ${esc(e.sched)} ${badge}
+  const io=arr?'in':'out', other=arr?e.from:e.to;
+  return `<div class="card ${esc(e.kind)}"><div class="row"><div><span class="dir ${io}">${arr?'Arriving from Vancouver':'Departing to Vancouver'}</span><br><b>${esc(e.flight)}</b> · <span class="route"><b>${esc(e.airport)}</b><span class="arrow ${io}">${arr?'←':'→'}</span>${esc(other)}</span> · ${esc(e.sched)} ${badge}
     <div class="sub">${esc(e.airline)} · ${esc(e.airport_name)}</div></div></div>
     ${pred}
     ${e.wx_at_time?wxDl(e.wx_at_time,'Weather at flight time (Castlegar)'):'<div class="sub" style="margin-top:8px">Weather at flight time: fills in once the airport report is available.</div>'}

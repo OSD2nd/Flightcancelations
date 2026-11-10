@@ -3,9 +3,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Kootenay Flight Risk</title>
 <style>
-:root{--bg:#f6f5f1;--card:#fff;--ink:#1c2321;--mute:#6b746f;--line:#e3e1d9;--accent:#1f5f8b;
+:root{--in:#0d9488;--out:#4f46e5;--bg:#f6f5f1;--card:#fff;--ink:#1c2321;--mute:#6b746f;--line:#e3e1d9;--accent:#1f5f8b;
 --low:#2f7d4f;--watch:#b7791f;--high:#c2410c;--severe:#b91c1c}
-@media(prefers-color-scheme:dark){:root{--bg:#141816;--card:#1d2321;--ink:#eef1ee;--mute:#98a39d;--line:#2e3633;--accent:#7cb8e4;
+@media(prefers-color-scheme:dark){:root{--in:#2dd4bf;--out:#a5b4fc;--bg:#141816;--card:#1d2321;--ink:#eef1ee;--mute:#98a39d;--line:#2e3633;--accent:#7cb8e4;
 --low:#5ec48a;--watch:#e0a73c;--high:#f07a45;--severe:#f26b6b}}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,sans-serif;padding:16px;max-width:760px;margin:auto}
 h1{font-size:1.3rem;margin:4px 0}h2{font-size:1rem;margin:22px 0 8px;color:var(--mute);text-transform:uppercase;letter-spacing:.05em}
@@ -62,6 +62,9 @@ details summary{cursor:pointer;font-size:.85rem;color:var(--accent)}
 .mapwrap{position:relative;width:100%;aspect-ratio:4/3;max-height:520px;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--card)}
 .mapwrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .badge{font-size:.72rem;font-weight:700;border-radius:6px;padding:1px 6px;margin-left:6px;vertical-align:middle;color:#fff;background:var(--severe)}
+.dir.in,.arrow.in{color:var(--in)}.dir.out,.arrow.out{color:var(--out)}
+.arrow{font-weight:800;font-size:1.15em;margin:0 3px}
+.route{white-space:nowrap}.card .route{color:var(--ink)}
 .badge.late{background:var(--watch)}.dir{font-size:.72rem;font-weight:700;letter-spacing:.04em;color:var(--mute);text-transform:uppercase;margin-right:4px}
 .cam img{display:block;width:100%;border-radius:12px;border:1px solid var(--line);background:var(--card);aspect-ratio:16/9;object-fit:cover}
 .camctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}.camctl input[type=range]{flex:1;min-width:140px}
@@ -219,8 +222,9 @@ function card(f){
   const pct=Math.round(f.risk*100);
   const arr=f.direction==='arr', canc=/^cancel/i.test(f.status), maybe=/uncertain/i.test(f.status), div=/divert/i.test(f.status);
   const badge=canc?`<span class="badge">${maybe?'MAYBE CANCELLED':'CANCELLED'}</span>`:div?`<span class="badge">DIVERTED${f.diverted_to?' to '+esc(f.diverted_to):''}</span>`:f.expected_local?`<span class="badge late">now ${esc(f.expected_local)}</span>`:'';
-  const here=AP[f.airport]||f.airport;
-  return `<div class="card ${f.level} ${esc(f.airport)}"><div class="row"><div><span class="dir">${arr?'Arrives '+esc(here):'Departs '+esc(here)}</span><br><b>${esc(f.flight)}</b> ${esc(f.from||f.airport)} → ${esc(f.to||'YVR')} · ${esc(f.dep_local)}${badge}
+  const other=arr?(f.from||'YVR'):(f.to||'YVR'), io=arr?'in':'out';
+  const route=`<span class="route"><b>${esc(f.airport)}</b><span class="arrow ${io}">${arr?'←':'→'}</span>${esc(other)}</span>`;
+  return `<div class="card ${f.level} ${esc(f.airport)}"><div class="row"><div><span class="dir ${io}">${arr?'Arriving from Vancouver':'Departing to Vancouver'}</span><br><b>${esc(f.flight)}</b> · ${route} · ${esc(f.dep_local)}${badge}
   <div class="sub">${esc(f.airline)}${f.inbound?' · plane comes in on '+esc(f.inbound):''}</div></div>
   <div class="big">${pct}%</div></div>
   <div class="bar"><i style="width:${Math.max(pct,2)}%"></i></div>
