@@ -1,5 +1,5 @@
 {
- "note": "Airports the daily OpenSky collector logs. ~60 credits each per day; free account = 4,000/day. Vancouver is the busiest by far (biggest file) - remove it if the log gets too large.",
+ "note": "Airports the nightly OpenSky collector logs (~60 credits each per day; free account = 4,000/day).",
  "utc_offset": -7,
  "airports": [
   {
@@ -23,16 +23,8 @@
    "name": "Tofino"
   },
   {
-   "icao": "CYQZ",
-   "name": "Quesnel"
-  },
-  {
    "icao": "CYXS",
    "name": "Prince George"
-  },
-  {
-   "icao": "CBBC",
-   "name": "Bella Bella"
   },
   {
    "icao": "CYPW",
@@ -43,28 +35,50 @@
    "name": "Nanaimo"
   },
   {
-   "icao": "CZMT",
-   "name": "Masset"
-  },
-  {
    "icao": "CYQQ",
    "name": "Comox"
-  },
-  {
-   "icao": "CYWL",
-   "name": "Williams Lake"
   },
   {
    "icao": "CYDQ",
    "name": "Dawson Creek"
   },
   {
-   "icao": "CYZP",
-   "name": "Sandspit"
-  },
-  {
    "icao": "CYXJ",
    "name": "Fort St. John"
+  },
+  {
+   "icao": "CYLW",
+   "name": "Kelowna"
+  },
+  {
+   "icao": "CYYF",
+   "name": "Penticton"
+  },
+  {
+   "icao": "CYYJ",
+   "name": "Victoria"
+  }
+ ],
+ "dropped": [
+  {
+   "icao": "CYQZ",
+   "name": "Quesnel"
+  },
+  {
+   "icao": "CBBC",
+   "name": "Bella Bella"
+  },
+  {
+   "icao": "CZMT",
+   "name": "Masset"
+  },
+  {
+   "icao": "CYWL",
+   "name": "Williams Lake"
+  },
+  {
+   "icao": "CYZP",
+   "name": "Sandspit"
   },
   {
    "icao": "CYXC",
@@ -91,24 +105,25 @@
    "name": "Bella Coola"
   },
   {
-   "icao": "CYLW",
-   "name": "Kelowna"
-  },
-  {
-   "icao": "CYYF",
-   "name": "Penticton"
-  },
-  {
    "icao": "CYKA",
    "name": "Kamloops"
-  },
-  {
-   "icao": "CYYJ",
-   "name": "Victoria"
   },
   {
    "icao": "CYVR",
    "name": "Vancouver"
   }
- ]
+ ],
+ "dropped_note": "Removed 2026-11-10: OpenSky saw no flights there (out of receiver range), or (Vancouver) too big to be useful.",
+ "backfill": {
+  "airports": [
+   "CAD4",
+   "CYXT",
+   "CYBL",
+   "CYPW",
+   "CYQQ"
+  ],
+  "from": "2025-11-01",
+  "to": "2026-03-31",
+  "note": "Nightly run spends leftover credits here, newest day first, until done."
+ }
 }

@@ -114,7 +114,9 @@ def collect_day(api, ap, day, offset):
 def main():
     ap_ = argparse.ArgumentParser()
     ap_.add_argument("--days", type=int, default=1, help="how many past days to collect")
-    ap_.add_argument("--budget", type=int, default=3500, help="stop before using more credits than this")
+    ap_.add_argument("--budget", type=int, default=3600, help="stop before using more credits than this")
+    ap_.add_argument("--backfill", action="store_true",
+                     help="after yesterday, spend leftover credits on the watchlist's 'backfill' period")
     ap_.add_argument("--airports", default="", help="comma-separated ICAO codes (default: whole watchlist)")
     ap_.add_argument("--from", dest="start", default="", help="first date YYYY-MM-DD (with --to)")
     ap_.add_argument("--to", dest="end", default="", help="last date YYYY-MM-DD")
@@ -140,22 +142,33 @@ def main():
         span = [d1 - timedelta(days=i) for i in range((d1 - d0).days + 1)]
     else:
         span = [today - timedelta(days=back) for back in range(1, a.days + 1)]
+    jobs = [(day, ap) for day in span for ap in airports]
+    bf = watch.get("backfill")
+    if a.backfill and bf and not (a.start or a.airports):
+        known = {ap["icao"]: ap for ap in watch["airports"]}
+        d0, d1 = date.fromisoformat(bf["from"]), date.fromisoformat(bf["to"])
+        for i in range((d1 - d0).days + 1):
+            for c in bf["airports"]:
+                jobs.append((d1 - timedelta(days=i), known.get(c, {"icao": c, "name": c})))
+        left = sum(1 for d, ap in jobs[len(span) * len(airports):] if f"{d.isoformat()}|{ap['icao']}" not in done)
+        print(f"backfill {bf['from']}..{bf['to']}: {left} airport-days still to collect")
     rows, spent, calls = [], 0, 0
     try:
-        for day in span:
-            for ap in airports:
-                key = f"{day.isoformat()}|{ap['icao']}"
-                if key in done:
-                    continue
-                if spent + 60 > a.budget:
-                    raise RuntimeError(f"stopping at the {a.budget}-credit budget")
-                got = collect_day(api, ap["icao"], day, ap.get("utc_offset", offset))
-                rows += got
-                done.add(key)
-                spent += 60
-                calls += 2
-                print(f"{day} {ap['icao']:5} {ap['name']:16} {sum(r['direction']=='arr' for r in got):3} arr "
-                      f"{sum(r['direction']=='dep' for r in got):3} dep")
+        for day, ap in jobs:
+            key = f"{day.isoformat()}|{ap['icao']}"
+            if key in done:
+                continue
+            if spent + 60 > a.budget:
+                raise RuntimeError(f"stopping at the {a.budget}-credit budget (continues next run)")
+            if api.remaining is not None and int(api.remaining) < 200:
+                raise RuntimeError(f"only {api.remaining} OpenSky credits left today (continues next run)")
+            got = collect_day(api, ap["icao"], day, ap.get("utc_offset", offset))
+            rows += got
+            done.add(key)
+            spent += 60
+            calls += 2
+            print(f"{day} {ap['icao']:5} {ap['name']:16} {sum(r['direction']=='arr' for r in got):3} arr "
+                  f"{sum(r['direction']=='dep' for r in got):3} dep")
     except Exception as e:
         print(f"[warn] {e}")
     save(rows, done)
