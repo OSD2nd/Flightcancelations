@@ -7,6 +7,15 @@ on:
       days:
         description: "How many past days to collect (each day of all airports uses ~1,600 credits)"
         default: "1"
+      airports:
+        description: "Only these airports, comma separated (e.g. CYCG,CAD4). Blank = all"
+        default: ""
+      from:
+        description: "Past period start YYYY-MM-DD (use with 'to'; overrides days)"
+        default: ""
+      to:
+        description: "Past period end YYYY-MM-DD"
+        default: ""
 permissions:
   contents: write
 concurrency:
@@ -23,7 +32,10 @@ jobs:
         env:
           OPENSKY_CLIENT_ID: ${{ secrets.OPENSKY_CLIENT_ID }}
           OPENSKY_CLIENT_SECRET: ${{ secrets.OPENSKY_CLIENT_SECRET }}
-        run: python -m ksalerts.collector --days ${{ github.event.inputs.days || '1' }}
+        run: >
+          python -m ksalerts.collector --days "${{ github.event.inputs.days || '1' }}"
+          --airports "${{ github.event.inputs.airports }}"
+          --from "${{ github.event.inputs.from }}" --to "${{ github.event.inputs.to }}"
       - name: Save
         run: |
           git config user.name "flight-risk-bot"

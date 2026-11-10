@@ -14,6 +14,9 @@ A free account gets 4,000 credits a day per endpoint group.
 
   python -m ksalerts.collector            # yesterday
   python -m ksalerts.collector --days 3   # the last 3 days (backfill)
+  python -m ksalerts.collector --airports CYCG,CAD4 --from 2025-11-01 --to 2026-03-31
+                                          # a past period for chosen airports, newest first;
+                                          # stops at the credit budget and resumes next run
 """
 import argparse, csv, json, os, sys, time, urllib.error, urllib.parse, urllib.request
 from datetime import date, datetime, timedelta, timezone
@@ -112,6 +115,9 @@ def main():
     ap_ = argparse.ArgumentParser()
     ap_.add_argument("--days", type=int, default=1, help="how many past days to collect")
     ap_.add_argument("--budget", type=int, default=3500, help="stop before using more credits than this")
+    ap_.add_argument("--airports", default="", help="comma-separated ICAO codes (default: whole watchlist)")
+    ap_.add_argument("--from", dest="start", default="", help="first date YYYY-MM-DD (with --to)")
+    ap_.add_argument("--to", dest="end", default="", help="last date YYYY-MM-DD")
     a = ap_.parse_args()
 
     cid, secret = os.environ.get("OPENSKY_CLIENT_ID"), os.environ.get("OPENSKY_CLIENT_SECRET")
@@ -124,11 +130,20 @@ def main():
     api = OpenSky(cid, secret)
     done = load_done()
     today = (datetime.now(timezone.utc) + timedelta(hours=offset)).date()
+    airports = watch["airports"]
+    if a.airports:
+        want = [x.strip().upper() for x in a.airports.split(",") if x.strip()]
+        known = {ap["icao"]: ap for ap in airports}
+        airports = [known.get(c, {"icao": c, "name": c}) for c in want]
+    if a.start and a.end:
+        d0, d1 = date.fromisoformat(a.start), date.fromisoformat(a.end)
+        span = [d1 - timedelta(days=i) for i in range((d1 - d0).days + 1)]
+    else:
+        span = [today - timedelta(days=back) for back in range(1, a.days + 1)]
     rows, spent, calls = [], 0, 0
     try:
-        for back in range(1, a.days + 1):
-            day = today - timedelta(days=back)
-            for ap in watch["airports"]:
+        for day in span:
+            for ap in airports:
                 key = f"{day.isoformat()}|{ap['icao']}"
                 if key in done:
                     continue
