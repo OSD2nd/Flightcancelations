@@ -96,9 +96,13 @@ details summary{cursor:pointer;font-size:.85rem;color:var(--accent)}
 <div id="app"></div>
 <h2>Airport weather now</h2>
 <div id="airportwx" class="wxgrid"><div class="sub">Official reports appear after the next check.</div></div>
+<h2>Castlegar airport webcams</h2>
+<div id="apcams" class="wxgrid"><div class="sub">Webcams appear after the next check.</div></div>
 <h2>Weather map</h2>
 <div class="seg" id="layers">
-  <button type="button" data-o="clouds" class="on">Clouds</button>
+  <button type="button" data-o="satellite" class="on">Satellite</button>
+  <button type="button" data-o="radar">Radar</button>
+  <button type="button" data-o="clouds">Cloud forecast</button>
   <button type="button" data-o="cbase">Cloud base</button>
   <button type="button" data-o="rain">Rain / snow</button>
   <button type="button" data-o="wind">Wind</button>
@@ -110,7 +114,7 @@ details summary{cursor:pointer;font-size:.85rem;color:var(--accent)}
 </div>
 <div class="mapwrap"><iframe id="windy" title="Windy weather map" loading="lazy"></iframe></div>
 <div class="sub" style="margin-top:4px">Map by Windy.com. Use the timeline at the bottom of the map to look ahead.</div>
-<h2>Red Mountain webcams</h2>
+<h2>Red Mountain webcams (over the valley)</h2>
 <div id="cams" class="cam"><div class="sub">Webcams appear after the next check.</div></div>
 <h2>What past cancellations looked like</h2>
 <div id="hist" class="sub">Builds up once flight history is loaded.</div>
@@ -182,6 +186,7 @@ function render(d){
   $('notes').innerHTML=(d.notes||[]).map(n=>'<div class="banner">'+esc(n)+'</div>').join('');
   renderAirportWx(d.airport_wx||{});
   renderCams(d.webcams);
+  renderApCams(d.airport_cams);
   $('app').innerHTML=html;
   if(d.history_stats&&d.history_stats.length){
     $('hist').innerHTML='<table><tr><th>Condition</th><th>Flights</th><th>Cancelled</th></tr>'+
@@ -208,6 +213,16 @@ function renderAirportWx(w){
     ${x.wx?`<dt>Weather</dt><dd>${esc(wxWords(x.wx))}</dd>`:''}</dl>
     <details><summary>Raw report and pilots' forecast</summary><div class="raw">${esc(x.raw||'')}${x.taf?'\n\n'+esc(x.taf):''}</div></details></div>`;
   }).join('');
+}
+
+// ---- Castlegar airport webcams (live only; refreshed every minute) ----
+let apTimer=null;
+function renderApCams(list){
+  if(!list||!list.length)return;
+  $('apcams').innerHTML=list.map((c,i)=>`<div class="cam"><a href="${esc(c.url)}" target="_blank" rel="noopener"><img data-src="${esc(c.url)}" alt="${esc(c.name)}"></a><div class="sub">${esc(c.name)}</div></div>`).join('')+
+    '<div class="sub" style="grid-column:1/-1">Live photos from the <a href="https://www.wkrairport.ca/passengers/webcams/" target="_blank" rel="noopener">West Kootenay Regional Airport</a>, updated every few minutes. Tap to enlarge.</div>';
+  const tick=()=>$('apcams').querySelectorAll('img').forEach(im=>im.src=im.dataset.src+'?t='+Math.floor(Date.now()/60000));
+  tick();clearInterval(apTimer);apTimer=setInterval(tick,60000);
 }
 
 // ---- Red Mountain webcam time-lapse ----
@@ -238,7 +253,7 @@ function renderCams(list){
 
 // ---- Windy map ----
 const VIEWS={kootenay:{lat:49.25,lon:-117.65,zoom:9},route:{lat:49.4,lon:-120.4,zoom:7}};
-let mapO='clouds',mapV='kootenay';
+let mapO='satellite',mapV='kootenay';
 function setMap(){
   const v=VIEWS[mapV];
   const q=new URLSearchParams({lat:v.lat,lon:v.lon,detailLat:49.296,detailLon:-117.632,zoom:v.zoom,level:'surface',

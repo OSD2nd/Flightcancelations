@@ -56,31 +56,15 @@
     "base": "https://wxdata.redresort.com/wxdata/",
     "live": "https://wxdata.redresort.com/cams/",
     "cams": [
-      {
-        "id": "red",
-        "name": "Red summit",
-        "file": "redcam"
-      },
-      {
-        "id": "granite",
-        "name": "Granite summit",
-        "file": "granitecam"
-      },
-      {
-        "id": "greytop",
-        "name": "Grey top",
-        "file": "greytop"
-      },
-      {
-        "id": "base",
-        "name": "Base area",
-        "file": "redbasecam"
-      },
-      {
-        "id": "c5west",
-        "name": "C5 west",
-        "file": "c5west"
-      }
+      {"id": "granite", "name": "Granite (down the valley)", "file": "granitecam"},
+      {"id": "paradise", "name": "Paradise", "file": "paradisecam"},
+      {"id": "grey", "name": "Grey", "file": "greycam"},
+      {"id": "red", "name": "Red", "file": "redcam"},
+      {"id": "greyline", "name": "Greyline", "file": "greyline"}
     ]
-  }
+  },
+  "airport_cams": [
+    {"name": "Castlegar airport \u2014 north", "url": "https://webcams.castlegar.ca/north.jpg"},
+    {"name": "Castlegar airport \u2014 runway, south", "url": "https://webcams.castlegar.ca/south.jpg"}
+  ]
 }

@@ -191,7 +191,7 @@ def main():
                "settings": {k: cfg.get(k) for k in ("alert_times", "days_ahead", "alert_threshold")},
                "airport_wx": {s: aviation.summary(mets.get(s), tafs.get(s)) for s in stations
                               if mets.get(s) or tafs.get(s)},
-               "notes": notes, "webcams": cams,
+               "notes": notes, "webcams": cams, "airport_cams": cfg.get("airport_cams", []),
                "flights": results, "history_stats": [] if a.demo else _safe_stats(cfg)}
     with open(OUT, "w") as f:
         json.dump(payload, f, indent=1)
