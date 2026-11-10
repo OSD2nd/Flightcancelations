@@ -61,7 +61,7 @@ function card(e){
   const badge=e.kind==='cancelled'?'<span class="badge">CANCELLED</span>':`<span class="badge delayed">${e.delay_min} min late${e.expected?' · '+esc(e.expected):''}</span>`;
   const pred=e.predicted!=null?`<div class="pred">Our forecast said <b>${Math.round(e.predicted*100)}%</b> risk${e.predicted_reasons&&e.predicted_reasons.length?' ('+esc(e.predicted_reasons.slice(0,3).join(', '))+')':''}</div>`:'';
   const photos=(e.photos||[]).map(p=>`<figure><a href="${esc(p.src)}" target="_blank" rel="noopener"><img loading="lazy" src="${esc(p.src)}" alt="${esc(p.name)}"></a><figcaption>${esc(p.name)}</figcaption></figure>`).join('')+
-    (e.red_daily?`<figure><a href="${esc(e.red_daily)}" target="_blank" rel="noopener"><img loading="lazy" src="${esc(e.red_daily)}" alt="Red Mountain daily photo" onerror="this.closest('figure').remove()"></a><figcaption>Red Mountain, daily photo</figcaption></figure>`:'');
+    (e.red||[]).map(p=>`<figure><a href="${esc(p.src)}" target="_blank" rel="noopener"><img loading="lazy" src="${esc(p.src)}" alt="${esc(p.name)}"></a><figcaption>${esc(p.name)}</figcaption></figure>`).join('');
   return `<div class="card ${esc(e.kind)}"><div class="row"><div><span class="dir">${arr?'Arrival':'Departure'}</span><b>${esc(e.flight)}</b> ${esc(e.from)} → ${esc(e.to)} · ${esc(e.sched)} ${badge}
     <div class="sub">${esc(e.airline)} · ${esc(e.airport_name)}</div></div></div>
     ${pred}
@@ -69,6 +69,7 @@ function card(e){
     ${e.wx_note?`<div class="sub">${esc(e.wx_note)}</div>`:''}
     ${e.wx_when_seen||e.taf_when_seen?`<details><summary>Weather when we first saw it${e.first_seen?' ('+esc(new Date(e.first_seen).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}))+')':''}</summary>${wxDl(e.wx_when_seen,'Airport report')}${e.taf_when_seen?`<div class="raw">${esc(e.taf_when_seen)}</div>`:''}</details>`:''}
     ${photos?`<div class="photos">${photos}</div>`:''}
+    ${e.red?'':`<div class="sub">Red Mountain photos are added once the flight time has passed.</div>`}
     <div class="sub" style="margin-top:6px">Source: ${esc(e.source||'')}</div></div>`;
 }
 function stats(list){

@@ -12,7 +12,11 @@ from . import aviation
 
 EVENTS = "data/events.json"
 IMG_DIR = "docs/history/img"
-RED_DAILY = "https://wxdata.redresort.com/wxdata/camArchive/daily/granite/granitecam_{:%y-%m-%d}.jpg"
+# Red Mountain cams that look over the valley: (archive folder, file prefix, label)
+RED_CAMS = [("granite", "granitecam", "Red Mountain, Granite"), ("greyline", "greyline", "Red Mountain, Greyline")]
+RED_PAGE = "https://wxdata.redresort.com/wxdata/weather.php"
+RED_BASE = "https://wxdata.redresort.com/wxdata/"
+_red_cache = {}
 DELAY_MIN = 15
 
 
@@ -82,6 +86,52 @@ def wx_block(m):
             "wx": m.get("wxString") or m.get("wx") or "", "raw": m.get("rawOb") or m.get("raw")}
 
 
+def _red_frames():
+    """{folder: [(local time, url)]} from the resort's 24-hour archive (fetched once per run)."""
+    if "f" not in _red_cache:
+        import re
+        out = {}
+        try:
+            with urllib.request.urlopen(RED_PAGE, timeout=45) as r:
+                page = r.read().decode("utf-8", "ignore")
+            for folder, prefix, _ in RED_CAMS:
+                for f in set(re.findall(r"camArchive/24hr/%s/(%s_[^'\"]+\.jpg)" % (folder, prefix), page)):
+                    m = re.search(r"_(\d\d)-(\d\d)-(\d\d)-(\d\d):(\d\d)", f)
+                    if m:
+                        y, mo, d, h, mi = map(int, m.groups())
+                        out.setdefault(folder, []).append(
+                            (datetime(2000 + y, mo, d, h, mi), f"{RED_BASE}camArchive/24hr/{folder}/{f}"))
+        except Exception as e:
+            print(f"[warn] Red Mountain archive unavailable: {e}")
+        _red_cache["f"] = out
+    return _red_cache["f"]
+
+
+def red_at(e, now):
+    """Save the Granite and Greyline photos closest to the flight time. Returns True if done."""
+    t = datetime.fromisoformat(f"{e['date']}T{e['sched']}")
+    if now < t:
+        return False  # wait until the flight time has passed
+    frames = _red_frames()
+    got = []
+    for folder, prefix, label in RED_CAMS:
+        near = [(abs((ft - t).total_seconds()), ft, u) for ft, u in frames.get(folder, [])]
+        near = [x for x in near if x[0] <= 20 * 60]
+        if near:
+            _, ft, url = min(near)
+            name = f"{label} ({ft:%H:%M})"
+        elif (now - t).total_seconds() > 20 * 3600:
+            # too old for the 5-minute archive: use the resort's one-a-day photo
+            url, name = f"{RED_BASE}camArchive/daily/{folder}/{prefix}_{t:%y-%m-%d}.jpg", f"{label} (daily photo)"
+        else:
+            return False
+        src = _snap(url, f"{IMG_DIR}/{e['date']}_{e['airport']}_{e['sched'].replace(':', '')}_{folder}.jpg")
+        if src:
+            got.append({"name": name, "src": src.replace("docs/", "", 1)})
+    e["red"] = got
+    return True
+
+
 def record(results, cfg, now, mets, tafs, to_utc):
     """Log new cancellations/delays from live status; fill in weather at flight time."""
     evs = {f"{e['date']}|{e['flight']}": e for e in load()}
@@ -107,7 +157,7 @@ def record(results, cfg, now, mets, tafs, to_utc):
                  "predicted": r.get("forecast_risk"), "predicted_reasons": r.get("forecast_reasons", []),
                  "wx_when_seen": wx_block((mets.get(st) or [None])[0]) if st else None,
                  "taf_when_seen": (tafs.get(st) or {}).get("rawTAF") if st else None,
-                 "photos": snapped[tag], "red_daily": RED_DAILY.format(datetime.fromisoformat(r["date"])),
+                 "photos": snapped[tag],
                  "source": "live"}
             evs[key] = e
             changed = True
@@ -118,6 +168,10 @@ def record(results, cfg, now, mets, tafs, to_utc):
                "delay_min": late if not cancelled else None}
         if any(e.get(k) != v for k, v in upd.items()):
             e.update(upd)
+            changed = True
+    # Red Mountain photos closest to each flight time
+    for e in evs.values():
+        if "red" not in e and red_at(e, now):
             changed = True
     # weather at the scheduled time, once a report from around then exists
     for e in evs.values():
