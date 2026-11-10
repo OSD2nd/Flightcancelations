@@ -39,4 +39,32 @@ def send(subject, body, to):
         except Exception as e:
             last = f"{type(e).__name__}: {e}"
         print(f"[alert] port {port}: {last}")
+    _explain(host, user, pw)
     return last
+
+
+def _explain(host, user, pw):
+    """Log in step by step and print Gmail's replies (codes and text only, never the password)."""
+    import base64
+    try:
+        s = smtplib.SMTP_SSL(host, 465, timeout=30)
+        code, msg = s.ehlo()
+        auth = s.esmtp_features.get("auth", "")
+        print(f"[alert] diag: EHLO {code}, server offers AUTH: {auth}")
+        for label, payload in (("start", None), ("user", user), ("password", pw)):
+            if payload is None:
+                code, msg = s.docmd("AUTH", "LOGIN")
+            else:
+                code, msg = s.docmd(base64.b64encode(payload.encode()).decode())
+            text = msg.decode(errors="replace")
+            if code == 334:  # base64 prompt ("Username:" / "Password:")
+                try:
+                    text = base64.b64decode(text).decode(errors="replace")
+                except Exception:
+                    pass
+            print(f"[alert] diag: after {label}: {code} {text[:200]}")
+            if code not in (334, 235):
+                break
+        s.close()
+    except Exception as e:
+        print(f"[alert] diag: {type(e).__name__}: {e}")
