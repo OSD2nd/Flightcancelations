@@ -1,0 +1,28 @@
+Airport          code   days  IFR day LIFR day cloud<2000 wet+cloud<4000
+Terrace          CYXT    463      49%      29%        50%            59%
+Campbell River   CYBL    463      48%      29%        62%            56%
+Tofino           CYAZ    445      33%      22%        48%            55%
+Quesnel          CYQZ    463      36%      19%        40%            40%
+Prince George    CYXS    463      36%      19%        34%            38%
+Bella Bella      CBBC    456      36%      15%        39%            48%
+Powell River     CYPW    462      34%      17%        46%            43%
+Nanaimo          CYCD    462      31%      11%        45%            46%
+Castlegar        CYCG    462      27%      13%        31%            42%
+Masset           CZMT    339      31%       9%        56%            54%
+Comox            CYQQ    463      28%      11%        51%            42%
+Williams Lake    CYWL    462      25%      14%        29%            26%
+Dawson Creek     CYDQ    461      27%      10%        24%            27%
+Sandspit         CYZP    463      28%       9%        38%            50%
+Fort St. John    CYXJ    462      26%       8%        17%            29%
+Cranbrook        CYXC    463      22%      11%        27%            28%
+Smithers         CYYD    463      23%      10%        25%            34%
+Prince Rupert    CYPR    463      22%       8%        29%            56%
+Golden           CYGE    462      19%      10%        27%            28%
+Vancouver        CYVR    462      21%       7%        30%            37%
+Fort Nelson      CYYE    462      22%       5%        17%            25%
+Victoria         CYYJ    463      15%       6%        34%            36%
+Port Hardy       CYZT    463      17%       3%        30%            45%
+Bella Coola      CYBD    461      15%       4%        22%            35%
+Kelowna          CYLW    462      15%       4%        31%            27%
+Penticton        CYYF    462       8%       3%        18%            23%
+Kamloops         CYKA    462       6%       2%        18%            11%
