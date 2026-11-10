@@ -356,7 +356,7 @@ function renderCams(list){
   fr.slice(0,6).forEach(f=>{new Image().src=f.url});
   const show=i=>{camIdx=i;$('camimg').src=fr[i].url;$('camslide').value=i;new Image().src=fr[(i+1)%fr.length].url;
     $('camtime').textContent=tLocal(fr[i].t,{weekday:'short',...HM});};
-  const play=()=>{clearInterval(camTimer);camTimer=setInterval(()=>show((camIdx+1)%fr.length),camRange==='24'?700:500);$('camplay').textContent='⏸ Pause'};
+  const play=()=>{clearInterval(camTimer);camTimer=setInterval(()=>show((camIdx+1)%fr.length),camRange==='24'?350:500);$('camplay').textContent='⏸ Pause'};
   $('camplay').onclick=()=>{if(camTimer){clearInterval(camTimer);camTimer=null;$('camplay').textContent='▶ Play'}else play()};
   $('camslide').oninput=e=>{clearInterval(camTimer);camTimer=null;$('camplay').textContent='▶ Play';show(+e.target.value)};
   show(0);play();
