@@ -11,7 +11,7 @@ import argparse, json, os, re
 from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
-from . import alert, aviation, features as F, flights, history, weather
+from . import alert, aviation, features as F, flights, history, weather, webcam
 
 OUT = "docs/latest.json"
 STATE = "data/state.json"
@@ -117,34 +117,71 @@ def main():
     to_utc = lambda t: t.replace(tzinfo=zone).astimezone(timezone.utc)
     hub_st = cfg["hub"].get("wx_station")
 
+    def score(f, code, ap_cfg, d, arriving, source):
+        """Risk for one flight. `here` = time at the Kootenay airport, `there` = time at Vancouver."""
+        block = timedelta(minutes=f.get("block_min", 75))
+        here = f["dep"]
+        there = here - block if arriving else here + block
+        st = ap_cfg.get("wx_station")
+        o_av = aviation.conditions(mets.get(st), tafs.get(st), to_utc(here)) if st else None
+        h_av = aviation.conditions(mets.get(hub_st), tafs.get(hub_st), to_utc(there)) if hub_st else None
+        feats = F.extract(weather.window(wx[code], here, 1, 1), weather.window(wx["HUB"], there, 1, 1), o_av, h_av)
+        p = F.probability(feats, weights)
+        why = F.reasons(feats, weights)
+        if history.is_cancelled(f["status"]):
+            p, why = 1.0, ["Airline already shows this flight as cancelled"]
+        hub = cfg["hub"]["code"]
+        return {
+            "airport": code, "airport_name": ap_cfg["name"], "airline": f["airline"],
+            "flight": f["flight"], "date": d.isoformat(), "direction": "arr" if arriving else "dep",
+            "from": hub if arriving else code, "to": code if arriving else hub,
+            "dep_local": here.strftime("%H:%M"),  # time at the Kootenay airport (arrival time for arrivals)
+            "expected_local": f["expected"].strftime("%H:%M") if f.get("expected") and f["expected"] != here else None,
+            "status": f["status"], "risk": round(p, 3), "own_risk": round(p, 3),
+            "level": F.level(p, cfg["watch_threshold"], cfg["alert_threshold"]),
+            "reasons": why, "schedule_source": source,
+            "airport_wx": (o_av["source"] + (f" ({st})" if st != code and st else "")) if o_av else None,
+            "ceiling_ft": o_av["ceiling_ft"] if o_av else None,
+            "flags": [k for k, v in feats.items() if v]}
+
+    def link_aircraft(rs):
+        """The plane that flies in from Vancouver is the one that flies back out.
+        A departure is at least as risky as the arrival it depends on."""
+        for dep in [r for r in rs if r["direction"] == "dep"]:
+            t = datetime.fromisoformat(f"{dep['date']}T{dep['dep_local']}")
+            ins = [r for r in rs if r["direction"] == "arr" and r["airport"] == dep["airport"]
+                   and r["date"] == dep["date"] and r["airline"] == dep["airline"]
+                   and timedelta(0) <= t - datetime.fromisoformat(f"{r['date']}T{r['dep_local']}") <= timedelta(hours=2)]
+            if not ins:
+                continue
+            inb = max(ins, key=lambda r: r["dep_local"])
+            dep["inbound"] = inb["flight"]
+            if inb["risk"] > dep["risk"]:
+                dep["risk"] = inb["risk"]
+                dep["level"] = F.level(dep["risk"], cfg["watch_threshold"], cfg["alert_threshold"])
+                lead = ("Incoming plane " + inb["flight"] + " is already cancelled"
+                        if history.is_cancelled(inb["status"]) else
+                        f"Incoming plane {inb['flight']} is at {round(inb['risk']*100)}% risk")
+                extra = [x for x in inb["reasons"] if x not in dep["reasons"]][:2]
+                dep["reasons"] = ([lead] if inb["risk"] >= cfg["watch_threshold"] else []) + extra + dep["reasons"]
+
     results = []
     for code, ap_cfg in cfg["airports"].items():
         for i, d in enumerate(days):
-            if a.demo or i >= LIVE_DAYS:
-                fl, source = flights.departures_static(code, d, cfg), "static"
-            else:
-                fl, source = flights.departures(code, d, cfg)
-            for f in fl:
-                dep = f["dep"]
-                arr = dep + timedelta(minutes=f.get("block_min", 75))
-                st = ap_cfg.get("wx_station")
-                o_av = aviation.conditions(mets.get(st), tafs.get(st), to_utc(dep)) if st else None
-                h_av = aviation.conditions(mets.get(hub_st), tafs.get(hub_st), to_utc(arr)) if hub_st else None
-                feats = F.extract(weather.window(wx[code], dep, 1, 1), weather.window(wx["HUB"], arr, 1, 1),
-                                  o_av, h_av)
-                p = F.probability(feats, weights)
-                why = F.reasons(feats, weights)
-                if history.is_cancelled(f["status"]):
-                    p, why = 1.0, ["Airline already shows this flight as cancelled"]
-                results.append({
-                    "airport": code, "airport_name": ap_cfg["name"], "airline": f["airline"],
-                    "flight": f["flight"], "date": d.isoformat(), "dep_local": dep.strftime("%H:%M"),
-                    "status": f["status"], "risk": round(p, 3),
-                    "level": F.level(p, cfg["watch_threshold"], cfg["alert_threshold"]),
-                    "reasons": why, "schedule_source": source,
-                    "airport_wx": (o_av["source"] + (f" ({st})" if st != code and st else "")) if o_av else None,
-                    "ceiling_ft": o_av["ceiling_ft"] if o_av else None,
-                    "flags": [k for k, v in feats.items() if v]})
+            for arriving in (False, True):
+                if a.demo or i >= LIVE_DAYS:
+                    fl, source = flights.departures_static(code, d, cfg, arriving), "static"
+                else:
+                    fl, source = flights.departures(code, d, cfg, arriving)
+                for f in fl:
+                    results.append(score(f, code, ap_cfg, d, arriving, source))
+    link_aircraft(results)
+    cams = []
+    if cfg.get("webcams") and not a.demo:
+        try:
+            cams = webcam.frames(cfg["webcams"])
+        except Exception as e:
+            print(f"[warn] webcams failed: {e}")
 
     os.makedirs("docs", exist_ok=True)
     payload = {"generated": datetime.now(timezone.utc).isoformat(timespec="minutes"),
@@ -154,7 +191,7 @@ def main():
                "settings": {k: cfg.get(k) for k in ("alert_times", "days_ahead", "alert_threshold")},
                "airport_wx": {s: aviation.summary(mets.get(s), tafs.get(s)) for s in stations
                               if mets.get(s) or tafs.get(s)},
-               "notes": notes,
+               "notes": notes, "webcams": cams,
                "flights": results, "history_stats": [] if a.demo else _safe_stats(cfg)}
     with open(OUT, "w") as f:
         json.dump(payload, f, indent=1)
@@ -179,7 +216,8 @@ def main():
             new.append(r)
             state["alerts"][key] = r["level"]
     if new:
-        lines = [f"{r['airline']} {r['flight']} from {r['airport_name']} at {r['dep_local']} on "
+        lines = [f"{r['airline']} {r['flight']} {r['from']}→{r['to']} "
+                 f"{'arriving' if r['direction'] == 'arr' else 'leaving'} {r['airport_name']} at {r['dep_local']} on "
                  f"{_day_name(r['date'], today)}: {round(r['risk']*100)}% cancellation risk ({r['level']}). "
                  f"{'; '.join(r['reasons']) or 'Elevated overall conditions'}." for r in new]
         body = ("Flight risk heads-up:\n\n" + "\n\n".join(lines) +

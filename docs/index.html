@@ -36,7 +36,7 @@ input[type=text],input[type=password]{width:100%}
 .times span{display:inline-flex;gap:2px;align-items:center}
 .x{padding:3px 8px}
 .hint{font-size:.8rem;color:var(--mute);margin-top:3px}
-.hint a{color:var(--accent)}
+a{color:var(--accent)}
 .foot{color:var(--mute);font-size:.8rem;margin:24px 0}
 .wxgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:8px}
 .wx{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
@@ -47,6 +47,10 @@ input[type=text],input[type=password]{width:100%}
 details summary{cursor:pointer;font-size:.85rem;color:var(--accent)}
 .mapwrap{position:relative;width:100%;aspect-ratio:4/3;max-height:520px;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--card)}
 .mapwrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.badge{font-size:.72rem;font-weight:700;border-radius:6px;padding:1px 6px;margin-left:6px;vertical-align:middle;color:#fff;background:var(--severe)}
+.badge.late{background:var(--watch)}.dir{font-size:.72rem;font-weight:700;letter-spacing:.04em;color:var(--mute);text-transform:uppercase;margin-right:4px}
+.cam img{display:block;width:100%;border-radius:12px;border:1px solid var(--line);background:var(--card);aspect-ratio:16/9;object-fit:cover}
+.camctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}.camctl input[type=range]{flex:1;min-width:140px}
 .seg{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}.seg button{padding:4px 10px;font-size:.85rem}.seg button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 </style></head><body>
 <h1>Kootenay flight risk</h1>
@@ -106,6 +110,8 @@ details summary{cursor:pointer;font-size:.85rem;color:var(--accent)}
 </div>
 <div class="mapwrap"><iframe id="windy" title="Windy weather map" loading="lazy"></iframe></div>
 <div class="sub" style="margin-top:4px">Map by Windy.com. Use the timeline at the bottom of the map to look ahead.</div>
+<h2>Red Mountain webcams</h2>
+<div id="cams" class="cam"><div class="sub">Webcams appear after the next check.</div></div>
 <h2>What past cancellations looked like</h2>
 <div id="hist" class="sub">Builds up once flight history is loaded.</div>
 <p class="foot">Estimate from weather forecasts and past cancellations. Not an airline notice — always confirm with the airline.</p>
@@ -154,7 +160,7 @@ function render(d){
   const days=[...new Set(d.flights.map(f=>f.date))].sort();
   let week='',html='';
   days.forEach((day,i)=>{
-    const fl=d.flights.filter(f=>f.date===day).sort((a,b)=>a.dep_local.localeCompare(b.dep_local));
+    const fl=d.flights.filter(f=>f.date===day).sort((a,b)=>a.airport.localeCompare(b.airport)||a.dep_local.localeCompare(b.dep_local));
     const top=fl.reduce((m,f)=>f.risk>m.risk?f:m,fl[0]);
     const id='d-'+day;
     week+=`<a class="day ${top.level}" href="#${id}"><b>${esc(i<2?dayLabel(day,today,i):shortDay(day).split(',')[0])}</b><span>${Math.round(top.risk*100)}%</span></a>`;
@@ -162,7 +168,10 @@ function render(d){
     if(i>=3)html+='<div class="sub">Further out — treat as a rough early look.</div>';
     fl.forEach(f=>{
       const pct=Math.round(f.risk*100);
-      html+=`<div class="card ${f.level}"><div class="row"><div><b>${esc(f.flight)}</b> ${esc(f.airport)} → YVR · ${esc(f.dep_local)}<div class="sub">${esc(f.airline)}</div></div>
+      const arr=f.direction==='arr', canc=/^cancel/i.test(f.status);
+      const badge=canc?'<span class="badge">CANCELLED</span>':f.expected_local?`<span class="badge late">now ${esc(f.expected_local)}</span>`:'';
+      html+=`<div class="card ${f.level}"><div class="row"><div><span class="dir">${arr?'Arrives':'Departs'}</span><b>${esc(f.flight)}</b> ${esc(f.from||f.airport)} → ${esc(f.to||'YVR')} · ${esc(f.dep_local)}${badge}
+      <div class="sub">${esc(f.airline)}${f.inbound?' · plane comes in on '+esc(f.inbound):''}</div></div>
       <div class="big">${pct}%</div></div>
       <div class="bar"><i style="width:${Math.max(pct,2)}%"></i></div>
       <div>${f.reasons.map(r=>'<span class="tag">'+esc(r)+'</span>').join('')||'<span class="tag">Nothing unusual in the forecast</span>'}</div>
@@ -172,6 +181,7 @@ function render(d){
   $('week').innerHTML=week;
   $('notes').innerHTML=(d.notes||[]).map(n=>'<div class="banner">'+esc(n)+'</div>').join('');
   renderAirportWx(d.airport_wx||{});
+  renderCams(d.webcams);
   $('app').innerHTML=html;
   if(d.history_stats&&d.history_stats.length){
     $('hist').innerHTML='<table><tr><th>Condition</th><th>Flights</th><th>Cancelled</th></tr>'+
@@ -198,6 +208,32 @@ function renderAirportWx(w){
     ${x.wx?`<dt>Weather</dt><dd>${esc(wxWords(x.wx))}</dd>`:''}</dl>
     <details><summary>Raw report and pilots' forecast</summary><div class="raw">${esc(x.raw||'')}${x.taf?'\n\n'+esc(x.taf):''}</div></details></div>`;
   }).join('');
+}
+
+// ---- Red Mountain webcam time-lapse ----
+let camSel=0,camIdx=0,camTimer=null,camRange='6';
+function renderCams(list){
+  list=(list||[]).filter(c=>c.frames&&c.frames.length);
+  if(!list.length)return;
+  camSel=Math.min(camSel,list.length-1);
+  const c=list[camSel];
+  const fr=camRange==='live'?[]:camRange==='24'?c.frames.filter((f,i)=>i%4===0||i===c.frames.length-1):c.frames.slice(-25);
+  $('cams').innerHTML=`<div class="seg">${list.map((x,i)=>`<button type="button" data-i="${i}" class="${i===camSel?'on':''}">${esc(x.name)}</button>`).join('')}</div>
+   <div class="seg">${[['live','Live'],['6','Last 6 hours'],['24','Last 24 hours']].map(([k,l])=>`<button type="button" data-r="${k}" class="${k===camRange?'on':''}">${l}</button>`).join('')}</div>
+   <img id="camimg" alt="${esc(c.name)} webcam">
+   <div class="camctl">${fr.length?`<button type="button" id="camplay">⏸ Pause</button><input type="range" id="camslide" min="0" max="${fr.length-1}" value="0">`:''}<span class="sub" id="camtime"></span></div>
+   <div class="sub">Webcams by <a href="https://wxdata.redresort.com/wxdata/weather.php" target="_blank" rel="noopener">Red Mountain Resort</a>. Summit cams in cloud mean cloud is down on the ridges.</div>`;
+  $('cams').querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{camSel=+b.dataset.i;renderCams(list)});
+  $('cams').querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{camRange=b.dataset.r;renderCams(list)});
+  clearInterval(camTimer);
+  if(!fr.length){$('camimg').src=c.live+'?'+Date.now();$('camtime').textContent='Latest photo';return;}
+  fr.slice(0,6).forEach(f=>{new Image().src=f.url});
+  const show=i=>{camIdx=i;$('camimg').src=fr[i].url;$('camslide').value=i;new Image().src=fr[(i+1)%fr.length].url;
+    $('camtime').textContent=new Date(fr[i].t).toLocaleString(undefined,{weekday:'short',hour:'numeric',minute:'2-digit'});};
+  const play=()=>{clearInterval(camTimer);camTimer=setInterval(()=>show((camIdx+1)%fr.length),camRange==='24'?700:500);$('camplay').textContent='⏸ Pause'};
+  $('camplay').onclick=()=>{if(camTimer){clearInterval(camTimer);camTimer=null;$('camplay').textContent='▶ Play'}else play()};
+  $('camslide').oninput=e=>{clearInterval(camTimer);camTimer=null;$('camplay').textContent='▶ Play';show(+e.target.value)};
+  show(0);play();
 }
 
 // ---- Windy map ----

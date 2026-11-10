@@ -35,22 +35,51 @@
   "static_schedule_note": "Fallback schedule used only when no flight API key is set. Checked against the airport departure boards on 2026-11-10.",
   "static_schedule": {
     "YZZ": [
-      {
-        "flight": "8P452",
-        "dep": "10:50",
-        "block_min": 75
-      },
-      {
-        "flight": "8P458",
-        "dep": "17:05",
-        "block_min": 75
-      }
+      {"flight": "8P452", "dep": "10:50", "block_min": 75},
+      {"flight": "8P458", "dep": "17:05", "block_min": 75}
     ],
     "YCG": [
+      {"flight": "AC8377", "dep": "12:15", "block_min": 70}
+    ]
+  },
+  "static_arrivals": {
+    "YZZ": [
+      {"flight": "8P451", "arr": "10:24", "block_min": 75},
+      {"flight": "8P457", "arr": "16:32", "block_min": 75}
+    ],
+    "YCG": [
+      {"flight": "AC8376", "arr": "11:43", "block_min": 70}
+    ]
+  },
+  "webcams": {
+    "page": "https://wxdata.redresort.com/wxdata/weather.php",
+    "base": "https://wxdata.redresort.com/wxdata/",
+    "live": "https://wxdata.redresort.com/cams/",
+    "cams": [
       {
-        "flight": "AC8377",
-        "dep": "12:15",
-        "block_min": 70
+        "id": "red",
+        "name": "Red summit",
+        "file": "redcam"
+      },
+      {
+        "id": "granite",
+        "name": "Granite summit",
+        "file": "granitecam"
+      },
+      {
+        "id": "greytop",
+        "name": "Grey top",
+        "file": "greytop"
+      },
+      {
+        "id": "base",
+        "name": "Base area",
+        "file": "redbasecam"
+      },
+      {
+        "id": "c5west",
+        "name": "C5 west",
+        "file": "c5west"
       }
     ]
   }
