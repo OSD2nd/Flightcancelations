@@ -245,7 +245,15 @@ def main():
         if a.no_email:
             print(subject, "\n", body)
         else:
-            alert.send(subject, body, recipients())
+            err = alert.send(subject, body, recipients())
+            if err:
+                print(f"[warn] email not sent: {err}")
+                for r in new:  # try again next email check
+                    state["alerts"].pop(f"{r['date']}|{r['flight']}", None)
+                payload["notes"].append(f"Email alert could not be sent: {err}. Check the SMTP_USER and "
+                                        "SMTP_PASS secrets in the repo settings.")
+                with open(OUT, "w") as f:
+                    json.dump(payload, f, indent=1)
 
     if slot:
         state["runs"].append(slot)
