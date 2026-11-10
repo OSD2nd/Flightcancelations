@@ -100,5 +100,11 @@
       "url": "https://aircams.trail.ca:8084/axis-cgi/jpg/image.cgi",
       "credit": "https://trail.ca/services/trail-regional-airport/live-web-cam/"
     }
+  ],
+  "history_snapshots": [
+    {"name": "Castlegar runway", "url": "https://webcams.castlegar.ca/south.jpg"},
+    {"name": "Castlegar north", "url": "https://webcams.castlegar.ca/north.jpg"},
+    {"name": "Trail runway north", "url": "https://aircams.trail.ca:8081/axis-cgi/jpg/image.cgi"},
+    {"name": "Red Mountain, Granite", "url": "https://wxdata.redresort.com/cams/granitecam.jpg"}
   ]
 }

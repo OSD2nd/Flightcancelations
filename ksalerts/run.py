@@ -11,7 +11,7 @@ import argparse, json, os, re
 from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
-from . import alert, aviation, features as F, flights, history, weather, webcam
+from . import alert, aviation, events, features as F, flights, history, weather, webcam
 
 OUT = "docs/latest.json"
 STATE = "data/state.json"
@@ -119,7 +119,7 @@ def main():
     mets, tafs = {}, {}
     if stations and not a.demo:
         try:
-            mets, tafs = aviation.metars(stations), aviation.tafs(stations)
+            mets, tafs = aviation.metars(stations, hours=24), aviation.tafs(stations)
         except Exception as e:
             print(f"[warn] airport weather failed: {e}")
             notes.append("Official airport weather unavailable this run.")
@@ -138,6 +138,7 @@ def main():
         feats = F.extract(weather.window(wx[code], here, 1, 1), weather.window(wx["HUB"], there, 1, 1), o_av, h_av)
         p = F.probability(feats, weights)
         why = F.reasons(feats, weights)
+        forecast_p, forecast_why = p, why
         if history.is_cancelled(f["status"]):
             p, why = 1.0, ["Airline already shows this flight as cancelled"]
         hub = cfg["hub"]["code"]
@@ -152,6 +153,7 @@ def main():
             "reasons": why, "schedule_source": source,
             "airport_wx": (o_av["source"] + (f" ({st})" if st != code and st else "")) if o_av else None,
             "ceiling_ft": o_av["ceiling_ft"] if o_av else None,
+            "forecast_risk": round(forecast_p, 3), "forecast_reasons": forecast_why,
             "flags": [k for k, v in feats.items() if v]}
 
     def link_aircraft(rs):
@@ -185,6 +187,12 @@ def main():
     link_aircraft(results)
     if cfg.get("record_history") and live.get("date") == today.isoformat():
         history.record_outcomes(results, now)
+    if live.get("date") == today.isoformat() and not a.demo:
+        try:
+            events.record([r for r in results if r["date"] == today.isoformat()], cfg, now, mets, tafs, to_utc)
+        except Exception as e:
+            print(f"[warn] history log failed: {e}")
+    events.publish()
     cams = []
     if cfg.get("webcams") and not a.demo:
         try:

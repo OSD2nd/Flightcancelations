@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 
 HOURLY = ("temperature_2m,precipitation,snowfall,weather_code,visibility,"
           "cloud_cover_low,wind_speed_10m,wind_gusts_10m")
+LEVELS = "cloud_cover_925hPa,cloud_cover_900hPa,cloud_cover_850hPa"
 
 
 def _get(url, tries=3):
@@ -24,11 +25,15 @@ def fetch_hourly(lat, lon, start, end, historical=False, tz="America/Vancouver")
             else "https://api.open-meteo.com/v1/forecast")
     q = dict(latitude=lat, longitude=lon, hourly=HOURLY, timezone=tz,
              start_date=start.isoformat(), end_date=end.isoformat())
-    data = _get(base + "?" + urllib.parse.urlencode(q))
+    try:  # with cloud at valley/ridge height; fall back if the server refuses those
+        data = _get(base + "?" + urllib.parse.urlencode({**q, "hourly": HOURLY + "," + LEVELS}))
+    except RuntimeError:
+        data = _get(base + "?" + urllib.parse.urlencode(q))
     h = data["hourly"]
+    keys = [k for k in (HOURLY + "," + LEVELS).split(",") if k in h]
     out = {}
     for i, t in enumerate(h["time"]):
-        out[datetime.fromisoformat(t)] = {k: h[k][i] for k in HOURLY.split(",")}
+        out[datetime.fromisoformat(t)] = {k: h[k][i] for k in keys}
     return out
 
 

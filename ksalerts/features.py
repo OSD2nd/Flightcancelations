@@ -10,11 +10,12 @@ FEATURES = [
     "vis_lt_1_6", "vis_lt_4_8", "lowcloud_90", "gust_35", "gust_50",
     "snow_03", "snow_10", "freezing", "fog", "tstorm",
     "hub_vis_lt_1_6", "hub_gust_60", "ceil_lt_1000", "ceil_lt_3000",
+    "rain", "valley_cloud", "ridge_cloud", "wet_low_cloud", "ceil_lt_4000",
 ]
 
 PRIOR = {
-    "bias": -3.6,          # ~3% baseline chance of cancellation on any flight
-    "vis_lt_1_6": 2.0, "vis_lt_4_8": 0.8, "lowcloud_90": 0.7,
+    "bias": -3.3,          # ~3.5% baseline chance of cancellation on a clear day
+    "vis_lt_1_6": 2.0, "vis_lt_4_8": 0.8, "lowcloud_90": 0.9,
     "gust_35": 0.5, "gust_50": 1.2,
     "snow_03": 0.4, "snow_10": 1.0,
     "freezing": 2.0, "fog": 1.2, "tstorm": 1.5,
@@ -22,6 +23,11 @@ PRIOR = {
     # Cloud base from the official airport report/forecast. Castlegar sits in a
     # deep valley, so a low ceiling matters more than cloud percentage.
     "ceil_lt_1000": 1.6, "ceil_lt_3000": 1.2,
+    # Nov 2026 Castlegar record: the cancelled mornings (Nov 6, Nov 10) had cloud
+    # near 3,000 ft WITH rain/mist; a dry 2,400 ft ceiling (Nov 4) still flew.
+    # So the combination carries most of the weight. Estimates until history is fitted.
+    "rain": 0.5, "valley_cloud": 0.8, "ridge_cloud": 0.5, "wet_low_cloud": 2.0,
+    "ceil_lt_4000": 0.3,
 }
 
 LABELS = {
@@ -31,6 +37,9 @@ LABELS = {
     "fog": "Fog", "tstorm": "Thunderstorm", "hub_vis_lt_1_6": "Low visibility at Vancouver",
     "hub_gust_60": "Strong wind at Vancouver",
     "ceil_lt_1000": "Cloud base under 1,000 ft", "ceil_lt_3000": "Cloud base under 3,000 ft",
+    "rain": "Rain or drizzle", "valley_cloud": "Cloud down in the valley", "ridge_cloud": "Cloud on the ridges",
+    "wet_low_cloud": "Low cloud with rain (the usual cancellation pattern)",
+    "ceil_lt_4000": "Cloud base under 4,000 ft",
 }
 
 
@@ -57,6 +66,14 @@ def extract(origin_rows, hub_rows, origin_av=None, hub_av=None):
         if snow:
             f["snow_03"] = int(max(snow) >= 0.3)
             f["snow_10"] = int(max(snow) >= 1.0)
+        pcp = _vals(origin_rows, "precipitation")
+        f["rain"] = int(bool(pcp) and max(pcp) >= 0.2)
+        # cloud at pressure levels: ~925/900 hPa is valley height around Castlegar/Trail,
+        # ~850 hPa is roughly the ridge tops the approach threads between
+        vc = _vals(origin_rows, "cloud_cover_925hPa") + _vals(origin_rows, "cloud_cover_900hPa")
+        f["valley_cloud"] = int(bool(vc) and max(vc) >= 80)
+        rc = _vals(origin_rows, "cloud_cover_850hPa")
+        f["ridge_cloud"] = int(bool(rc) and max(rc) >= 80)
         codes = set(_vals(origin_rows, "weather_code"))
         f["freezing"] = int(bool(codes & {56, 57, 66, 67}))
         f["fog"] = int(bool(codes & {45, 48}))
@@ -68,6 +85,10 @@ def extract(origin_rows, hub_rows, origin_av=None, hub_av=None):
         f["hub_gust_60"] = int(bool(g) and max(g) >= 60)
     if origin_av:
         _apply_airport(f, origin_av)
+    # cancellations so far had cloud bases of 3,000-3,500 ft with rain, so "low" here means under 4,000 ft
+    low_cloud = f["lowcloud_90"] or f["ceil_lt_4000"] or f["valley_cloud"]
+    wet = f["rain"] or f["snow_03"] or f["freezing"] or f["fog"]
+    f["wet_low_cloud"] = int(bool(low_cloud and wet))
     if hub_av:
         if hub_av["vis_sm"] is not None and hub_av["vis_sm"] < 1:
             f["hub_vis_lt_1_6"] = 1
@@ -82,6 +103,7 @@ def _apply_airport(f, av):
     if c is not None:
         f["ceil_lt_1000"] |= int(c < 1000)
         f["ceil_lt_3000"] |= int(c < 3000)
+        f["ceil_lt_4000"] |= int(c < 4000)
     if v is not None:
         f["vis_lt_1_6"] |= int(v < 1)      # 1 statute mile = 1.6 km
         f["vis_lt_4_8"] |= int(v < 3)
@@ -89,6 +111,7 @@ def _apply_airport(f, av):
         f["gust_35"] |= int(g * 1.852 >= 35)
         f["gust_50"] |= int(g * 1.852 >= 50)
     for w in wx:
+        if any(p in w for p in ("RA", "DZ", "BR")): f["rain"] = 1
         if "FZ" in w: f["freezing"] = 1
         if "FG" in w and "FZ" not in w: f["fog"] = 1
         if "TS" in w: f["tstorm"] = 1
