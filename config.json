@@ -1,0 +1,21 @@
+{
+  "timezone": "America/Vancouver",
+  "alert_threshold": 0.30,
+  "watch_threshold": 0.15,
+  "email_to": ["actionsyncsports@gmail.com"],
+  "hub": {"code": "YVR", "name": "Vancouver Intl", "lat": 49.1947, "lon": -123.1792},
+  "airports": {
+    "YZZ": {"name": "Trail Regional", "lat": 49.0556, "lon": -117.6089, "airline": "Pacific Coastal"},
+    "YCG": {"name": "Castlegar (West Kootenay Regional)", "lat": 49.2964, "lon": -117.6320, "airline": "Air Canada Express (Jazz)"}
+  },
+  "static_schedule_note": "Fallback schedule used only when no flight API key is set. Times came from public listings and may be out of date - check against the airline and edit here.",
+  "static_schedule": {
+    "YZZ": [
+      {"flight": "8P452", "dep": "10:55", "block_min": 75},
+      {"flight": "8P458", "dep": "17:05", "block_min": 75}
+    ],
+    "YCG": [
+      {"flight": "AC8465", "dep": "11:05", "block_min": 70}
+    ]
+  }
+}

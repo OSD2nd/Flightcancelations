@@ -1,0 +1,113 @@
+{
+ "generated": "2026-11-10T16:11+00:00",
+ "demo": true,
+ "model": "starting-weights",
+ "model_info": null,
+ "flights": [
+  {
+   "airport": "YZZ",
+   "airport_name": "Trail Regional",
+   "airline": "Pacific Coastal",
+   "flight": "8P452",
+   "date": "2026-11-10",
+   "dep_local": "10:55",
+   "status": "Scheduled",
+   "risk": 0.027,
+   "level": "LOW",
+   "reasons": [],
+   "schedule_source": "static",
+   "flags": []
+  },
+  {
+   "airport": "YZZ",
+   "airport_name": "Trail Regional",
+   "airline": "Pacific Coastal",
+   "flight": "8P458",
+   "date": "2026-11-10",
+   "dep_local": "17:05",
+   "status": "Scheduled",
+   "risk": 0.027,
+   "level": "LOW",
+   "reasons": [],
+   "schedule_source": "static",
+   "flags": []
+  },
+  {
+   "airport": "YZZ",
+   "airport_name": "Trail Regional",
+   "airline": "Pacific Coastal",
+   "flight": "8P452",
+   "date": "2026-11-11",
+   "dep_local": "10:55",
+   "status": "Scheduled",
+   "risk": 0.168,
+   "level": "WATCH",
+   "reasons": [
+    "Reduced visibility (under 4.8 km)",
+    "Heavy low cloud",
+    "Gusts over 35 km/h"
+   ],
+   "schedule_source": "static",
+   "flags": [
+    "vis_lt_4_8",
+    "lowcloud_90",
+    "gust_35"
+   ]
+  },
+  {
+   "airport": "YZZ",
+   "airport_name": "Trail Regional",
+   "airline": "Pacific Coastal",
+   "flight": "8P458",
+   "date": "2026-11-11",
+   "dep_local": "17:05",
+   "status": "Scheduled",
+   "risk": 0.027,
+   "level": "LOW",
+   "reasons": [],
+   "schedule_source": "static",
+   "flags": []
+  },
+  {
+   "airport": "YCG",
+   "airport_name": "Castlegar (West Kootenay Regional)",
+   "airline": "Air Canada Express (Jazz)",
+   "flight": "AC8465",
+   "date": "2026-11-10",
+   "dep_local": "11:05",
+   "status": "Scheduled",
+   "risk": 0.027,
+   "level": "LOW",
+   "reasons": [],
+   "schedule_source": "static",
+   "flags": []
+  },
+  {
+   "airport": "YCG",
+   "airport_name": "Castlegar (West Kootenay Regional)",
+   "airline": "Air Canada Express (Jazz)",
+   "flight": "AC8465",
+   "date": "2026-11-11",
+   "dep_local": "11:05",
+   "status": "Scheduled",
+   "risk": 0.818,
+   "level": "SEVERE",
+   "reasons": [
+    "Visibility under 1.6 km",
+    "Fog",
+    "Reduced visibility (under 4.8 km)",
+    "Heavy low cloud",
+    "Snow falling"
+   ],
+   "schedule_source": "static",
+   "flags": [
+    "vis_lt_1_6",
+    "vis_lt_4_8",
+    "lowcloud_90",
+    "snow_03",
+    "fog"
+   ]
+  }
+ ],
+ "history_stats": []
+}
