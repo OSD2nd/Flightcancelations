@@ -79,11 +79,15 @@ details summary{cursor:pointer;font-size:.85rem;color:var(--accent)}
   <input id="emails" type="text" autocomplete="off" placeholder="Leave blank to keep the current list">
   <div class="hint">Stored privately as a GitHub secret — never shown on this page or in the repo. To change it, type the full new list.</div>
 
+  <div id="keySaved" class="hint" style="margin-top:14px" hidden>🔑 Access key saved in this browser ·
+    <a href="#" id="keyChange">change</a> · <a href="#" id="keyRemove">remove</a></div>
+  <div id="keyBox">
   <label for="token">GitHub access key (stays in this browser only)</label>
   <input id="token" type="password" autocomplete="off" placeholder="github_pat_…">
   <div class="hint">Needed to save settings or run a check from this page.
     <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Create one</a>:
     choose “Only select repositories” → this repo, then Permissions → <b>Contents</b>, <b>Actions</b> and <b>Secrets</b>: Read and write.</div>
+  </div>
 
   <div class="tools" style="margin-top:14px">
     <button type="submit" class="primary" id="save">Save settings</button>
@@ -335,6 +339,7 @@ function fillForm(c){
   $('thresh').value=Math.round((c.alert_threshold||0.3)*100);
   $('emails').value='';
   $('token').value=store.get('kfa.token');
+  showKey(false);
 }
 async function openSettings(){
   fillForm((current&&current.settings)||{});
@@ -347,11 +352,19 @@ async function openSettings(){
 }
 $('toggleSettings').onclick=()=>{const f=$('settings');f.hidden=!f.hidden;if(!f.hidden)openSettings()};
 $('cancel').onclick=()=>{$('settings').hidden=true};
-$('token').onchange=()=>store.set('kfa.token',$('token').value.trim());
+$('token').onchange=()=>{const v=$('token').value.trim();if(v)store.set('kfa.token',v)};
+// once a key is saved, hide the box behind a one-line "saved · change · remove"
+function showKey(open){
+  const has=!!store.get('kfa.token');
+  $('keySaved').hidden=!has||open;
+  $('keyBox').hidden=has&&!open;
+}
+$('keyChange').onclick=e=>{e.preventDefault();showKey(true);$('token').value='';$('token').focus()};
+$('keyRemove').onclick=e=>{e.preventDefault();store.set('kfa.token','');$('token').value='';showKey(true);msg('Access key removed from this browser.')};
 
 $('settings').onsubmit=async e=>{
   e.preventDefault();
-  store.set('kfa.token',$('token').value.trim());
+  {const v=$('token').value.trim();if(v)store.set('kfa.token',v);}
   if(!store.get('kfa.token')){msg('Add a GitHub access key to save settings.');return}
   const times=[...new Set([...$('times').querySelectorAll('input')].map(i=>i.value).filter(Boolean))].sort();
   const days=Math.round(+$('days').value), th=+$('thresh').value;
@@ -383,6 +396,7 @@ $('settings').onsubmit=async e=>{
     let extra='';
     if(emails.length){await saveEmails(emails);extra=' Email list saved privately ('+emails.length+' address'+(emails.length>1?'es':'')+').';}
     $('emails').value='';
+    showKey(false);
     $('settings').hidden=true;
     msg('Saved. Email checks now run at '+times.join(', ')+'.'+extra+' Tap “Run check now” to see '+days+' days right away.');
   }catch(e){msg('Not saved: '+e.message)}
