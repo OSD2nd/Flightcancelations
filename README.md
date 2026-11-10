@@ -1,24 +1,37 @@
 # Kootenay flight risk alerts (Trail YZZ + Castlegar YCG)
 
-Scores each departure to Vancouver for cancellation risk from weather forecasts
-(Trail, Castlegar, Vancouver) plus what past cancellations looked like. Emails
-you when tomorrow looks risky. `docs/index.html` is the dashboard;
-`docs/latest.json` is the data other pages (your maps) can read.
+Scores each departure to Vancouver for cancellation risk and emails you when a
+flight in the next 30 hours looks risky. Dashboard: https://osd2nd.github.io/Flightcancelations/
 
-## Try it (no accounts needed)
+## Where the data comes from
+- **Official airport weather** (aviationweather.gov, free): Castlegar (CYCG) and
+  Vancouver (CYVR) reports and pilots' forecasts. Gives cloud-base height, the
+  thing that most often grounds Castlegar. Trail has no reports, so it uses Castlegar's.
+- **Weather-model forecast** (Open-Meteo, free): the 7-day outlook.
+- **Weather map**: embedded from Windy.com.
+- **Flights**: times in `config.json`, or live status if `AERODATABOX_KEY` is set.
+- **History**: `data/history.csv` (date,airport,flight,sched,status). The risk
+  weights start as estimates and are retrained once there are ~30 flights and
+  ~5 cancellations (`python3 run.py --train`).
+
+## How it runs
+GitHub Actions runs every 30 minutes, refreshes the dashboard, and deploys it to
+Pages. Emails only go out at the times in `config.json` `alert_times`.
+Change times, days shown and alert level from **Settings** on the dashboard.
+
+## Repo settings
+- Settings → Pages → Source: **GitHub Actions**
+- Settings → Actions → General → Workflow permissions: **Read and write**
+- Secrets (Settings → Secrets and variables → Actions):
+  - `SMTP_USER` / `SMTP_PASS`: Gmail address + app password (sends the alerts)
+  - `ALERT_EMAILS`: who gets alerts, comma separated (private; defaults to `SMTP_USER`).
+    Can also be set from dashboard Settings.
+  - `AERODATABOX_KEY`: optional, live flight status
+
+## Try it locally
     python3 run.py --demo --no-email
 
-## Go live
-1. Put this folder in a GitHub repo. Turn on Pages (Settings → Pages → /docs).
-2. Add repo secrets (Settings → Secrets → Actions):
-   - `SMTP_USER` / `SMTP_PASS`: Gmail address + an App Password
-   - `AERODATABOX_KEY`: RapidAPI key for AeroDataBox (gives real schedules, delays, cancellations)
-3. Load history once, then retrain: `AERODATABOX_KEY=... python3 run.py --backfill 180`
-   (or hand-fill `data/history.csv`: date,airport,flight,sched,status)
-4. The workflow runs at ~7pm and ~6:30am Pacific. Edit `config.json` for thresholds/emails/schedule.
-
-## Honest limits
-- Until history is loaded it uses starting estimates, not learned ones.
-- Only a few flights a day: the learning is slow and noisy. It needs ~30 flights and ~5 cancellations to start adjusting.
-- Weather is forecast-model data, not the official aviation forecast. No live aircraft tracking yet.
-- Fallback schedule in config.json comes from public listings; verify it.
+## Limits
+- Risk numbers are estimates until real cancellation history is loaded.
+- Castlegar's official forecast only covers ~8 daytime hours; beyond that it uses the weather model.
+- Not an airline notice. Always confirm with the airline.

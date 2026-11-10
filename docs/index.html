@@ -38,6 +38,16 @@ input[type=text],input[type=password]{width:100%}
 .hint{font-size:.8rem;color:var(--mute);margin-top:3px}
 .hint a{color:var(--accent)}
 .foot{color:var(--mute);font-size:.8rem;margin:24px 0}
+.wxgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:8px}
+.wx{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.wx .cat{font-size:.75rem;font-weight:700;border-radius:99px;padding:1px 8px;color:#fff}
+.cat.VFR{background:var(--low)}.cat.MVFR{background:#2563eb}.cat.IFR{background:var(--high)}.cat.LIFR{background:#9333ea}
+.wx dl{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;margin:8px 0;font-size:.9rem}.wx dt{color:var(--mute)}
+.raw{font:12px/1.4 ui-monospace,monospace;color:var(--mute);white-space:pre-wrap;word-break:break-word;margin-top:6px}
+details summary{cursor:pointer;font-size:.85rem;color:var(--accent)}
+.mapwrap{position:relative;width:100%;aspect-ratio:4/3;max-height:520px;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--card)}
+.mapwrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.seg{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}.seg button{padding:4px 10px;font-size:.85rem}.seg button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 </style></head><body>
 <h1>Kootenay flight risk</h1>
 <div class="sub" id="meta">Loading…</div>
@@ -62,13 +72,14 @@ input[type=text],input[type=password]{width:100%}
   <input id="thresh" type="number" min="5" max="95" step="5" style="width:6em">
 
   <label for="emails">Send emails to (separate with commas)</label>
-  <input id="emails" type="text" autocomplete="off">
+  <input id="emails" type="text" autocomplete="off" placeholder="Leave blank to keep the current list">
+  <div class="hint">Stored privately as a GitHub secret — never shown on this page or in the repo. To change it, type the full new list.</div>
 
   <label for="token">GitHub access key (stays in this browser only)</label>
   <input id="token" type="password" autocomplete="off" placeholder="github_pat_…">
   <div class="hint">Needed to save settings or run a check from this page.
     <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Create one</a>:
-    choose “Only select repositories” → this repo, then Permissions → <b>Contents</b> and <b>Actions</b>: Read and write.</div>
+    choose “Only select repositories” → this repo, then Permissions → <b>Contents</b>, <b>Actions</b> and <b>Secrets</b>: Read and write.</div>
 
   <div class="tools" style="margin-top:14px">
     <button type="submit" class="primary" id="save">Save settings</button>
@@ -76,8 +87,25 @@ input[type=text],input[type=password]{width:100%}
   </div>
 </form>
 
+<div id="notes"></div>
 <div id="week" class="week"></div>
 <div id="app"></div>
+<h2>Airport weather now</h2>
+<div id="airportwx" class="wxgrid"><div class="sub">Official reports appear after the next check.</div></div>
+<h2>Weather map</h2>
+<div class="seg" id="layers">
+  <button type="button" data-o="clouds" class="on">Clouds</button>
+  <button type="button" data-o="cbase">Cloud base</button>
+  <button type="button" data-o="rain">Rain / snow</button>
+  <button type="button" data-o="wind">Wind</button>
+  <button type="button" data-o="visibility">Visibility</button>
+</div>
+<div class="seg" id="views">
+  <button type="button" data-v="kootenay" class="on">Kootenays</button>
+  <button type="button" data-v="route">Whole route to Vancouver</button>
+</div>
+<div class="mapwrap"><iframe id="windy" title="Windy weather map" loading="lazy"></iframe></div>
+<div class="sub" style="margin-top:4px">Map by Windy.com. Use the timeline at the bottom of the map to look ahead.</div>
 <h2>What past cancellations looked like</h2>
 <div id="hist" class="sub">Builds up once flight history is loaded.</div>
 <p class="foot">Estimate from weather forecasts and past cancellations. Not an airline notice — always confirm with the airline.</p>
@@ -138,16 +166,54 @@ function render(d){
       <div class="big">${pct}%</div></div>
       <div class="bar"><i style="width:${Math.max(pct,2)}%"></i></div>
       <div>${f.reasons.map(r=>'<span class="tag">'+esc(r)+'</span>').join('')||'<span class="tag">Nothing unusual in the forecast</span>'}</div>
-      <div class="sub" style="margin-top:6px">${esc(f.level)} · status: ${esc(f.status)}${f.schedule_source==='static'?' · schedule from config':''}</div></div>`;
+      <div class="sub" style="margin-top:6px">${esc(f.level)} · status: ${esc(f.status)}${f.schedule_source==='static'?' · schedule from config':''}${f.airport_wx?' · uses '+esc(f.airport_wx)+(f.ceiling_ft!=null?', cloud base '+Number(f.ceiling_ft).toLocaleString()+' ft':', no low ceiling'):''}</div></div>`;
     });
   });
   $('week').innerHTML=week;
+  $('notes').innerHTML=(d.notes||[]).map(n=>'<div class="banner">'+esc(n)+'</div>').join('');
+  renderAirportWx(d.airport_wx||{});
   $('app').innerHTML=html;
   if(d.history_stats&&d.history_stats.length){
     $('hist').innerHTML='<table><tr><th>Condition</th><th>Flights</th><th>Cancelled</th></tr>'+
       d.history_stats.map(s=>`<tr><td>${esc(s.condition)}</td><td>${s.flights}</td><td>${s.cancelled} (${Math.round(s.rate*100)}%)</td></tr>`).join('')+'</table>';
   }
 }
+
+const WXW={RA:'rain',SN:'snow',DZ:'drizzle',SH:'showers',TS:'thunderstorm',FZ:'freezing',BR:'mist',FG:'fog',HZ:'haze',FU:'smoke',
+  GR:'hail',GS:'small hail',PL:'ice pellets',SG:'snow grains',BL:'blowing',MI:'shallow',BC:'patches of',VC:'nearby',UP:'unknown precip'};
+function wxWords(s){return String(s).split(/\s+/).map(t=>{let p=t[0]==='-'?'light ':t[0]==='+'?'heavy ':'';t=t.replace(/^[-+]/,'');
+  let parts=t.match(/.{2}/g)||[];if(parts.includes('SH')&&parts.length>1)parts=parts.filter(x=>x!=='SH').concat('SH');return p+parts.map(x=>WXW[x]||x).join(' ');}).join(', ');}
+const CAT={VFR:'Good flying weather',MVFR:'Marginal',IFR:'Poor — instruments only',LIFR:'Very poor'};
+function renderAirportWx(w){
+  const ids=Object.keys(w);
+  if(!ids.length)return;
+  $('airportwx').innerHTML=ids.map(id=>{
+    const x=w[id];
+    const t=x.obs_time?new Date(x.obs_time).toLocaleString(undefined,{weekday:'short',hour:'numeric',minute:'2-digit'}):'—';
+    return `<div class="wx"><div class="row"><b>${esc(x.name||id)}</b>${x.category?`<span class="cat ${esc(x.category)}" title="${esc(CAT[x.category]||'')}">${esc(x.category)}</span>`:''}</div>
+    <div class="sub">${esc(id)} report at ${esc(t)}${x.category?' · '+esc(CAT[x.category]||''):''}</div>
+    <dl><dt>Cloud base</dt><dd>${x.ceiling_ft!=null?Number(x.ceiling_ft).toLocaleString()+' ft':'No low ceiling'}</dd>
+    <dt>Visibility</dt><dd>${x.vis_sm!=null?x.vis_sm+' mi':'—'}</dd>
+    <dt>Wind</dt><dd>${esc(x.wind||'—')}</dd>
+    ${x.wx?`<dt>Weather</dt><dd>${esc(wxWords(x.wx))}</dd>`:''}</dl>
+    <details><summary>Raw report and pilots' forecast</summary><div class="raw">${esc(x.raw||'')}${x.taf?'\n\n'+esc(x.taf):''}</div></details></div>`;
+  }).join('');
+}
+
+// ---- Windy map ----
+const VIEWS={kootenay:{lat:49.25,lon:-117.65,zoom:9},route:{lat:49.4,lon:-120.4,zoom:7}};
+let mapO='clouds',mapV='kootenay';
+function setMap(){
+  const v=VIEWS[mapV];
+  const q=new URLSearchParams({lat:v.lat,lon:v.lon,detailLat:49.296,detailLon:-117.632,zoom:v.zoom,level:'surface',
+    overlay:mapO,product:'ecmwf',menu:'',message:'true',marker:'true',calendar:'now',pressure:'',type:'map',
+    location:'coordinates',detail:'',metricWind:'km/h',metricTemp:'°C',radarRange:'-1'});
+  $('windy').src='https://embed.windy.com/embed2.html?'+q;
+}
+function seg(id,attr,fn){$(id).querySelectorAll('button').forEach(b=>b.onclick=()=>{
+  $(id).querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));fn(b.dataset[attr]);setMap();});}
+seg('layers','o',o=>mapO=o);seg('views','v',v=>mapV=v);
+setMap();
 
 function load(){
   return fetch('latest.json?'+Date.now()).then(r=>{if(!r.ok)throw 0;return r.json()})
@@ -199,7 +265,7 @@ function fillForm(c){
   (c.alert_times||['19:00','06:30']).forEach(timeRow);
   $('days').value=c.days_ahead||7;
   $('thresh').value=Math.round((c.alert_threshold||0.3)*100);
-  $('emails').value=(c.email_to||[]).join(', ');
+  $('emails').value='';
   $('token').value=store.get('kfa.token');
 }
 async function openSettings(){
@@ -221,11 +287,11 @@ $('settings').onsubmit=async e=>{
   if(!store.get('kfa.token')){msg('Add a GitHub access key to save settings.');return}
   const times=[...new Set([...$('times').querySelectorAll('input')].map(i=>i.value).filter(Boolean))].sort();
   const days=Math.round(+$('days').value), th=+$('thresh').value;
-  const emails=$('emails').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const emails=$('emails').value.split(/[,\s]+/).map(s=>s.trim()).filter(Boolean);
   if(!times.length)return msg('Add at least one email check time.');
   if(!(days>=1&&days<=14))return msg('Days to show must be 1–14.');
   if(!(th>=5&&th<=95))return msg('Alert level must be between 5% and 95%.');
-  if(!emails.length||emails.some(x=>!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(x)))return msg('Check the email address(es).');
+  if(emails.some(x=>!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(x)))return msg('Check the email address(es).');
   $('save').disabled=true;msg('Saving…');
   try{
     // always re-read so we don't overwrite a newer config
@@ -233,19 +299,72 @@ $('settings').onsubmit=async e=>{
     if(!r.ok)throw new Error('could not read config ('+r.status+')');
     const j=await r.json();
     const c=JSON.parse(b64dec(j.content));
-    c.alert_times=times;c.days_ahead=days;c.alert_threshold=Math.round(th)/100;c.email_to=emails;
+    c.alert_times=times;c.days_ahead=days;c.alert_threshold=Math.round(th)/100;delete c.email_to;
     if(c.watch_threshold>=c.alert_threshold)c.watch_threshold=Math.round(c.alert_threshold*50)/100;
     const w=await gh('/contents/config.json',{method:'PUT',body:JSON.stringify({
       message:'Update settings from dashboard',branch:'main',sha:j.sha,
       content:b64enc(JSON.stringify(c,null,2)+'\n')})});
     if(!w.ok)throw new Error(w.status===401||w.status===403||w.status===404?'access key was refused — check it has Contents: Read and write for this repo':'GitHub said '+w.status);
     cfg=c;
-    if(current){current.settings={alert_times:times,days_ahead:days,alert_threshold:c.alert_threshold,email_to:emails};}
+    if(current){current.settings={alert_times:times,days_ahead:days,alert_threshold:c.alert_threshold};}
+    let extra='';
+    if(emails.length){await saveEmails(emails);extra=' Email list saved privately ('+emails.length+' address'+(emails.length>1?'es':'')+').';}
+    $('emails').value='';
     $('settings').hidden=true;
-    msg('Saved. Email checks now run at '+times.join(', ')+'. Tap “Run check now” to see '+days+' days right away.');
+    msg('Saved. Email checks now run at '+times.join(', ')+'.'+extra+' Tap “Run check now” to see '+days+' days right away.');
   }catch(e){msg('Not saved: '+e.message)}
   finally{$('save').disabled=false}
 };
+
+// GitHub secrets must be encrypted with the repo's public key (a "sealed box").
+function loadNacl(){
+  return window.nacl?Promise.resolve(window.nacl):new Promise((ok,bad)=>{
+    const sc=document.createElement('script');
+    sc.src='https://cdnjs.cloudflare.com/ajax/libs/tweetnacl/1.0.3/nacl-fast.min.js';
+    sc.onload=()=>ok(window.nacl);sc.onerror=()=>bad(new Error('could not load encryption library'));
+    document.head.appendChild(sc);});
+}
+function blake2b(input,outlen){ // unkeyed BLAKE2b, enough for the sealed-box nonce
+  const M=(1n<<64n)-1n,IV=[0x6a09e667f3bcc908n,0xbb67ae8584caa73bn,0x3c6ef372fe94f82bn,0xa54ff53a5f1d36f1n,
+    0x510e527fade682d1n,0x9b05688c2b3e6c1fn,0x1f83d9abfb41bd6bn,0x5be0cd19137e2179n];
+  const S=[[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],[14,10,4,8,9,15,13,6,1,12,0,2,11,7,5,3],[11,8,12,0,5,2,15,13,10,14,3,6,7,1,9,4],
+    [7,9,3,1,13,12,11,14,2,6,5,10,4,0,15,8],[9,0,5,7,2,4,10,15,14,1,11,12,6,8,3,13],[2,12,6,10,0,11,8,3,4,13,7,5,15,14,1,9],
+    [12,5,1,15,14,13,4,10,0,7,6,3,9,2,8,11],[13,11,7,14,12,1,3,9,5,0,15,4,8,6,2,10],[6,15,14,9,11,3,0,8,12,2,13,7,1,4,10,5],
+    [10,2,8,4,7,6,1,5,15,11,9,14,3,12,13,0]];
+  const rot=(x,n)=>((x>>n)|(x<<(64n-n)))&M;
+  const h=IV.slice();h[0]^=0x01010000n^BigInt(outlen);
+  const n=input.length,blocks=Math.max(1,Math.ceil(n/128));
+  for(let b=0;b<blocks;b++){
+    const blk=new Uint8Array(128);blk.set(input.subarray(b*128,Math.min(n,b*128+128)));
+    const m=[];for(let i=0;i<16;i++){let w=0n;for(let j=7;j>=0;j--)w=(w<<8n)|BigInt(blk[i*8+j]);m.push(w);}
+    const last=b===blocks-1,t=BigInt(last?n:(b+1)*128);
+    const v=h.concat(IV);v[12]^=t&M;v[13]^=t>>64n;if(last)v[14]^=M;
+    const G=(a,bb,c,d,x,y)=>{v[a]=(v[a]+v[bb]+x)&M;v[d]=rot(v[d]^v[a],32n);v[c]=(v[c]+v[d])&M;v[bb]=rot(v[bb]^v[c],24n);
+      v[a]=(v[a]+v[bb]+y)&M;v[d]=rot(v[d]^v[a],16n);v[c]=(v[c]+v[d])&M;v[bb]=rot(v[bb]^v[c],63n);};
+    for(let r=0;r<12;r++){const s=S[r%10];
+      G(0,4,8,12,m[s[0]],m[s[1]]);G(1,5,9,13,m[s[2]],m[s[3]]);G(2,6,10,14,m[s[4]],m[s[5]]);G(3,7,11,15,m[s[6]],m[s[7]]);
+      G(0,5,10,15,m[s[8]],m[s[9]]);G(1,6,11,12,m[s[10]],m[s[11]]);G(2,7,8,13,m[s[12]],m[s[13]]);G(3,4,9,14,m[s[14]],m[s[15]]);}
+    for(let i=0;i<8;i++)h[i]^=v[i]^v[i+8];
+  }
+  const out=new Uint8Array(outlen);for(let i=0;i<outlen;i++)out[i]=Number((h[i>>3]>>BigInt(8*(i&7)))&0xffn);
+  return out;
+}
+async function sealFor(pubB64,text){
+  const nacl=await loadNacl();
+  const pk=Uint8Array.from(atob(pubB64),c=>c.charCodeAt(0));
+  const ek=nacl.box.keyPair();
+  const both=new Uint8Array(64);both.set(ek.publicKey);both.set(pk,32);
+  const box=nacl.box(new TextEncoder().encode(text),blake2b(both,24),pk,ek.secretKey);
+  const out=new Uint8Array(32+box.length);out.set(ek.publicKey);out.set(box,32);
+  let s='';out.forEach(x=>s+=String.fromCharCode(x));return btoa(s);
+}
+async function saveEmails(list){
+  const k=await gh('/actions/secrets/public-key');
+  if(!k.ok)throw new Error('settings saved, but the email list was not — access key needs Secrets: Read and write');
+  const {key,key_id}=await k.json();
+  const r=await gh('/actions/secrets/ALERT_EMAILS',{method:'PUT',body:JSON.stringify({encrypted_value:await sealFor(key,list.join(',')),key_id})});
+  if(!r.ok)throw new Error('settings saved, but the email list was not (GitHub said '+r.status+')');
+}
 
 load();
 </script></body></html>

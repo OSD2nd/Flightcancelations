@@ -1,14 +1,17 @@
 """Score the coming week's flights, write the dashboard data, send email alerts.
 
-Run times live in config.json "alert_times" (local time). The GitHub workflow
-wakes every 30 minutes with --scheduled; this script skips unless one of those
-times has come up and hasn't been handled yet today.
+The GitHub workflow runs this every 30 minutes with --scheduled: the dashboard
+data is refreshed every time, but emails only go out at the times in
+config.json "alert_times" (local time).
+
+Email recipients come from the private ALERT_EMAILS secret (comma separated),
+falling back to the sending address SMTP_USER. They are never written to the repo.
 """
 import argparse, json, os, re
 from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
-from . import alert, features as F, flights, history, weather
+from . import alert, aviation, features as F, flights, history, weather
 
 OUT = "docs/latest.json"
 STATE = "data/state.json"
@@ -62,7 +65,7 @@ def main():
     ap.add_argument("--demo", action="store_true", help="fake weather, no network")
     ap.add_argument("--no-email", action="store_true")
     ap.add_argument("--scheduled", action="store_true",
-                    help="only run if one of config alert_times is due")
+                    help="refresh data; only email if one of config alert_times is due")
     ap.add_argument("--now", help="pretend local time, e.g. 2026-11-10T19:07 (testing)")
     ap.add_argument("--train", action="store_true", help="retrain from data/history.csv first")
     ap.add_argument("--backfill", type=int, metavar="DAYS", help="pull past DAYS of flights into history")
@@ -79,9 +82,7 @@ def main():
     slot = None
     if a.scheduled:
         slot = due_slot(now, cfg.get("alert_times", ["19:00", "06:30"]), state["runs"])
-        if not slot:
-            print(f"{now:%H:%M} local: no check due (times: {', '.join(cfg.get('alert_times', []))})")
-            return
+    may_email = slot is not None or not a.scheduled
 
     if a.backfill:
         history.backfill(cfg, a.backfill)
@@ -93,10 +94,28 @@ def main():
     n_days = max(1, min(14, int(cfg.get("days_ahead", 7))))
     days = [today + timedelta(days=i) for i in range(n_days)]
 
-    wx = {}
+    wx, notes = {}, []
     for code, ap_cfg in list(cfg["airports"].items()) + [("HUB", cfg["hub"])]:
-        wx[code] = (demo_weather(code, days) if a.demo else
-                    weather.fetch_hourly(ap_cfg["lat"], ap_cfg["lon"], days[0], days[-1], False, tz))
+        try:
+            wx[code] = (demo_weather(code, days) if a.demo else
+                        weather.fetch_hourly(ap_cfg["lat"], ap_cfg["lon"], days[0], days[-1], False, tz))
+        except Exception as e:
+            print(f"[warn] weather model forecast failed for {code}: {e}")
+            wx[code] = {}
+            notes.append(f"Weather-model forecast unavailable for {ap_cfg['name']} this run.")
+
+    # official airport reports + forecasts (Trail has none, so it borrows Castlegar's)
+    stations = sorted({c.get("wx_station") for c in list(cfg["airports"].values()) + [cfg["hub"]]} - {None})
+    mets, tafs = {}, {}
+    if stations and not a.demo:
+        try:
+            mets, tafs = aviation.metars(stations), aviation.tafs(stations)
+        except Exception as e:
+            print(f"[warn] airport weather failed: {e}")
+            notes.append("Official airport weather unavailable this run.")
+    zone = ZoneInfo(tz)
+    to_utc = lambda t: t.replace(tzinfo=zone).astimezone(timezone.utc)
+    hub_st = cfg["hub"].get("wx_station")
 
     results = []
     for code, ap_cfg in cfg["airports"].items():
@@ -108,7 +127,11 @@ def main():
             for f in fl:
                 dep = f["dep"]
                 arr = dep + timedelta(minutes=f.get("block_min", 75))
-                feats = F.extract(weather.window(wx[code], dep, 1, 1), weather.window(wx["HUB"], arr, 1, 1))
+                st = ap_cfg.get("wx_station")
+                o_av = aviation.conditions(mets.get(st), tafs.get(st), to_utc(dep)) if st else None
+                h_av = aviation.conditions(mets.get(hub_st), tafs.get(hub_st), to_utc(arr)) if hub_st else None
+                feats = F.extract(weather.window(wx[code], dep, 1, 1), weather.window(wx["HUB"], arr, 1, 1),
+                                  o_av, h_av)
                 p = F.probability(feats, weights)
                 why = F.reasons(feats, weights)
                 if history.is_cancelled(f["status"]):
@@ -119,6 +142,8 @@ def main():
                     "status": f["status"], "risk": round(p, 3),
                     "level": F.level(p, cfg["watch_threshold"], cfg["alert_threshold"]),
                     "reasons": why, "schedule_source": source,
+                    "airport_wx": (o_av["source"] + (f" ({st})" if st != code and st else "")) if o_av else None,
+                    "ceiling_ft": o_av["ceiling_ft"] if o_av else None,
                     "flags": [k for k, v in feats.items() if v]})
 
     os.makedirs("docs", exist_ok=True)
@@ -126,7 +151,10 @@ def main():
                "today": today.isoformat(), "demo": a.demo,
                "model": ("learned" if model else "starting-weights"),
                "model_info": {k: model[k] for k in ("flights", "cancellations", "trained")} if model else None,
-               "settings": {k: cfg.get(k) for k in ("alert_times", "days_ahead", "alert_threshold", "email_to")},
+               "settings": {k: cfg.get(k) for k in ("alert_times", "days_ahead", "alert_threshold")},
+               "airport_wx": {s: aviation.summary(mets.get(s), tafs.get(s)) for s in stations
+                              if mets.get(s) or tafs.get(s)},
+               "notes": notes,
                "flights": results, "history_stats": [] if a.demo else _safe_stats(cfg)}
     with open(OUT, "w") as f:
         json.dump(payload, f, indent=1)
@@ -142,7 +170,7 @@ def main():
     # ---- alerts: flights leaving in the next alert_window_hours, once per flight per level ----
     horizon = now + timedelta(hours=cfg.get("alert_window_hours", 30))
     new = []
-    for r in results:
+    for r in (results if may_email else []):
         dep = datetime.fromisoformat(f"{r['date']}T{r['dep_local']}")
         if not (now <= dep <= horizon) or r["risk"] < cfg["alert_threshold"]:
             continue
@@ -161,7 +189,7 @@ def main():
         if a.no_email:
             print(subject, "\n", body)
         else:
-            alert.send(subject, body, cfg["email_to"])
+            alert.send(subject, body, recipients())
 
     if slot:
         state["runs"].append(slot)
@@ -171,8 +199,14 @@ def main():
     os.makedirs("data", exist_ok=True)
     with open(STATE, "w") as f:
         json.dump(state, f, indent=1)
-    print(f"{now:%Y-%m-%d %H:%M} local{' (' + slot + ' check)' if slot else ''}: "
-          f"scored {len(results)} flights over {n_days} days, {len(new)} new alert(s)")
+    print(f"{now:%Y-%m-%d %H:%M} local{' (' + slot + ' email check)' if slot else ''}: "
+          f"scored {len(results)} flights over {n_days} days, "
+          + (f"{len(new)} new alert(s)" if may_email else "no email check due"))
+
+
+def recipients():
+    raw = os.environ.get("ALERT_EMAILS") or os.environ.get("SMTP_USER") or ""
+    return [e.strip() for e in raw.replace("\n", ",").split(",") if e.strip()]
 
 
 def _day_name(d, today):

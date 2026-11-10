@@ -1,24 +1,57 @@
 {
   "timezone": "America/Vancouver",
-  "alert_times": ["19:00", "06:30"],
+  "alert_times": [
+    "19:00",
+    "06:30"
+  ],
   "alert_window_hours": 30,
   "days_ahead": 7,
-  "alert_threshold": 0.30,
+  "alert_threshold": 0.3,
   "watch_threshold": 0.15,
-  "email_to": ["actionsyncsports@gmail.com"],
-  "hub": {"code": "YVR", "name": "Vancouver Intl", "lat": 49.1947, "lon": -123.1792},
+  "hub": {
+    "code": "YVR",
+    "name": "Vancouver Intl",
+    "lat": 49.1947,
+    "lon": -123.1792,
+    "wx_station": "CYVR"
+  },
   "airports": {
-    "YZZ": {"name": "Trail Regional", "lat": 49.0556, "lon": -117.6089, "airline": "Pacific Coastal"},
-    "YCG": {"name": "Castlegar (West Kootenay Regional)", "lat": 49.2964, "lon": -117.6320, "airline": "Air Canada Express (Jazz)"}
+    "YZZ": {
+      "name": "Trail Regional",
+      "lat": 49.0556,
+      "lon": -117.6089,
+      "airline": "Pacific Coastal",
+      "wx_station": "CYCG",
+      "note": "Trail has no official weather reports; uses Castlegar (CYCG), ~25 km away."
+    },
+    "YCG": {
+      "name": "Castlegar (West Kootenay Regional)",
+      "lat": 49.2964,
+      "lon": -117.632,
+      "airline": "Air Canada Express (Jazz)",
+      "wx_station": "CYCG"
+    }
   },
   "static_schedule_note": "Fallback schedule used only when no flight API key is set. Checked against the airport departure boards on 2026-11-10.",
   "static_schedule": {
     "YZZ": [
-      {"flight": "8P452", "dep": "10:50", "block_min": 75},
-      {"flight": "8P458", "dep": "17:05", "block_min": 75}
+      {
+        "flight": "8P452",
+        "dep": "10:50",
+        "block_min": 75
+      },
+      {
+        "flight": "8P458",
+        "dep": "17:05",
+        "block_min": 75
+      }
     ],
     "YCG": [
-      {"flight": "AC8377", "dep": "12:15", "block_min": 70}
+      {
+        "flight": "AC8377",
+        "dep": "12:15",
+        "block_min": 70
+      }
     ]
   }
 }

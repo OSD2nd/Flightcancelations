@@ -1,18 +1,23 @@
 name: Flight risk check
 on:
   schedule:
-    # Wakes every 30 min; run.py only does a real check (and emails) at the
-    # times set in config.json "alert_times". Edit those, not this file.
+    # Every 30 min: refresh the dashboard. Emails only go out at the times in
+    # config.json "alert_times" - edit those (or use Settings on the site), not this.
     - cron: "7,37 * * * *"
   workflow_dispatch:
 permissions:
   contents: write
+  pages: write
+  id-token: write
 concurrency:
   group: flight-risk
   cancel-in-progress: false
 jobs:
   run:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -22,13 +27,19 @@ jobs:
           AERODATABOX_KEY: ${{ secrets.AERODATABOX_KEY }}
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          ALERT_EMAILS: ${{ secrets.ALERT_EMAILS }}
         run: python run.py ${{ github.event_name == 'schedule' && '--scheduled' || '' }}
-      - name: Save results
+      - name: Save alert memory and history
         run: |
           git config user.name "flight-risk-bot"
           git config user.email "bot@users.noreply.github.com"
-          git add docs/latest.json data/
+          git add data/
           if git diff --staged --quiet; then exit 0; fi
-          git commit -m "Update flight risk"
-          git pull --rebase origin main
+          git commit -m "Update flight risk data"
+          git pull --rebase --autostash origin main
           git push
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with: {path: docs}
+      - id: deploy
+        uses: actions/deploy-pages@v4

@@ -9,7 +9,7 @@ import math
 FEATURES = [
     "vis_lt_1_6", "vis_lt_4_8", "lowcloud_90", "gust_35", "gust_50",
     "snow_03", "snow_10", "freezing", "fog", "tstorm",
-    "hub_vis_lt_1_6", "hub_gust_60",
+    "hub_vis_lt_1_6", "hub_gust_60", "ceil_lt_1000", "ceil_lt_3000",
 ]
 
 PRIOR = {
@@ -19,6 +19,9 @@ PRIOR = {
     "snow_03": 0.4, "snow_10": 1.0,
     "freezing": 2.0, "fog": 1.2, "tstorm": 1.5,
     "hub_vis_lt_1_6": 1.0, "hub_gust_60": 0.8,
+    # Cloud base from the official airport report/forecast. Castlegar sits in a
+    # deep valley, so a low ceiling matters more than cloud percentage.
+    "ceil_lt_1000": 1.6, "ceil_lt_3000": 1.2,
 }
 
 LABELS = {
@@ -27,6 +30,7 @@ LABELS = {
     "snow_03": "Snow falling", "snow_10": "Heavy snow (1+ cm/h)", "freezing": "Freezing rain/drizzle",
     "fog": "Fog", "tstorm": "Thunderstorm", "hub_vis_lt_1_6": "Low visibility at Vancouver",
     "hub_gust_60": "Strong wind at Vancouver",
+    "ceil_lt_1000": "Cloud base under 1,000 ft", "ceil_lt_3000": "Cloud base under 3,000 ft",
 }
 
 
@@ -34,8 +38,9 @@ def _vals(rows, key):
     return [r[key] for r in rows if r.get(key) is not None]
 
 
-def extract(origin_rows, hub_rows):
-    """origin_rows/hub_rows: hourly weather dicts around departure / arrival."""
+def extract(origin_rows, hub_rows, origin_av=None, hub_av=None):
+    """origin_rows/hub_rows: hourly weather-model dicts around departure / arrival.
+    origin_av/hub_av: official airport conditions from aviation.conditions(), if any."""
     f = {k: 0 for k in FEATURES}
     if origin_rows:
         vis = _vals(origin_rows, "visibility")
@@ -61,7 +66,35 @@ def extract(origin_rows, hub_rows):
         g = _vals(hub_rows, "wind_gusts_10m")
         f["hub_vis_lt_1_6"] = int(bool(v) and min(v) < 1600)
         f["hub_gust_60"] = int(bool(g) and max(g) >= 60)
+    if origin_av:
+        _apply_airport(f, origin_av)
+    if hub_av:
+        if hub_av["vis_sm"] is not None and hub_av["vis_sm"] < 1:
+            f["hub_vis_lt_1_6"] = 1
+        if hub_av["gust_kt"] is not None and hub_av["gust_kt"] * 1.852 >= 60:
+            f["hub_gust_60"] = 1
     return f
+
+
+def _apply_airport(f, av):
+    """Official report/forecast can only add warnings, never clear model ones."""
+    c, v, g, wx = av["ceiling_ft"], av["vis_sm"], av["gust_kt"], av["wx"]
+    if c is not None:
+        f["ceil_lt_1000"] |= int(c < 1000)
+        f["ceil_lt_3000"] |= int(c < 3000)
+    if v is not None:
+        f["vis_lt_1_6"] |= int(v < 1)      # 1 statute mile = 1.6 km
+        f["vis_lt_4_8"] |= int(v < 3)
+    if g is not None:
+        f["gust_35"] |= int(g * 1.852 >= 35)
+        f["gust_50"] |= int(g * 1.852 >= 50)
+    for w in wx:
+        if "FZ" in w: f["freezing"] = 1
+        if "FG" in w and "FZ" not in w: f["fog"] = 1
+        if "TS" in w: f["tstorm"] = 1
+        if "SN" in w:
+            f["snow_03"] = 1
+            if w.startswith("+"): f["snow_10"] = 1
 
 
 def probability(feats, weights=None):
