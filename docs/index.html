@@ -348,7 +348,7 @@ function renderCams(list){
    <div class="seg">${[['live','Live'],['6','Last 6 hours'],['24','Last 24 hours']].map(([k,l])=>`<button type="button" data-r="${k}" class="${k===camRange?'on':''}">${l}</button>`).join('')}</div>
    <img id="camimg" alt="${esc(c.name)} webcam">
    <div class="camctl">${fr.length?`<button type="button" id="camplay">⏸ Pause</button><input type="range" id="camslide" min="0" max="${fr.length-1}" value="0">`:''}<span class="sub" id="camtime"></span></div>
-   <div class="sub">Webcams by <a href="https://wxdata.redresort.com/wxdata/weather.php" target="_blank" rel="noopener">Red Mountain Resort</a>. Summit cams in cloud mean cloud is down on the ridges.</div>`;
+   <div class="sub">Webcams by <a href="https://www.redresort.com/" target="_blank" rel="noopener">Red Mountain Resort</a>. Summit cams in cloud mean cloud is down on the ridges.</div>`;
   $('cams').querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{camSel=+b.dataset.i;renderCams(list)});
   $('cams').querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{camRange=b.dataset.r;renderCams(list)});
   clearInterval(camTimer);
