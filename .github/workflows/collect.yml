@@ -1,0 +1,35 @@
+name: Collect flight log
+on:
+  schedule:
+    - cron: "41 9 * * *"   # ~2:40 am local: yesterday's flights are ready by then
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "How many past days to collect (each day of all airports uses ~1,600 credits)"
+        default: "1"
+permissions:
+  contents: write
+concurrency:
+  group: flight-risk
+  cancel-in-progress: false
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - name: Log yesterday's arrivals and departures
+        env:
+          OPENSKY_CLIENT_ID: ${{ secrets.OPENSKY_CLIENT_ID }}
+          OPENSKY_CLIENT_SECRET: ${{ secrets.OPENSKY_CLIENT_SECRET }}
+        run: python -m ksalerts.collector --days ${{ github.event.inputs.days || '1' }}
+      - name: Save
+        run: |
+          git config user.name "flight-risk-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add data/collect/ 2>/dev/null || true
+          if git diff --staged --quiet; then exit 0; fi
+          git commit -m "Flight log update"
+          git pull --rebase --autostash origin main
+          git push

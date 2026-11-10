@@ -1,0 +1,114 @@
+{
+ "note": "Airports the daily OpenSky collector logs. ~60 credits each per day; free account = 4,000/day. Vancouver is the busiest by far (biggest file) - remove it if the log gets too large.",
+ "utc_offset": -7,
+ "airports": [
+  {
+   "icao": "CYCG",
+   "name": "Castlegar"
+  },
+  {
+   "icao": "CAD4",
+   "name": "Trail"
+  },
+  {
+   "icao": "CYXT",
+   "name": "Terrace"
+  },
+  {
+   "icao": "CYBL",
+   "name": "Campbell River"
+  },
+  {
+   "icao": "CYAZ",
+   "name": "Tofino"
+  },
+  {
+   "icao": "CYQZ",
+   "name": "Quesnel"
+  },
+  {
+   "icao": "CYXS",
+   "name": "Prince George"
+  },
+  {
+   "icao": "CBBC",
+   "name": "Bella Bella"
+  },
+  {
+   "icao": "CYPW",
+   "name": "Powell River"
+  },
+  {
+   "icao": "CYCD",
+   "name": "Nanaimo"
+  },
+  {
+   "icao": "CZMT",
+   "name": "Masset"
+  },
+  {
+   "icao": "CYQQ",
+   "name": "Comox"
+  },
+  {
+   "icao": "CYWL",
+   "name": "Williams Lake"
+  },
+  {
+   "icao": "CYDQ",
+   "name": "Dawson Creek"
+  },
+  {
+   "icao": "CYZP",
+   "name": "Sandspit"
+  },
+  {
+   "icao": "CYXJ",
+   "name": "Fort St. John"
+  },
+  {
+   "icao": "CYXC",
+   "name": "Cranbrook"
+  },
+  {
+   "icao": "CYYD",
+   "name": "Smithers"
+  },
+  {
+   "icao": "CYPR",
+   "name": "Prince Rupert"
+  },
+  {
+   "icao": "CYYE",
+   "name": "Fort Nelson"
+  },
+  {
+   "icao": "CYZT",
+   "name": "Port Hardy"
+  },
+  {
+   "icao": "CYBD",
+   "name": "Bella Coola"
+  },
+  {
+   "icao": "CYLW",
+   "name": "Kelowna"
+  },
+  {
+   "icao": "CYYF",
+   "name": "Penticton"
+  },
+  {
+   "icao": "CYKA",
+   "name": "Kamloops"
+  },
+  {
+   "icao": "CYYJ",
+   "name": "Victoria"
+  },
+  {
+   "icao": "CYVR",
+   "name": "Vancouver"
+  }
+ ]
+}
