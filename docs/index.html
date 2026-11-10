@@ -269,12 +269,12 @@ function renderFlights(){
     if(selDay&&selDay!==day)return;
     html+=`<h2 id="d-${day}">${esc(dayLabel(day,today,i))} · ${esc(shortDay(day))}</h2>`;
     if(i>=3)html+='<div class="sub">Further out — treat as a rough early look.</div>';
-    if(selDay===day)html+=dayForecast(d,day,fl);
     aps.forEach(a=>{
       const x=fl.filter(f=>f.airport===a).sort((p,q)=>p.dep_local.localeCompare(q.dep_local));
       if(!x.length)return;
       html+=`<div class="aphead"><span class="apcode ap-${a}">${a}</span>${esc(x[0].airport_name)}</div>`+x.map(card).join('');
     });
+    if(selDay===day)html+=`<h2>Forecast · ${esc(dayLabel(day,today,i))}</h2>`+dayForecast(d,day,fl);
   });
   $('week').innerHTML=week;
   $('app').innerHTML=html;
