@@ -59,61 +59,6 @@
    "name": "Victoria"
   }
  ],
- "dropped": [
-  {
-   "icao": "CYQZ",
-   "name": "Quesnel"
-  },
-  {
-   "icao": "CBBC",
-   "name": "Bella Bella"
-  },
-  {
-   "icao": "CZMT",
-   "name": "Masset"
-  },
-  {
-   "icao": "CYWL",
-   "name": "Williams Lake"
-  },
-  {
-   "icao": "CYZP",
-   "name": "Sandspit"
-  },
-  {
-   "icao": "CYXC",
-   "name": "Cranbrook"
-  },
-  {
-   "icao": "CYYD",
-   "name": "Smithers"
-  },
-  {
-   "icao": "CYPR",
-   "name": "Prince Rupert"
-  },
-  {
-   "icao": "CYYE",
-   "name": "Fort Nelson"
-  },
-  {
-   "icao": "CYZT",
-   "name": "Port Hardy"
-  },
-  {
-   "icao": "CYBD",
-   "name": "Bella Coola"
-  },
-  {
-   "icao": "CYKA",
-   "name": "Kamloops"
-  },
-  {
-   "icao": "CYVR",
-   "name": "Vancouver"
-  }
- ],
- "dropped_note": "Removed 2026-11-10: OpenSky saw no flights there (out of receiver range), or (Vancouver) too big to be useful.",
  "backfill": {
   "airports": [
    "CAD4",
@@ -125,5 +70,58 @@
   "from": "2025-11-01",
   "to": "2026-03-31",
   "note": "Nightly run spends leftover credits here, newest day first, until done."
+ },
+ "needs_other_source": {
+  "note": "Good airports to track, but OpenSky's receivers can't see them. Find another source for their daily arrivals and departures.",
+  "airports": [
+   {
+    "icao": "CYQZ",
+    "name": "Quesnel"
+   },
+   {
+    "icao": "CBBC",
+    "name": "Bella Bella"
+   },
+   {
+    "icao": "CZMT",
+    "name": "Masset"
+   },
+   {
+    "icao": "CYWL",
+    "name": "Williams Lake"
+   },
+   {
+    "icao": "CYZP",
+    "name": "Sandspit"
+   },
+   {
+    "icao": "CYXC",
+    "name": "Cranbrook"
+   },
+   {
+    "icao": "CYYD",
+    "name": "Smithers"
+   },
+   {
+    "icao": "CYPR",
+    "name": "Prince Rupert"
+   },
+   {
+    "icao": "CYYE",
+    "name": "Fort Nelson"
+   },
+   {
+    "icao": "CYZT",
+    "name": "Port Hardy"
+   },
+   {
+    "icao": "CYBD",
+    "name": "Bella Coola"
+   },
+   {
+    "icao": "CYKA",
+    "name": "Kamloops"
+   }
+  ]
  }
 }
