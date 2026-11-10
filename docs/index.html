@@ -305,7 +305,8 @@ async function runNow(){
   $('runnow').disabled=true;
   try{
     const r=await gh('/actions/workflows/flight-risk.yml/dispatches',{method:'POST',body:JSON.stringify({ref:'main'})});
-    if(r.status!==204)throw new Error(r.status===401||r.status===403?'access key was refused — check it has Actions: Read and write':'GitHub said '+r.status);
+    if(r.status!==204)throw new Error(r.status===401?'the access key is expired or wrong — make a new one in Settings':
+      (r.status===403||r.status===404)?'the access key can\'t start runs. Give it Actions: Read and write for this repo (GitHub → Settings → Developer settings → Fine-grained tokens), or use Run workflow on the Actions tab':'GitHub said '+r.status);
     const before=current&&current.generated;
     msg('Check started. New results usually appear in 2–4 minutes…');
     for(let i=0;i<24;i++){
