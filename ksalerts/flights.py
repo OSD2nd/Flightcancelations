@@ -41,10 +41,15 @@ def airport_day(code, day, hub_code, key, window=("06:00", "17:59")):
     out = {"dep": [], "arr": []}
     for kind, near, far in (("departures", "departure", "arrival"), ("arrivals", "arrival", "departure")):
         for f in data.get(kind, []) or []:
-            other = ((f.get(far) or {}).get("airport") or {}).get("iata")
+            if "movement" in f:
+                # airport board format: "movement" holds the OTHER airport and the time HERE
+                here = f["movement"]
+                other = (here.get("airport") or {}).get("iata")
+            else:
+                here = f.get(near) or {}
+                other = ((f.get(far) or {}).get("airport") or {}).get("iata")
             if other != hub_code:
                 continue
-            here = f.get(near) or {}
             sched = (here.get("scheduledTime") or {}).get("local")
             if not sched:
                 continue
