@@ -142,6 +142,7 @@ details summary{cursor:pointer;font-size:.85rem;color:var(--accent)}
   <button type="button" data-o="rain">Rain / snow</button>
   <button type="button" data-o="wind">Wind</button>
   <button type="button" data-o="visibility">Visibility</button>
+  <button type="button" data-o="pm2p5">Smoke</button>
 </div>
 <div class="seg" id="views">
   <button type="button" data-v="kootenay" class="on">Kootenays</button>
@@ -249,13 +250,16 @@ function dayForecast(d,day,fl){
     return String(m>=30?(h+1)%24:h).padStart(2,'0')+':00';}));
   const cls=(v,bad,meh,lower)=>v==null?'':(lower?(v<bad?'bad':v<meh?'meh':''):(v>=bad?'bad':v>=meh?'meh':''));
   const n=(v,u='')=>v==null?'—':v+u;
+  // only show the smoke column when there's some smoke in the forecast for this day
+  const hasSmoke=places.some(p=>fx[p].rows.some(r=>r.smoke!=null&&r.smoke>=15));
   return '<div class="fx"><div class="sub" style="margin-bottom:6px">Hourly forecast for this day. ✈ = around a flight time. Red = the conditions that usually ground flights here.</div>'+
     places.map(p=>{const fh=flightHours(p);return `<h3>${esc(fx[p].name)}${p==='HUB'?' (arrival/departure end)':''}</h3><table>
-    <tr><th>Time</th><th>Low cloud</th><th>Valley cloud</th><th>Visibility</th><th>Rain</th><th>Snow</th><th>Gusts</th></tr>`+
+    <tr><th>Time</th><th>Low cloud</th><th>Valley cloud</th><th>Visibility</th>${hasSmoke?'<th title="Fine particles from wildfire smoke, µg/m³">Smoke</th>':''}<th>Rain</th><th>Snow</th><th>Gusts</th></tr>`+
     fx[p].rows.map(r=>`<tr class="${fh.has(r.h)?'fl':''}"><td>${fh.has(r.h)?'✈ ':''}${esc(r.h)}</td>
       <td class="${cls(r.low,90,60)}">${n(r.low,'%')}</td><td class="${cls(r.valley,80,50)}">${n(r.valley,'%')}</td>
-      <td class="${cls(r.vis,1.6,4.8,true)}">${n(r.vis,' km')}</td><td class="${cls(r.rain,0.2,0.05)}">${n(r.rain,' mm')}</td>
-      <td class="${cls(r.snow,1,0.3)}">${n(r.snow,' cm')}</td><td class="${cls(r.gust,50,35)}">${n(r.gust,' km/h')}</td></tr>`).join('')+'</table>';}).join('')+'</div>';
+      <td class="${cls(r.vis,1.6,4.8,true)}">${n(r.vis,' km')}</td>${hasSmoke?`<td class="${cls(r.smoke,100,35)}">${n(r.smoke)}</td>`:''}<td class="${cls(r.rain,0.2,0.05)}">${n(r.rain,' mm')}</td>
+      <td class="${cls(r.snow,1,0.3)}">${n(r.snow,' cm')}</td><td class="${cls(r.gust,50,35)}">${n(r.gust,' km/h')}</td></tr>`).join('')+'</table>';}).join('')+
+    (hasSmoke?'<div class="sub" style="margin-top:6px">Smoke = fine particles from wildfire smoke (µg/m³). Over 35 is hazy; over 100 is thick smoke that can cut visibility.</div>':'')+'</div>';
 }
 const addMin=(t,m)=>{let[h,mm]=t.split(':').map(Number);let x=h*60+mm+m;x=(x+1440)%1440;return String(Math.floor(x/60)).padStart(2,'0')+':'+String(x%60).padStart(2,'0')};
 const subMin=(t,m)=>addMin(t,-m);

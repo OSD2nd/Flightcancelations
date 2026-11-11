@@ -11,6 +11,7 @@ FEATURES = [
     "snow_03", "snow_10", "freezing", "fog", "tstorm",
     "hub_vis_lt_1_6", "hub_gust_60", "ceil_lt_1000", "ceil_lt_3000",
     "rain", "valley_cloud", "ridge_cloud", "wet_low_cloud", "ceil_lt_4000",
+    "smoke", "smoke_heavy",
 ]
 
 PRIOR = {
@@ -28,6 +29,9 @@ PRIOR = {
     # So the combination carries most of the weight. Estimates until history is fitted.
     "rain": 0.5, "valley_cloud": 0.8, "ridge_cloud": 0.5, "wet_low_cloud": 2.0,
     "ceil_lt_4000": 0.3,
+    # Wildfire smoke (summer): fine particles from the air-quality forecast, or smoke
+    # in the airport report. Thick smoke cuts visibility like fog does.
+    "smoke": 0.7, "smoke_heavy": 1.6,
 }
 
 LABELS = {
@@ -40,6 +44,7 @@ LABELS = {
     "rain": "Rain or drizzle", "valley_cloud": "Cloud down in the valley", "ridge_cloud": "Cloud on the ridges",
     "wet_low_cloud": "Low cloud with rain (the usual cancellation pattern)",
     "ceil_lt_4000": "Cloud base under 4,000 ft",
+    "smoke": "Wildfire smoke", "smoke_heavy": "Thick wildfire smoke",
 }
 
 
@@ -66,6 +71,10 @@ def extract(origin_rows, hub_rows, origin_av=None, hub_av=None):
         if snow:
             f["snow_03"] = int(max(snow) >= 0.3)
             f["snow_10"] = int(max(snow) >= 1.0)
+        pm = _vals(origin_rows, "pm2_5")
+        if pm:
+            f["smoke"] = int(max(pm) >= 100)
+            f["smoke_heavy"] = int(max(pm) >= 250)
         pcp = _vals(origin_rows, "precipitation")
         f["rain"] = int(bool(pcp) and max(pcp) >= 0.2)
         # cloud at pressure levels: ~925/900 hPa is valley height around Castlegar/Trail,
@@ -111,6 +120,10 @@ def _apply_airport(f, av):
         f["gust_35"] |= int(g * 1.852 >= 35)
         f["gust_50"] |= int(g * 1.852 >= 50)
     for w in wx:
+        if "FU" in w:  # smoke reported at the airport
+            f["smoke"] = 1
+            if v is not None and v < 3:
+                f["smoke_heavy"] = 1
         if any(p in w for p in ("RA", "DZ", "BR")): f["rain"] = 1
         if "FZ" in w: f["freezing"] = 1
         if "FG" in w and "FZ" not in w: f["fog"] = 1

@@ -1,0 +1,31 @@
+Airport          code  smoky days  heavy  worst   smoky days by summer
+Fort Nelson      CYYE          56     14    672   2024:26  2025:25  2026:5
+Golden           CYGE          38      8    332   2024:11  2025:3  2026:24
+Penticton        CYYF          37     14    512   2024:1  2025:6  2026:30
+Williams Lake    CYWL          35      6    155   2024:7  2025:11  2026:17
+Kamloops         CYKA          31      6    179   2024:3  2025:6  2026:22
+Kelowna          CYLW          29      9    185   2024:0  2025:4  2026:25
+Castlegar        CYCG          28      7    158   2024:2  2025:5  2026:21
+Trail            CAD4          28      7    158   2024:2  2025:5  2026:21
+Quesnel          CYQZ          26      2    125   2024:7  2025:12  2026:7
+Cranbrook        CYXC          25      4    174   2024:4  2025:4  2026:17
+Dawson Creek     CYDQ          25      2    127   2024:8  2025:12  2026:5
+Fort St. John    CYXJ          22      2    122   2024:11  2025:7  2026:4
+Prince George    CYXS          21      3    126   2024:6  2025:11  2026:4
+Vancouver        CYVR          21      0     67   2024:1  2025:10  2026:10
+Bella Coola      CYBD          15      6    384   2024:3  2025:11  2026:1
+Comox            CYQQ           7      1    135   2024:0  2025:6  2026:1
+Nanaimo          CYCD           7      1    114   2024:0  2025:5  2026:2
+Victoria         CYYJ           7      0     54   2024:0  2025:4  2026:3
+Smithers         CYYD           6      0     64   2024:2  2025:4  2026:0
+Powell River     CYPW           5      2    156   2024:0  2025:5  2026:0
+Campbell River   CYBL           4      0     64   2024:0  2025:4  2026:0
+Terrace          CYXT           3      0     52   2024:0  2025:3  2026:0
+Tofino           CYAZ           1      0     36   2024:0  2025:1  2026:0
+Bella Bella      CBBC           1      0     78   2024:1  2025:0  2026:0
+Prince Rupert    CYPR           0      0     25   2024:0  2025:0  2026:0
+Sandspit         CYZP           0      0     24   2024:0  2025:0  2026:0
+Masset           CZMT           0      0     22   2024:0  2025:0  2026:0
+Port Hardy       CYZT           0      0     24   2024:0  2025:0  2026:0
+
+smoky = PM2.5 reached 35 µg/m³ during 9am-6pm; heavy = reached 100; worst = highest hourly value. Jun-Sep 2024, 2025, 2026.

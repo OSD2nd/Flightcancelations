@@ -18,3 +18,14 @@ To redo it: download each station's reports from
 `https://mesonet.agron.iastate.edu/cgi-bin/request/asos.py` (fields vsby,
 skyc1-4, skyl1-4, wxcodes; UTC) into a folder named `STATION.csv`, then run
 `python3 rank_airports.py <folder>`.
+
+# Which airports get the most summer wildfire smoke?
+
+`airport_smoke_ranking.txt` counts smoky days (Jun–Sep 2024–2026, 9 am – 6 pm)
+at each airport from modelled fine particles (PM2.5, Open-Meteo air-quality
+history). Smoky = PM2.5 reached 35 µg/m³ (hazy); heavy = reached 100 (thick
+smoke, visibility often drops). Airport weather reports aren't used for this
+because automated stations don't report smoke at all.
+
+The model is coarse (~40 km) and under-reads narrow valleys, so use it to
+compare airports, not as exact counts. Rerun: `python3 rank_smoke_pm25.py [cache folder]`.

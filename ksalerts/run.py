@@ -114,6 +114,16 @@ def main():
             wx[code] = {}
             notes.append(f"Weather-model forecast unavailable for {ap_cfg['name']} this run.")
 
+    # wildfire smoke forecast (fine particles), merged into the same hourly rows
+    if not a.demo:
+        for code, ap_cfg in list(cfg["airports"].items()) + [("HUB", cfg["hub"])]:
+            try:
+                for t, v in weather.fetch_smoke(ap_cfg["lat"], ap_cfg["lon"], days[0], days[-1]).items():
+                    if t in wx[code]:
+                        wx[code][t]["pm2_5"] = v
+            except Exception as e:
+                print(f"[warn] smoke forecast failed for {code}: {e}")
+
     # official airport reports + forecasts (Trail has none, so it borrows Castlegar's)
     stations = sorted({c.get("wx_station") for c in list(cfg["airports"].values()) + [cfg["hub"]]} - {None})
     mets, tafs = {}, {}
@@ -298,6 +308,7 @@ def day_forecast(wx, days, cfg, hours=range(7, 20)):
                              "vis": rnd((r.get("visibility") or 0) / 1000, 1) if r.get("visibility") is not None else None,
                              "rain": rnd(r.get("precipitation"), 1), "snow": rnd(r.get("snowfall"), 1),
                              "gust": rnd(r.get("wind_gusts_10m")), "temp": rnd(r.get("temperature_2m")),
+                             "smoke": rnd(r.get("pm2_5")),
                              "code": r.get("weather_code")})
             if rows:
                 day[code] = {"name": places[code], "rows": rows}

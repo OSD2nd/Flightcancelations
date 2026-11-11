@@ -48,3 +48,16 @@ def window(hours, t, before=1, after=1):
         if r:
             rows.append(r)
     return rows
+
+
+def fetch_smoke(lat, lon, start, end):
+    """Wildfire smoke forecast: {naive local hour: pm2_5 µg/m³} (Open-Meteo air quality, ~5 days ahead)."""
+    from . import clock
+    base = "https://air-quality-api.open-meteo.com/v1/air-quality"
+    q = dict(latitude=lat, longitude=lon, hourly="pm2_5", timezone="GMT",
+             start_date=start.isoformat(), end_date=(end + timedelta(days=1)).isoformat())
+    data = _get(base + "?" + urllib.parse.urlencode(q))
+    h = data["hourly"]
+    return {datetime.fromisoformat(t) + timedelta(hours=clock.OFFSET): v
+            for t, v in zip(h["time"], h["pm2_5"]) if v is not None}
+
