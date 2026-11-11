@@ -16,12 +16,28 @@
   "first_seen": null,
   "predicted": 0.15,
   "predicted_reasons": [],
-  "wx_at_time": null,
+  "wx_at_time": {
+   "time": "2026-11-11T00:00+00:00",
+   "ceiling_ft": 4000,
+   "vis_sm": 8.0,
+   "wx": "",
+   "raw": "METAR CYCG 110000Z 00000KT 8SM FEW005 OVC040 07/07 A3022 RMK CF1SC8 CF TR LAST STFD OBS/NXT 111300Z SLP246"
+  },
   "wx_when_seen": null,
   "taf_when_seen": null,
   "photos": [],
   "source": "airport board",
-  "wx_note": "Trail has no weather station; Castlegar report shown."
+  "wx_note": "Trail has no weather station; Castlegar report shown.",
+  "red": [
+   {
+    "name": "Red Mountain, Granite (17:05)",
+    "src": "history/img/2026-11-10_YZZ_1705_granite.jpg"
+   },
+   {
+    "name": "Red Mountain, Greyline (17:05)",
+    "src": "history/img/2026-11-10_YZZ_1705_greyline.jpg"
+   }
+  ]
  },
  {
   "date": "2026-11-10",
@@ -40,12 +56,28 @@
   "first_seen": null,
   "predicted": 0.15,
   "predicted_reasons": [],
-  "wx_at_time": null,
+  "wx_at_time": {
+   "time": "2026-11-11T00:00+00:00",
+   "ceiling_ft": 4000,
+   "vis_sm": 8.0,
+   "wx": "",
+   "raw": "METAR CYCG 110000Z 00000KT 8SM FEW005 OVC040 07/07 A3022 RMK CF1SC8 CF TR LAST STFD OBS/NXT 111300Z SLP246"
+  },
   "wx_when_seen": null,
   "taf_when_seen": null,
   "photos": [],
   "source": "airport board",
-  "wx_note": "Trail has no weather station; Castlegar report shown."
+  "wx_note": "Trail has no weather station; Castlegar report shown.",
+  "red": [
+   {
+    "name": "Red Mountain, Granite (16:30)",
+    "src": "history/img/2026-11-10_YZZ_1632_granite.jpg"
+   },
+   {
+    "name": "Red Mountain, Greyline (16:30)",
+    "src": "history/img/2026-11-10_YZZ_1632_greyline.jpg"
+   }
+  ]
  },
  {
   "date": "2026-11-10",

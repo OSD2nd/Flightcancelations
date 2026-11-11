@@ -7,13 +7,18 @@
   "via": "Vancouver",
   "sched": "18:57",
   "shown_time": "18:57",
-  "status": "On Time",
+  "status": "Late",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
     "On Time",
+    "18:57"
+   ],
+   [
+    "2026-11-10T19:13",
+    "Late",
     "18:57"
    ]
   ]
@@ -28,7 +33,7 @@
   "shown_time": "22:37",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -45,13 +50,18 @@
   "via": "Victoria",
   "sched": "16:57",
   "shown_time": "16:57",
-  "status": "On Time",
+  "status": "Arrived",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
     "On Time",
+    "16:57"
+   ],
+   [
+    "2026-11-10T19:13",
+    "Arrived",
     "16:57"
    ]
   ]
@@ -83,13 +93,18 @@
   "via": "Vancouver",
   "sched": "19:35",
   "shown_time": "19:35",
-  "status": "On Time",
+  "status": "Delayed at 20:05",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
     "On Time",
+    "19:35"
+   ],
+   [
+    "2026-11-10T19:13",
+    "Delayed at 20:05",
     "19:35"
    ]
   ]
@@ -102,13 +117,18 @@
   "via": "Victoria",
   "sched": "17:25",
   "shown_time": "17:25",
-  "status": "On Time",
+  "status": "Departed",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
     "On Time",
+    "17:25"
+   ],
+   [
+    "2026-11-10T19:13",
+    "Departed",
     "17:25"
    ]
   ]
@@ -142,7 +162,7 @@
   "shown_time": "09:47",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -161,7 +181,7 @@
   "shown_time": "14:57",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -180,7 +200,7 @@
   "shown_time": "18:57",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -199,7 +219,7 @@
   "shown_time": "22:37",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -218,7 +238,7 @@
   "shown_time": "16:57",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -237,7 +257,7 @@
   "shown_time": "10:15",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -256,7 +276,7 @@
   "shown_time": "14:45",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -275,7 +295,7 @@
   "shown_time": "00:15",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -294,7 +314,7 @@
   "shown_time": "06:30",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -313,7 +333,7 @@
   "shown_time": "10:20",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -332,7 +352,7 @@
   "shown_time": "15:35",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -351,7 +371,7 @@
   "shown_time": "19:35",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -370,7 +390,7 @@
   "shown_time": "17:25",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -389,7 +409,7 @@
   "shown_time": "05:10",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -408,7 +428,7 @@
   "shown_time": "15:20",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -427,7 +447,7 @@
   "shown_time": "10:50",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -446,7 +466,7 @@
   "shown_time": "09:47",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -465,7 +485,7 @@
   "shown_time": "14:57",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -484,7 +504,7 @@
   "shown_time": "22:37",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -503,7 +523,7 @@
   "shown_time": "16:57",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -522,7 +542,7 @@
   "shown_time": "10:15",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -541,7 +561,7 @@
   "shown_time": "14:45",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -560,7 +580,7 @@
   "shown_time": "00:15",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -579,7 +599,7 @@
   "shown_time": "06:30",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -598,7 +618,7 @@
   "shown_time": "10:20",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -617,7 +637,7 @@
   "shown_time": "15:35",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -636,7 +656,7 @@
   "shown_time": "17:25",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -655,7 +675,7 @@
   "shown_time": "05:10",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -674,7 +694,7 @@
   "shown_time": "15:20",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -693,7 +713,7 @@
   "shown_time": "10:50",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -712,7 +732,7 @@
   "shown_time": "09:47",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -731,7 +751,7 @@
   "shown_time": "18:57",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -750,7 +770,7 @@
   "shown_time": "16:57",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -769,7 +789,7 @@
   "shown_time": "10:15",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -788,7 +808,7 @@
   "shown_time": "14:45",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -807,7 +827,7 @@
   "shown_time": "00:15",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -826,7 +846,7 @@
   "shown_time": "06:30",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -845,7 +865,7 @@
   "shown_time": "10:20",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -864,7 +884,7 @@
   "shown_time": "19:35",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -883,7 +903,7 @@
   "shown_time": "17:25",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -902,7 +922,7 @@
   "shown_time": "05:10",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -921,7 +941,7 @@
   "shown_time": "15:20",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -940,7 +960,7 @@
   "shown_time": "10:50",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
@@ -959,7 +979,7 @@
   "shown_time": "00:15",
   "status": "On Time",
   "first_seen": "2026-11-10T15:21",
-  "last_seen": "2026-11-10T15:21",
+  "last_seen": "2026-11-10T19:13",
   "changes": [
    [
     "2026-11-10T15:21",
