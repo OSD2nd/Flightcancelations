@@ -64,6 +64,7 @@ def fetch_smoke(lat, lon, start, end):
 
 # ---- cache: fetch the model forecast every couple of hours and reuse it in between ----
 CACHE_DIR = ".cache/weather"     # kept between GitHub runs with actions/cache (not committed)
+FETCHED = {}                     # name -> when the data in use was actually fetched (epoch seconds)
 
 
 def _cache_path(name):
@@ -88,14 +89,17 @@ def cached(name, fetch, fresh_hours=2, keep_hours=30):
     def unpack(d):
         return {datetime.fromisoformat(k): v for k, v in d.items()}
     if saved and age < fresh_hours:
+        FETCHED[name] = saved["at"]
         return unpack(saved["data"]), None
     try:
         data = fetch()
         with open(path, "w") as f:
             json.dump({"at": time.time(), "data": {k.isoformat(): v for k, v in data.items()}}, f)
+        FETCHED[name] = time.time()
         return data, None
     except Exception as e:
         if saved and age < keep_hours:
+            FETCHED[name] = saved["at"]
             return unpack(saved["data"]), f"using the forecast from {age:.0f} h ago ({e})"
         raise
 

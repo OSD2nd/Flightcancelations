@@ -273,6 +273,9 @@ def main():
                               if mets.get(s) or tafs.get(s)},
                "flight_status_checked": live.get("checked") if live.get("date") == today.isoformat() else None,
                "utc_offset": clock.OFFSET, "day_wx": day_forecast(wx, days, cfg),
+               "weather_updated": (datetime.fromtimestamp(min(v for k, v in weather.FETCHED.items() if k.startswith("model_")),
+                                                          timezone.utc).isoformat(timespec="minutes")
+                                   if any(k.startswith("model_") for k in weather.FETCHED) else None),
                "notes": notes, "webcams": cams, "airport_cams": cfg.get("airport_cams", []),
                "flights": results, "history_stats": [] if a.demo else _safe_stats(cfg)}
     with open(OUT, "w") as f:
