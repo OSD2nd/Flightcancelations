@@ -69,13 +69,36 @@ def record(results, now, mets=None, stations=None, to_utc=None):
             json.dump(recs, f, separators=(",", ":"))
 
 
-def settle(rec, date, now):
-    """Final outcome; if the airline never posted 'Departed/Arrived' (our last status check can
-    be before an evening flight), a flight last seen on schedule within 3 h of its time, and now
-    well past, is counted as 'Flew (probably)'."""
+OPENSKY_LOG = "data/collect/flights.csv"
+ICAO = {"YZZ": "CAD4", "YCG": "CYCG"}
+
+
+def opensky_index():
+    """{(date, ICAO, 'arr'/'dep'): [minutes after midnight, ...]} from the nightly OpenSky log."""
+    import csv
+    idx = {}
+    try:
+        with open(OPENSKY_LOG) as f:
+            for r in csv.DictReader(f):
+                if r.get("local_time"):
+                    h, m = map(int, r["local_time"].split(":"))
+                    idx.setdefault((r["date"], r["airport"], r["direction"]), []).append(h * 60 + m)
+    except FileNotFoundError:
+        pass
+    return idx
+
+
+def settle(rec, date, now, airport=None, seen=None):
+    """Final outcome. If the airline never posted 'Departed/Arrived':
+    - the nightly OpenSky log saw a plane leave/arrive within 90 min of the time -> 'Flew (seen by OpenSky)'
+    - last seen on schedule within 3 h of the flight, now well past -> 'Flew (probably)'."""
     if rec.get("outcome"):
         return rec["outcome"]
     t = datetime.fromisoformat(f"{date}T{rec['sched']}")
+    if seen is not None and airport in ICAO and now > t:
+        mins = t.hour * 60 + t.minute
+        if any(abs(x - mins) <= 90 for x in seen.get((date, ICAO[airport], rec.get("direction", "dep")), [])):
+            return "Flew (seen by OpenSky)"
     at = rec.get("last_status_at")
     if (at and now > t + timedelta(hours=3) and t - datetime.fromisoformat(at) <= timedelta(hours=3)
             and not str(rec.get("last_status", "")).lower().startswith(("cancel", "divert"))):
@@ -86,11 +109,12 @@ def settle(rec, date, now):
 def publish(today, days_back=45, now=None):
     cutoff = (today - timedelta(days=days_back)).isoformat()
     out = {}
+    seen = opensky_index()
     for path in sorted(glob.glob(f"{DIR}/*.json")):
         for k, v in _load(path).items():
             if k.split("|")[0] >= cutoff:
                 if now is not None:
-                    o = settle(v, k.split("|")[0], now)
+                    o = settle(v, k.split("|")[0], now, k.split("|")[1], seen)
                     if o and not v.get("outcome"):
                         v = {**v, "outcome": o}
                 out[k] = v
