@@ -39,7 +39,16 @@ button:disabled{opacity:.55;cursor:default}
 .fx th:first-child,.fx td:first-child{text-align:left}.fx th{color:var(--mute);font-weight:600;font-size:.75rem}
 .fx tr.fl td{font-weight:700;background:color-mix(in srgb,var(--accent) 10%,transparent)}
 .fx td.bad{color:var(--severe);font-weight:700}.fx td.meh{color:var(--watch);font-weight:700}
-.fx h3{font-size:.9rem;margin:4px 0 6px}#dayfilter{font-size:.85rem;color:var(--mute);margin:4px 0}
+.fx h3{font-size:.9rem;margin:4px 0 6px}
+.w7{display:grid;gap:6px}
+.w7 button{display:grid;grid-template-columns:5.2em 1.8em 1fr auto;align-items:center;gap:8px;text-align:left;font:inherit;
+  background:var(--card);color:var(--ink);border:1px solid var(--line);border-left-width:5px;border-radius:10px;padding:8px 10px;cursor:pointer}
+.w7 button.LOW{border-left-color:var(--low)}.w7 button.WATCH{border-left-color:var(--watch)}.w7 button.HIGH{border-left-color:var(--high)}.w7 button.SEVERE{border-left-color:var(--severe)}
+.w7 .d{font-weight:700;font-size:.9rem}.w7 .d small{display:block;font-weight:400;color:var(--mute);font-size:.75rem}
+.w7 .ic{font-size:1.4rem;line-height:1}.w7 .tx{font-size:.85rem}.w7 .tx b{font-size:.95rem}
+.w7 .tx span{color:var(--mute)}.w7 .rk{font-weight:700;font-size:1.05rem;text-align:right}.w7 .rk small{display:block;font-weight:400;font-size:.7rem;color:var(--mute)}
+.w7 button .d,.w7 button .tx,.w7 button .ic{color:var(--ink)}.w7 button .tx span,.w7 button .d small,.w7 button .rk small{color:var(--mute)}
+.w7 button.LOW .rk{color:var(--low)}.w7 button.WATCH .rk{color:var(--watch)}.w7 button.HIGH .rk{color:var(--high)}.w7 button.SEVERE .rk{color:var(--severe)}#dayfilter{font-size:.85rem;color:var(--mute);margin:4px 0}
 .day.LOW{border-top-color:var(--low)}.day.WATCH{border-top-color:var(--watch)}.day.HIGH{border-top-color:var(--high)}.day.SEVERE{border-top-color:var(--severe)}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:8px 0;border-left-width:6px}
 .card.LOW{border-left-color:var(--low)}.card.WATCH{border-left-color:var(--watch)}.card.HIGH{border-left-color:var(--high)}.card.SEVERE{border-left-color:var(--severe)}
@@ -131,8 +140,9 @@ details summary{cursor:pointer;font-size:.85rem;color:var(--accent)}
 <div id="app"></div>
 <h2 id="nowhead">Airport weather now</h2>
 <div id="airportwx" class="wxgrid"><div class="sub">Official reports appear after the next check.</div></div>
-<h2>Airport webcams</h2>
-<div id="apcams"><div class="sub">Webcams appear after the next check.</div></div>
+<h2 id="weekhead">7-day forecast</h2>
+<div class="seg" id="wkplace"></div>
+<div id="week7"><div class="sub">The forecast appears after the next check.</div></div>
 <h2>Weather map</h2>
 <div class="seg" id="layers">
   <button type="button" data-o="satellite" class="on">Satellite</button>
@@ -157,6 +167,8 @@ details summary{cursor:pointer;font-size:.85rem;color:var(--accent)}
 </div>
 <div class="mapwrap"><iframe id="tracker" title="Live flight tracker" loading="lazy"></iframe></div>
 <div class="sub" style="margin-top:4px"><a id="trkfull" href="https://globe.adsbexchange.com/?lat=49.2&lon=-117.62&zoom=9" target="_blank" rel="noopener">Open full tracker ↗</a> (use this if the map above says it couldn't verify). Live map from <a href="https://www.adsbexchange.com/" target="_blank" rel="noopener">ADS-B Exchange</a> (volunteer receivers). Planes low in the valleys around Trail and Castlegar can drop off it. Tap a plane for details.</div>
+<h2>Airport webcams</h2>
+<div id="apcams"><div class="sub">Webcams appear after the next check.</div></div>
 <h2>Red Mountain webcams (over the valley)</h2>
 <div id="cams" class="cam"><div class="sub">Webcams appear after the next check.</div></div>
 <h2>What past cancellations looked like</h2>
@@ -215,6 +227,7 @@ function render(d){
   renderFlights();
   $('notes').innerHTML=(d.notes||[]).map(n=>'<div class="banner">'+esc(n)+'</div>').join('');
   renderAirportWx(d.airport_wx||{});
+  renderWeek7();
   renderCams(d.webcams);
   renderApCams(d.airport_cams);
   if(d.history_stats&&d.history_stats.length){
@@ -231,6 +244,47 @@ const STATUS={Expected:'On schedule',Unknown:'Unknown',EnRoute:'In the air',Chec
   GateClosed:'Gate closed',Departed:'Departed',Delayed:'Delayed',Approaching:'Landing soon',Arrived:'Arrived',
   Canceled:'Cancelled',Diverted:'Diverted',CanceledUncertain:'Possibly cancelled',Scheduled:'On schedule'};
 const CAT={VFR:'Good flying weather',MVFR:'Marginal',IFR:'Poor — instruments only',LIFR:'Very poor'};
+// ---- 7-day forecast: one line per day, from the saved hourly forecast (7 am - 7 pm) ----
+let wkPlace=null;
+const WMO=c=>c==null?['❔','']:c>=95?['⛈️','Thunderstorms']:c>=85?['🌨️','Snow showers']:c>=80?['🌦️','Showers']:c>=71?['🌨️','Snow']:
+  c>=66?['🧊','Freezing rain']:c>=61?['🌧️','Rain']:c>=56?['🧊','Freezing drizzle']:c>=51?['🌦️','Drizzle']:c>=45?['🌫️','Fog']:c>=3?['☁️','Cloudy']:c>=1?['⛅','Partly cloudy']:['☀️','Clear'];
+function renderWeek7(){
+  const d=current;if(!d||!d.day_wx)return;
+  const days=Object.keys(d.day_wx).sort();
+  const places=['YCG','YZZ','HUB'].filter(p=>days.some(k=>d.day_wx[k][p]));
+  if(!places.length)return;
+  if(!wkPlace||!places.includes(wkPlace))wkPlace=selAp!=='all'&&places.includes(selAp)?selAp:places[0];
+  const label=p=>p==='HUB'?'Vancouver':AP[p]||p;
+  $('wkplace').innerHTML=places.map(p=>`<button type="button" data-p="${p}" class="${p===wkPlace?'on':''}">${esc(label(p))}</button>`).join('');
+  $('wkplace').querySelectorAll('button').forEach(b=>b.onclick=()=>{wkPlace=b.dataset.p;renderWeek7()});
+  const today=d.today||days[0];
+  const r1=v=>Math.round(v*10)/10;
+  $('week7').innerHTML='<div class="w7">'+days.map((day,i)=>{
+    const rows=(d.day_wx[day][wkPlace]||{}).rows||[];
+    if(!rows.length)return '';
+    const vals=k=>rows.map(r=>r[k]).filter(v=>v!=null);
+    const mx=k=>{const v=vals(k);return v.length?Math.max(...v):null}, mn=k=>{const v=vals(k);return v.length?Math.min(...v):null};
+    const sum=k=>{const v=vals(k);return v.length?r1(v.reduce((a,b)=>a+b,0)):null};
+    const codes=vals('code');const worst=codes.length?Math.max(...codes):null;   // worst weather of the day sets the icon
+    const [icon,words]=WMO(worst);
+    const hi=mx('temp'),lo=mn('temp'),rain=sum('rain'),snow=sum('snow'),gust=mx('gust'),low=mx('low'),vis=mn('vis'),smoke=mx('smoke');
+    const bits=[];
+    if(snow)bits.push(`${snow} cm snow`);else if(rain)bits.push(`${rain} mm rain`);
+    if(low!=null&&low>=80)bits.push('low cloud');
+    if(vis!=null&&vis<4.8)bits.push(`vis ${vis} km`);
+    if(gust!=null&&gust>=35)bits.push(`gusts ${gust} km/h`);
+    if(smoke!=null&&smoke>=35)bits.push(smoke>=100?'thick smoke':'smoky');
+    const fl=(d.flights||[]).filter(f=>f.date===day&&(wkPlace==='HUB'||f.airport===wkPlace));
+    const top=fl.length?fl.reduce((m,f)=>f.risk>m.risk?f:m,fl[0]):null;
+    return `<button type="button" class="${top?top.level:''}" data-day="${day}">
+      <span class="d">${esc(i<2?dayLabel(day,today,i):shortDay(day).split(',')[0])}<small>${esc(shortDay(day).split(', ').pop())}</small></span>
+      <span class="ic" title="${esc(words)}">${icon}</span>
+      <span class="tx"><b>${hi!=null?Math.round(hi)+'°':''}</b>${lo!=null?` <span>/ ${Math.round(lo)}°</span>`:''} ${esc(words)}${bits.length?'<br><span>'+esc(bits.join(' · '))+'</span>':''}</span>
+      <span class="rk">${top?Math.round(top.risk*100)+'%':''}<small>${top?'flight risk':''}</small></span></button>`;
+  }).join('')+'</div><div class="sub" style="margin-top:6px">Daytime (7 am – 7 pm). Icon = the worst weather of the day. Tap a day to see its flights and hourly forecast.</div>';
+  $('week7').querySelectorAll('[data-day]').forEach(b=>b.onclick=()=>{selDay=b.dataset.day;renderFlights();$('app').scrollIntoView({behavior:'smooth',block:'start'})});
+}
+
 // ---- flight list: airport filter + tap a day to see just that day ----
 const AP={YCG:'Castlegar',YZZ:'Trail'};
 let selDay=null, selAp=(()=>{try{return localStorage.getItem('kfa.ap')||'all'}catch(e){return 'all'}})();
@@ -308,7 +362,7 @@ function renderFlights(){
   });
 }
 document.querySelectorAll('#apfilter button').forEach(b=>b.onclick=()=>{
-  selAp=b.dataset.ap;try{localStorage.setItem('kfa.ap',selAp)}catch(e){}renderFlights();});
+  selAp=b.dataset.ap;try{localStorage.setItem('kfa.ap',selAp)}catch(e){}wkPlace=null;renderFlights();renderWeek7();});
 
 function renderAirportWx(w){
   const ids=Object.keys(w);
