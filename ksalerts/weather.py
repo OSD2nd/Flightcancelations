@@ -19,6 +19,9 @@ def _get(url, tries=3):
     raise RuntimeError(f"weather fetch failed: {last}")
 
 
+MODEL = None   # set from config "weather_model" (e.g. gem_seamless = Environment Canada)
+
+
 def fetch_hourly(lat, lon, start, end, historical=False, tz=None):
     """Return {naive local datetime (hour): {var: value}} for start..end dates inclusive.
     Times come back in UTC and are shifted to local with clock.OFFSET (see clock.py)."""
@@ -27,11 +30,23 @@ def fetch_hourly(lat, lon, start, end, historical=False, tz=None):
             else "https://api.open-meteo.com/v1/forecast")
     q = dict(latitude=lat, longitude=lon, hourly=HOURLY, timezone="GMT",
              start_date=start.isoformat(), end_date=(end + timedelta(days=1)).isoformat())
-    try:  # with cloud at valley/ridge height; fall back if the server refuses those
-        data = _get(base + "?" + urllib.parse.urlencode({**q, "hourly": HOURLY + "," + LEVELS}))
-    except RuntimeError:
-        data = _get(base + "?" + urllib.parse.urlencode(q))
+    def get(extra):
+        try:  # with cloud at valley/ridge height; fall back if the server refuses those
+            return _get(base + "?" + urllib.parse.urlencode({**q, **extra, "hourly": HOURLY + "," + LEVELS}))
+        except RuntimeError:
+            return _get(base + "?" + urllib.parse.urlencode({**q, **extra}))
+    data = get({"models": MODEL} if MODEL and not historical else {})
     h = data["hourly"]
+    if MODEL and not historical:
+        # anything this model doesn't provide (all empty) is filled from the default blend
+        missing = [k for k in (HOURLY + "," + LEVELS).split(",") if k in h and all(v is None for v in h[k])]
+        missing += [k for k in (HOURLY + "," + LEVELS).split(",") if k not in h]
+        if missing:
+            fill = _get(base + "?" + urllib.parse.urlencode({**q, "hourly": ",".join(missing)}))["hourly"]
+            idx = {t: i for i, t in enumerate(fill["time"])}
+            for k in missing:
+                if k in fill:
+                    h[k] = [fill[k][idx[t]] if t in idx else None for t in h["time"]]
     keys = [k for k in (HOURLY + "," + LEVELS).split(",") if k in h]
     out = {}
     for i, t in enumerate(h["time"]):

@@ -41,6 +41,9 @@ button:disabled{opacity:.55;cursor:default}
 .fx td.bad{color:var(--severe);font-weight:700}.fx td.meh{color:var(--watch);font-weight:700}
 .fx h3{font-size:.9rem;margin:4px 0 6px}
 .w7{display:grid;gap:6px}
+.ec{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:10px 0}
+.ec h3{font-size:.9rem;margin:0 0 6px}.ec dl{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;margin:0;font-size:.88rem}
+.ec dt{font-weight:700;white-space:nowrap}.ec dd{margin:0}.ec .warn{background:#fde68a;color:#422;border-radius:8px;padding:6px 10px;margin:6px 0;font-size:.88rem;font-weight:600}
 .w7 button{display:grid;grid-template-columns:5.2em 1.8em 1fr auto;align-items:center;gap:8px;text-align:left;font:inherit;
   background:var(--card);color:var(--ink);border:1px solid var(--line);border-left-width:5px;border-radius:10px;padding:8px 10px;cursor:pointer}
 .w7 button.LOW{border-left-color:var(--low)}.w7 button.WATCH{border-left-color:var(--watch)}.w7 button.HIGH{border-left-color:var(--high)}.w7 button.SEVERE{border-left-color:var(--severe)}
@@ -146,6 +149,7 @@ details summary{cursor:pointer;font-size:.85rem;color:var(--accent)}
 <h2 id="weekhead">7-day forecast</h2>
 <div class="seg" id="wkplace"></div>
 <div id="week7"><div class="sub">The forecast appears after the next check.</div></div>
+<div id="official"></div>
 <h2>Weather map</h2>
 <div class="seg" id="layers">
   <button type="button" data-o="satellite" class="on">Satellite</button>
@@ -309,7 +313,19 @@ function renderWeek7(){
       <span class="tx"><b>${hi!=null?Math.round(hi)+'°':''}</b>${lo!=null?` <span>/ ${Math.round(lo)}°</span>`:''} ${esc(words)}${bits.length?'<br><span>'+esc(bits.join(' · '))+'</span>':''}</span>
       <span class="rk">${top?Math.round(top.risk*100)+'%':''}<small>${top?'flight risk':''}</small></span></button>`;
   }).join('')+'</div><div class="sub" style="margin-top:6px">Daytime (7 am – 7 pm). Icon = the worst weather of the day. Tap a day to see its flights and hourly forecast.</div>';
+  renderOfficial();
   $('week7').querySelectorAll('[data-day]').forEach(b=>b.onclick=()=>{selDay=b.dataset.day;renderFlights();$('app').scrollIntoView({behavior:'smooth',block:'start'})});
+}
+
+// ---- Environment Canada's official forecast (weather.gc.ca) for the place picked in the 7-day forecast ----
+function officialFor(code){return ((current||{}).official||{})[code]}
+function renderOfficial(){
+  const fc=officialFor(wkPlace);
+  if(!fc){$('official').innerHTML='';return}
+  const w=(fc.warnings||[]).map(t=>`<div class="warn">⚠ ${esc(t)}</div>`).join('');
+  $('official').innerHTML=`<div class="ec"><h3>Environment Canada forecast — ${esc(fc.name)}</h3>${w}
+    <dl>${(fc.periods||[]).slice(0,8).map(p=>`<dt>${esc(p.name)}</dt><dd>${esc(p.summary)}</dd>`).join('')}</dl>
+    <div class="sub" style="margin-top:6px">Official public forecast from <a href="${esc(fc.url||'https://weather.gc.ca')}" target="_blank" rel="noopener">weather.gc.ca</a>, issued ${esc(tUTC(fc.updated,{weekday:'short',...HM}))}. Mentions of fog, low cloud, freezing rain or heavy snow near a flight time count toward its risk.</div></div>`;
 }
 
 // ---- flight list: airport filter + tap a day to see just that day ----
@@ -340,7 +356,9 @@ function dayForecast(d,day,fl){
   const n=(v,u='')=>v==null?'—':v+u;
   // only show the smoke column when there's some smoke in the forecast for this day
   const hasSmoke=places.some(p=>fx[p].rows.some(r=>r.smoke!=null&&r.smoke>=15));
-  return '<div class="fx"><div class="sub" style="margin-bottom:6px">Hourly forecast for this day. ✈ = around a flight time. Red = the conditions that usually ground flights here.</div>'+
+  const offl=places.map(p=>{const fc=officialFor(p);if(!fc)return '';const per=(fc.periods||[]).filter(x=>x.date===day);
+    return per.length?`<div style="margin-bottom:6px"><b>${esc(fc.name)}</b> — Environment Canada: ${per.map(x=>`<b>${esc(x.name)}:</b> ${esc(x.summary)}`).join(' ')}</div>`:''}).join('');
+  return '<div class="fx">'+offl+'<div class="sub" style="margin-bottom:6px">Hourly forecast for this day. ✈ = around a flight time. Red = the conditions that usually ground flights here.</div>'+
     places.map(p=>{const fh=flightHours(p);return `<h3>${esc(fx[p].name)}${p==='HUB'?' (arrival/departure end)':''}</h3><table>
     <tr><th>Time</th><th>Low cloud</th><th>Valley cloud</th><th>Visibility</th>${hasSmoke?'<th title="Fine particles from wildfire smoke, µg/m³">Smoke</th>':''}<th>Rain</th><th>Snow</th><th>Gusts</th></tr>`+
     fx[p].rows.map(r=>`<tr class="${fh.has(r.h)?'fl':''}"><td>${fh.has(r.h)?'✈ ':''}${esc(r.h)}</td>

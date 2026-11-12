@@ -11,7 +11,7 @@ FEATURES = [
     "snow_03", "snow_10", "freezing", "fog", "tstorm",
     "hub_vis_lt_1_6", "hub_gust_60", "ceil_lt_1000", "ceil_lt_3000",
     "rain", "valley_cloud", "ridge_cloud", "wet_low_cloud", "ceil_lt_4000",
-    "smoke", "smoke_heavy", "low_patches",
+    "smoke", "smoke_heavy", "low_patches", "ec_fog", "ec_wintry", "ec_warning",
 ]
 
 PRIOR = {
@@ -35,6 +35,8 @@ PRIOR = {
     # Patches of cloud/fog under 1,000 ft (FEW/SCT, not a solid layer). On 11 Nov 2026 this
     # alone cancelled Trail's morning flights while we said 4%.
     "low_patches": 2.0,
+    # Environment Canada's official forecast wording around the flight time
+    "ec_fog": 1.2, "ec_wintry": 1.2, "ec_warning": 0.6,
 }
 
 LABELS = {
@@ -49,6 +51,8 @@ LABELS = {
     "ceil_lt_4000": "Cloud base under 4,000 ft",
     "smoke": "Wildfire smoke", "smoke_heavy": "Thick wildfire smoke",
     "low_patches": "Low cloud or fog patches under 1,000 ft",
+    "ec_fog": "Environment Canada forecasts fog or low cloud", "ec_wintry": "Environment Canada forecasts freezing rain or heavy snow",
+    "ec_warning": "Environment Canada weather warning in effect",
 }
 
 
@@ -56,7 +60,7 @@ def _vals(rows, key):
     return [r[key] for r in rows if r.get(key) is not None]
 
 
-def extract(origin_rows, hub_rows, origin_av=None, hub_av=None):
+def extract(origin_rows, hub_rows, origin_av=None, hub_av=None, ec=None):
     """origin_rows/hub_rows: hourly weather-model dicts around departure / arrival.
     origin_av/hub_av: official airport conditions from aviation.conditions(), if any."""
     f = {k: 0 for k in FEATURES}
@@ -98,8 +102,14 @@ def extract(origin_rows, hub_rows, origin_av=None, hub_av=None):
         f["hub_gust_60"] = int(bool(g) and max(g) >= 60)
     if origin_av:
         _apply_airport(f, origin_av)
+    if ec:
+        f["ec_fog"] = int(ec.get("fog", False))
+        f["ec_wintry"] = int(ec.get("wintry", False))
+        f["ec_warning"] = int(bool(ec.get("warnings")))
+        if ec.get("snow"):
+            f["snow_03"] = 1
     # cancellations so far had cloud bases of 3,000-3,500 ft with rain, so "low" here means under 4,000 ft
-    low_cloud = f["lowcloud_90"] or f["ceil_lt_4000"] or f["valley_cloud"] or f["low_patches"]
+    low_cloud = f["lowcloud_90"] or f["ceil_lt_4000"] or f["valley_cloud"] or f["low_patches"] or f["ec_fog"]
     wet = f["rain"] or f["snow_03"] or f["freezing"] or f["fog"]
     f["wet_low_cloud"] = int(bool(low_cloud and wet))
     if hub_av:

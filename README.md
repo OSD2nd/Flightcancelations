@@ -7,7 +7,12 @@ flight in the next 30 hours looks risky. Dashboard: https://osd2nd.github.io/Fli
 - **Official airport weather** (aviationweather.gov, free): Castlegar (CYCG) and
   Vancouver (CYVR) reports and pilots' forecasts. Gives cloud-base height, the
   thing that most often grounds Castlegar. Trail has no reports, so it uses Castlegar's.
-- **Weather-model forecast** (Open-Meteo, free): the 7-day outlook.
+- **Weather-model forecast**: Environment Canada's GEM models (via Open-Meteo, `weather_model`), fetched
+  every 2 h. Backups in order: MET Norway, the last good forecast (up to 7 days), Trail borrows Castlegar's.
+  Days with no forecast at all show "—".
+- **Environment Canada's official forecast** (weather.gc.ca city pages, `eccc_city`): hourly wording for 24 h,
+  daily periods and warnings, shown on the dashboard; fog/low cloud, freezing rain/heavy snow and warnings
+  near a flight time count toward its risk.
 - **Weather map**: embedded from Windy.com.
 - **Flights**: timetable in `config.json` (`static_schedule`, `static_arrivals`). With an
   `AERODATABOX_KEY` secret, real status (cancelled, delayed, new times) is checked at

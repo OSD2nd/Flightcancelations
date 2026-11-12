@@ -10,7 +10,7 @@ falling back to the sending address SMTP_USER. They are never written to the rep
 import argparse, json, os, re
 from datetime import date, datetime, timedelta, timezone
 
-from . import alert, aviation, clock, events, tracking, features as F, flights, history, weather, webcam
+from . import alert, aviation, clock, eccc, events, tracking, features as F, flights, history, weather, webcam
 
 OUT = "docs/latest.json"
 STATE = "data/state.json"
@@ -74,6 +74,7 @@ def main():
         cfg = json.load(f)
     tz = None
     clock.setup(cfg)
+    weather.MODEL = cfg.get("weather_model")
     now = (datetime.fromisoformat(a.now) if a.now
            else clock.now())
     today = now.date()
@@ -158,6 +159,16 @@ def main():
             except Exception as e:
                 print(f"[warn] smoke forecast failed for {code}: {e}")
 
+    # Environment Canada's official public forecast for each place (hourly words, periods, warnings)
+    official = {}
+    if not a.demo:
+        for code, ap_cfg in list(cfg["airports"].items()) + [("HUB", cfg["hub"])]:
+            if ap_cfg.get("eccc_city"):
+                try:
+                    official[code] = eccc.fetch(ap_cfg["eccc_city"])
+                except Exception as e:
+                    print(f"[warn] Environment Canada forecast failed for {code}: {e}")
+
     # official airport reports + forecasts (Trail has none, so it borrows Castlegar's)
     stations = sorted({c.get("wx_station") for c in list(cfg["airports"].values()) + [cfg["hub"]]} - {None})
     mets, tafs = {}, {}
@@ -192,12 +203,13 @@ def main():
         st = ap_cfg.get("wx_station")
         o_av = aviation.conditions(mets.get(st), tafs.get(st), to_utc(here)) if st else None
         h_av = aviation.conditions(mets.get(hub_st), tafs.get(hub_st), to_utc(there)) if hub_st else None
-        feats = F.extract(weather.window(wx[code], here, 1, 1), weather.window(wx["HUB"], there, 1, 1), o_av, h_av)
+        ec = eccc.signals(official.get(code), here, to_utc, today)
+        feats = F.extract(weather.window(wx[code], here, 1, 1), weather.window(wx["HUB"], there, 1, 1), o_av, h_av, ec)
         p = F.probability(feats, weights)
         why = F.reasons(feats, weights)
         forecast_p, forecast_why = p, why
         # no weather-model hours and no airport report/forecast: the number would just be the base rate
-        no_fc = not weather.window(wx[code], here, 1, 1) and o_av is None
+        no_fc = not weather.window(wx[code], here, 1, 1) and o_av is None and ec is None
         if history.is_cancelled(f["status"]):
             p, why = 1.0, ["Airline already shows this flight as cancelled"]
         elif "divert" in str(f["status"]).lower():
@@ -292,6 +304,10 @@ def main():
                               if mets.get(s) or tafs.get(s)},
                "flight_status_checked": live.get("checked") if live.get("date") == today.isoformat() else None,
                "utc_offset": clock.OFFSET, "day_wx": day_forecast(wx, days, cfg),
+               "official": {code: {"name": fc["name"], "updated": fc["updated"], "url": fc["url"],
+                                   "warnings": fc["warnings"],
+                                   "periods": eccc.period_dates(fc["periods"], today)[:12]}
+                            for code, fc in official.items()},
                "weather_updated": (datetime.fromtimestamp(min(v for k, v in weather.FETCHED.items() if k.startswith("model_")),
                                                           timezone.utc).isoformat(timespec="minutes")
                                    if any(k.startswith("model_") for k in weather.FETCHED) else None),
