@@ -61,3 +61,41 @@ def fetch_smoke(lat, lon, start, end):
     return {datetime.fromisoformat(t) + timedelta(hours=clock.OFFSET): v
             for t, v in zip(h["time"], h["pm2_5"]) if v is not None}
 
+
+# ---- cache: fetch the model forecast every couple of hours and reuse it in between ----
+CACHE_DIR = ".cache/weather"     # kept between GitHub runs with actions/cache (not committed)
+
+
+def _cache_path(name):
+    import os
+    os.makedirs(CACHE_DIR, exist_ok=True)
+    return f"{CACHE_DIR}/{name}.json"
+
+
+def cached(name, fetch, fresh_hours=2, keep_hours=30):
+    """Returns (data, note). Uses a saved copy younger than fresh_hours; otherwise fetches,
+    and if that fails falls back to a saved copy up to keep_hours old (with a note)."""
+    import json, os
+    path = _cache_path(name)
+    saved = None
+    if os.path.exists(path):
+        try:
+            with open(path) as f:
+                saved = json.load(f)
+        except Exception:
+            saved = None
+    age = (time.time() - saved["at"]) / 3600 if saved else None
+    def unpack(d):
+        return {datetime.fromisoformat(k): v for k, v in d.items()}
+    if saved and age < fresh_hours:
+        return unpack(saved["data"]), None
+    try:
+        data = fetch()
+        with open(path, "w") as f:
+            json.dump({"at": time.time(), "data": {k.isoformat(): v for k, v in data.items()}}, f)
+        return data, None
+    except Exception as e:
+        if saved and age < keep_hours:
+            return unpack(saved["data"]), f"using the forecast from {age:.0f} h ago ({e})"
+        raise
+

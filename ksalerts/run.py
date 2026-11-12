@@ -111,19 +111,29 @@ def main():
 
     wx, notes = {}, []
     for code, ap_cfg in list(cfg["airports"].items()) + [("HUB", cfg["hub"])]:
+        if a.demo:
+            wx[code] = demo_weather(code, days)
+            continue
         try:
-            wx[code] = (demo_weather(code, days) if a.demo else
-                        weather.fetch_hourly(ap_cfg["lat"], ap_cfg["lon"], days[0], days[-1], False, tz))
+            wx[code], note = weather.cached(
+                f"model_{code}",
+                lambda ap_cfg=ap_cfg: weather.fetch_hourly(ap_cfg["lat"], ap_cfg["lon"], days[0], days[-1], False, tz))
+            if note:
+                notes.append(f"{ap_cfg['name']}: {note}.")
         except Exception as e:
             print(f"[warn] weather model forecast failed for {code}: {e}")
             wx[code] = {}
-            notes.append(f"Weather-model forecast unavailable for {ap_cfg['name']} this run.")
+            notes.append(f"Weather-model forecast unavailable for {ap_cfg['name']} this run ({e}). "
+                         "Days without it show — instead of a risk.")
 
     # wildfire smoke forecast (fine particles), merged into the same hourly rows
     if not a.demo:
         for code, ap_cfg in list(cfg["airports"].items()) + [("HUB", cfg["hub"])]:
             try:
-                for t, v in weather.fetch_smoke(ap_cfg["lat"], ap_cfg["lon"], days[0], days[-1]).items():
+                smoke, _ = weather.cached(
+                    f"smoke_{code}", lambda ap_cfg=ap_cfg: weather.fetch_smoke(ap_cfg["lat"], ap_cfg["lon"], days[0], days[-1]),
+                    fresh_hours=3)
+                for t, v in smoke.items():
                     if t in wx[code]:
                         wx[code][t]["pm2_5"] = v
             except Exception as e:
@@ -167,6 +177,8 @@ def main():
         p = F.probability(feats, weights)
         why = F.reasons(feats, weights)
         forecast_p, forecast_why = p, why
+        # no weather-model hours and no airport report/forecast: the number would just be the base rate
+        no_fc = not weather.window(wx[code], here, 1, 1) and o_av is None
         if history.is_cancelled(f["status"]):
             p, why = 1.0, ["Airline already shows this flight as cancelled"]
         elif "divert" in str(f["status"]).lower():
@@ -186,6 +198,7 @@ def main():
             "airport_wx": (o_av["source"] + (f" ({st})" if st != code and st else "")) if o_av else None,
             "ceiling_ft": o_av["ceiling_ft"] if o_av else None,
             "forecast_risk": round(forecast_p, 3), "forecast_reasons": forecast_why,
+            "no_forecast": no_fc and not history.is_cancelled(f["status"]) and "divert" not in str(f["status"]).lower(),
             "flags": [k for k, v in feats.items() if v]}
 
     def link_aircraft(rs):
@@ -276,7 +289,7 @@ def main():
     # ---- alerts: flights leaving in the next alert_window_hours, once per flight per level ----
     horizon = now + timedelta(hours=cfg.get("alert_window_hours", 30))
     new = []
-    for r in (results if may_email else []):
+    for r in ([r for r in results if not r.get("no_forecast")] if may_email else []):
         dep = datetime.fromisoformat(f"{r['date']}T{r['dep_local']}")
         if not (now <= dep <= horizon) or r["risk"] < cfg["alert_threshold"]:
             continue

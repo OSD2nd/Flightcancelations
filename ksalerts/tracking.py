@@ -49,7 +49,7 @@ def record(results, now, mets=None, stations=None, to_utc=None):
         rec = recs.setdefault(key, {"sched": r["dep_local"], "direction": r["direction"], "p": []})
         pct = round(100 * r.get("forecast_risk", r["risk"]))
         flight_time = datetime.fromisoformat(f"{r['date']}T{r['dep_local']}")
-        if now <= flight_time + timedelta(minutes=30):
+        if now <= flight_time + timedelta(minutes=30) and not r.get("no_forecast"):
             last = rec["p"][-1] if rec["p"] else None
             if (last is None or abs(pct - last[1]) >= 5
                     or now - datetime.fromisoformat(last[0]) >= timedelta(hours=3)):

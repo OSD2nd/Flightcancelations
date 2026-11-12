@@ -301,7 +301,7 @@ function renderWeek7(){
     if(vis!=null&&vis<4.8)bits.push(`vis ${vis} km`);
     if(gust!=null&&gust>=35)bits.push(`gusts ${gust} km/h`);
     if(smoke!=null&&smoke>=35)bits.push(smoke>=100?'thick smoke':'smoky');
-    const fl=(d.flights||[]).filter(f=>f.date===day&&(wkPlace==='HUB'||f.airport===wkPlace));
+    const fl=(d.flights||[]).filter(f=>f.date===day&&(wkPlace==='HUB'||f.airport===wkPlace)&&!f.no_forecast);
     const top=fl.length?fl.reduce((m,f)=>f.risk>m.risk?f:m,fl[0]):null;
     return `<button type="button" class="${top?top.level:''}" data-day="${day}">
       <span class="d">${esc(i<2?dayLabel(day,today,i):shortDay(day).split(',')[0])}<small>${esc(shortDay(day).split(', ').pop())}</small></span>
@@ -316,16 +316,16 @@ function renderWeek7(){
 const AP={YCG:'Castlegar',YZZ:'Trail'};
 let selDay=null, selAp=(()=>{try{return localStorage.getItem('kfa.ap')||'all'}catch(e){return 'all'}})();
 function card(f){
-  const pct=Math.round(f.risk*100);
+  const pct=Math.round(f.risk*100), nofc=!!f.no_forecast;
   const arr=f.direction==='arr', canc=/^cancel/i.test(f.status), maybe=/uncertain/i.test(f.status), div=/divert/i.test(f.status);
   const badge=canc?`<span class="badge">${maybe?'MAYBE CANCELLED':'CANCELLED'}</span>`:div?`<span class="badge">DIVERTED${f.diverted_to?' to '+esc(f.diverted_to):''}</span>`:f.expected_local?`<span class="badge late">now ${esc(f.expected_local)}</span>`:'';
   const other=arr?(f.from||'YVR'):(f.to||'YVR'), io=arr?'in':'out';
   const route=`<span class="route"><b>${esc(f.airport)}</b><span class="arrow ${io}">${arr?'←':'→'}</span>${esc(other)}</span>`;
   return `<div class="card ${f.level} ${esc(f.airport)}"><div class="row"><div><span class="dir ${io}">${arr?'Arriving from Vancouver':'Departing to Vancouver'}</span><br><b>${esc(f.flight)}</b> · ${route} · ${esc(f.dep_local)}${badge}
   <div class="sub">${esc(f.airline)}${f.inbound?' · plane comes in on '+esc(f.inbound):''}</div></div>
-  <div class="big">${pct}%</div></div>
-  <div class="bar"><i style="width:${Math.max(pct,2)}%"></i></div>
-  <div>${f.reasons.map(r=>'<span class="tag">'+esc(r)+'</span>').join('')||'<span class="tag">Nothing unusual in the forecast</span>'}</div>
+  <div class="big">${nofc?'—':pct+'%'}</div></div>
+  <div class="bar"><i style="width:${nofc?0:Math.max(pct,2)}%"></i></div>
+  <div>${nofc?'<span class="tag">No weather forecast this run — check back later</span>':(f.reasons.map(r=>'<span class="tag">'+esc(r)+'</span>').join('')||'<span class="tag">Nothing unusual in the forecast</span>')}</div>
   <div class="sub" style="margin-top:6px">${esc(f.level)} · ${f.schedule_source==='live'?'airline status: <b>'+esc(STATUS[f.status]||f.status)+'</b>':'status not checked yet · schedule from config'}${f.airport_wx?' · uses '+esc(f.airport_wx)+(f.ceiling_ft!=null?', cloud base '+Number(f.ceiling_ft).toLocaleString()+' ft':', no low ceiling'):''}</div></div>`;
 }
 // hourly forecast table for one day (Castlegar, Trail, Vancouver)
@@ -363,9 +363,10 @@ function renderFlights(){
   days.forEach((day,i)=>{
     const fl=flights.filter(f=>f.date===day);
     if(!fl.length)return;
-    const top=fl.reduce((m,f)=>f.risk>m.risk?f:m,fl[0]);
-    const per=aps.map(a=>{const x=fl.filter(f=>f.airport===a);return x.length?`${AP[a]} ${Math.round(Math.max(...x.map(f=>f.risk))*100)}%`:''}).filter(Boolean);
-    week+=`<button type="button" class="day ${top.level}${selDay===day?' sel':''}" data-day="${day}"><b>${esc(i<2?dayLabel(day,today,i):shortDay(day).split(',')[0])}</b><span>${Math.round(top.risk*100)}%</span>${aps.length>1?'<small>'+per.map(esc).join('<br>')+'</small>':''}</button>`;
+    const known=fl.filter(f=>!f.no_forecast);
+    const top=known.length?known.reduce((m,f)=>f.risk>m.risk?f:m,known[0]):null;
+    const per=aps.map(a=>{const x=known.filter(f=>f.airport===a);return fl.some(f=>f.airport===a)?`${AP[a]} ${x.length?Math.round(Math.max(...x.map(f=>f.risk))*100)+'%':'—'}`:''}).filter(Boolean);
+    week+=`<button type="button" class="day ${top?top.level:''}${selDay===day?' sel':''}" data-day="${day}"><b>${esc(i<2?dayLabel(day,today,i):shortDay(day).split(',')[0])}</b><span>${top?Math.round(top.risk*100)+'%':'—'}</span>${aps.length>1?'<small>'+per.map(esc).join('<br>')+'</small>':''}</button>`;
     if(selDay&&selDay!==day)return;
     html+=`<h2 id="d-${day}">${esc(dayLabel(day,today,i))} · ${esc(shortDay(day))}</h2>`;
     if(i>=3)html+='<div class="sub">Further out — treat as a rough early look.</div>';
