@@ -30,7 +30,8 @@
       "lon": -117.6089,
       "airline": "Pacific Coastal",
       "wx_station": "CYCG",
-      "note": "Trail has no official weather reports; uses Castlegar (CYCG), ~25 km away."
+      "note": "Trail has no official weather reports; uses Castlegar (CYCG), ~25 km away.",
+      "wx_fallback": "YCG"
     },
     "YCG": {
       "name": "Castlegar (West Kootenay Regional)",

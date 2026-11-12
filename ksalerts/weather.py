@@ -103,3 +103,61 @@ def cached(name, fetch, fresh_hours=2, keep_hours=30):
             return unpack(saved["data"]), f"using the forecast from {age:.0f} h ago ({e})"
         raise
 
+
+# ---- backup forecast: MET Norway (free, worldwide; asks callers to identify themselves) ----
+METNO = "https://api.met.no/weatherapi/locationforecast/2.0/complete"
+METNO_UA = "kootenay-flight-risk/1.0 github.com/OSD2nd/Flightcancelations"
+
+
+def _metno_code(sym):
+    """MET Norway symbol -> the WMO-style weather codes the rest of the tool uses."""
+    s = sym or ""
+    if "thunder" in s: return 95
+    if "sleet" in s: return 66
+    if "snow" in s: return 85 if "showers" in s else 73
+    if "rain" in s: return 80 if "showers" in s else (61 if "light" in s else 63)
+    if "fog" in s: return 45
+    if "cloudy" in s and "partly" not in s: return 3
+    if "partlycloudy" in s or "fair" in s: return 2
+    return 0 if "clearsky" in s else None
+
+
+def fetch_metno(lat, lon, start=None, end=None):
+    """Same shape as fetch_hourly: {naive local hour: {var: value}}. 6-hourly steps later in
+    the week are spread over their 6 hours. No visibility or gusts: visibility is estimated
+    from the fog share, gusts are left out."""
+    from . import clock
+    req = urllib.request.Request(f"{METNO}?lat={lat:.4f}&lon={lon:.4f}", headers={"User-Agent": METNO_UA})
+    last = None
+    for attempt in range(3):
+        try:
+            with urllib.request.urlopen(req, timeout=30) as r:
+                d = json.load(r)
+            break
+        except Exception as e:
+            last = e
+            time.sleep(4 * (attempt + 1))
+    else:
+        raise RuntimeError(f"MET Norway failed: {last}")
+    out = {}
+    for step in d["properties"]["timeseries"]:
+        t = datetime.fromisoformat(step["time"].replace("Z", "+00:00")).replace(tzinfo=None) + timedelta(hours=clock.OFFSET)
+        inst = step["data"]["instant"]["details"]
+        nxt, span = step["data"].get("next_1_hours"), 1
+        if not nxt:
+            nxt, span = step["data"].get("next_6_hours"), 6
+        sym = ((nxt or {}).get("summary") or {}).get("symbol_code")
+        pcp = ((nxt or {}).get("details") or {}).get("precipitation_amount")
+        per_h = pcp / span if pcp is not None else None
+        fog = inst.get("fog_area_fraction")
+        vis = None if fog is None else (500 if fog >= 50 else 3000 if fog >= 20 else 20000)
+        snowy = bool(sym) and ("snow" in sym or "sleet" in sym)
+        row = {"temperature_2m": inst.get("air_temperature"), "cloud_cover_low": inst.get("cloud_area_fraction_low"),
+               "precipitation": per_h, "snowfall": (per_h if snowy else 0.0) if per_h is not None else None,
+               "weather_code": _metno_code(sym), "visibility": vis,
+               "wind_speed_10m": round(inst["wind_speed"] * 3.6, 1) if inst.get("wind_speed") is not None else None,
+               "wind_gusts_10m": None, "source": "MET Norway"}
+        for h in range(span):
+            out.setdefault(t + timedelta(hours=h), dict(row))
+    return out
+

@@ -114,10 +114,20 @@ def main():
         if a.demo:
             wx[code] = demo_weather(code, days)
             continue
+        backup = []
+        def fetch_model(ap_cfg=ap_cfg, code=code):
+            try:
+                return weather.fetch_hourly(ap_cfg["lat"], ap_cfg["lon"], days[0], days[-1], False, tz)
+            except Exception as e1:
+                print(f"[warn] Open-Meteo failed for {code}: {e1}; trying MET Norway")
+                data = weather.fetch_metno(ap_cfg["lat"], ap_cfg["lon"])
+                backup.append(str(e1))
+                return data
         try:
-            wx[code], note = weather.cached(
-                f"model_{code}",
-                lambda ap_cfg=ap_cfg: weather.fetch_hourly(ap_cfg["lat"], ap_cfg["lon"], days[0], days[-1], False, tz))
+            # fresh every 2 h; if both sources fail, keep using the last good forecast for up to 7 days
+            wx[code], note = weather.cached(f"model_{code}", fetch_model, fresh_hours=2, keep_hours=168)
+            if backup:
+                notes.append(f"{ap_cfg['name']}: forecast from the backup source (MET Norway) this time.")
             if note:
                 notes.append(f"{ap_cfg['name']}: {note}.")
         except Exception as e:
@@ -125,6 +135,15 @@ def main():
             wx[code] = {}
             notes.append(f"Weather-model forecast unavailable for {ap_cfg['name']} this run ({e}). "
                          "Days without it show — instead of a risk.")
+
+    # an airport whose forecast didn't load borrows a nearby one's (Trail <- Castlegar, ~25 km)
+    for code, ap_cfg in cfg["airports"].items():
+        near = ap_cfg.get("wx_fallback")
+        if not wx.get(code) and near and wx.get(near):
+            wx[code] = {t: dict(r) for t, r in wx[near].items()}
+            notes[:] = [n for n in notes if not n.startswith(f"Weather-model forecast unavailable for {ap_cfg['name']}")]
+            notes.append(f"{ap_cfg['name']}: its forecast didn't load, so this run uses "
+                         f"{cfg['airports'][near]['name']}'s (about 25 km away).")
 
     # wildfire smoke forecast (fine particles), merged into the same hourly rows
     if not a.demo:
