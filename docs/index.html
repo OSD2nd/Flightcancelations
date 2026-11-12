@@ -68,6 +68,8 @@ input[type=text],input[type=password]{width:100%}
 .x{padding:3px 8px}
 .hint{font-size:.8rem;color:var(--mute);margin-top:3px}
 a{color:var(--accent)}
+.when{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin:8px 0;font-size:.85rem;line-height:1.5}
+.when b{font-weight:700}
 .foot{color:var(--mute);font-size:.8rem;margin:24px 0}
 .wxgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:8px}
 .wx{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
@@ -89,6 +91,7 @@ details summary{cursor:pointer;font-size:.85rem;color:var(--accent)}
 </style></head><body>
 <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap"><h1>Kootenay flight risk</h1><a href="history.html">History of cancellations →</a></div>
 <div class="sub" id="meta">Loading…</div>
+<div class="when" id="when"></div>
 <div id="demo"></div>
 <div class="tools">
   <button id="refresh">↻ Refresh</button>
@@ -242,10 +245,9 @@ function render(d){
   current=d;
   const g=new Date(d.generated);
   const s=d.settings||{};
+  renderWhen(d);
   $('meta').textContent='Updated '+tUTC(d.generated,{weekday:'short',...HM})+' · model: '+
-    (d.model==='learned'?'learned from '+d.model_info.cancellations+' cancellations in '+d.model_info.flights+' flights':'starting estimates (no history yet)')+
-    (s.alert_times?' · email checks at '+s.alert_times.join(', '):'')+
-    (d.flight_status_checked?' · airline status checked '+tLocal(d.flight_status_checked,HM):'');
+    (d.model==='learned'?'learned from '+d.model_info.cancellations+' cancellations in '+d.model_info.flights+' flights':'starting estimates (no history yet)');
   $('demo').innerHTML=d.demo?'<div class="banner">Demo data — not real conditions.</div>':'';
   renderFlights();
   $('notes').innerHTML=(d.notes||[]).map(n=>'<div class="banner">'+esc(n)+'</div>').join('');
@@ -388,6 +390,25 @@ function renderFlights(){
 }
 document.querySelectorAll('#apfilter button').forEach(b=>b.onclick=()=>{
   selAp=b.dataset.ap;try{localStorage.setItem('kfa.ap',selAp)}catch(e){}wkPlace=null;renderFlights();renderWeek7();});
+
+// ---- when things update (so nobody waits for a check that's hours away) ----
+function nowLocalMin(){const t=new Date(Date.now()-7*3600e3);return t.getUTCHours()*60+t.getUTCMinutes()}   // BC time, UTC-7
+const fmtHM=hm=>{const [h,m]=hm.split(':').map(Number);return (h%12||12)+(m?':'+String(m).padStart(2,'0'):'')+(h<12?' am':' pm')};
+function renderWhen(d){
+  const s=d.settings||{};
+  const checks=(s.status_checks||[]).slice().sort((a,b)=>a.time.localeCompare(b.time));
+  if(!checks.length){$('when').hidden=true;return}
+  const label=c=>{const a=c.airports||['YZZ','YCG'];return a.length>1?'Trail & Castlegar':(AP[a[0]]||a[0])+' only'};
+  const now=nowLocalMin(), mins=c=>{const [h,m]=c.time.split(':').map(Number);return h*60+m};
+  const next=checks.find(c=>mins(c)>now)||checks[0], tomorrow=!checks.some(c=>mins(c)>now);
+  const last=d.flight_status_checked?tLocal(d.flight_status_checked,HM):null;
+  $('when').hidden=false;
+  $('when').innerHTML=`✈ <b>Airline status</b> (cancelled / delayed) is checked at ${checks.map(c=>`<b>${fmtHM(c.time)}</b> (${esc(label(c))})`).join(', ')}.
+    ${last?`Last checked ${esc(last)}. `:''}Next: <b>${fmtHM(next.time)}${tomorrow?' tomorrow':''}</b>.<br>
+    🌦 <b>Weather and risk</b> update about every 30 minutes. 📧 Alert emails go out at ${(s.alert_times||[]).slice().sort().map(t=>'<b>'+fmtHM(t)+'</b>').join(' and ')}.<br>
+    <span class="sub">For up-to-the-minute status, check with the airline.</span>`;
+}
+setInterval(()=>{if(current)renderWhen(current)},60000);
 
 function renderAirportWx(w){
   const ids=Object.keys(w);

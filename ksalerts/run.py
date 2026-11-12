@@ -254,7 +254,8 @@ def main():
                "today": today.isoformat(), "demo": a.demo,
                "model": ("learned" if model else "starting-weights"),
                "model_info": {k: model[k] for k in ("flights", "cancellations", "trained")} if model else None,
-               "settings": {k: cfg.get(k) for k in ("alert_times", "days_ahead", "alert_threshold", "signup_formspree")},
+               "settings": {k: cfg.get(k) for k in ("alert_times", "days_ahead", "alert_threshold", "signup_formspree",
+                                                     "status_checks")},
                "airport_wx": {s: aviation.summary(mets.get(s), tafs.get(s)) for s in stations
                               if mets.get(s) or tafs.get(s)},
                "flight_status_checked": live.get("checked") if live.get("date") == today.isoformat() else None,
