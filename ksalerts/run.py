@@ -223,10 +223,11 @@ def main():
     events.publish()
     if not a.demo:
         try:
-            tracking.record(results, now)
+            tracking.record(results, now, mets,
+                            {c: a_.get("wx_station") for c, a_ in cfg["airports"].items()}, to_utc)
         except Exception as e:
             print(f"[warn] forecast tracking failed: {e}")
-    tracking.publish(today)
+    tracking.publish(today, now=now)
     cams = []
     if cfg.get("webcams") and not a.demo:
         try:

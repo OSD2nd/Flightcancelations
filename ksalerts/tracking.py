@@ -26,7 +26,20 @@ def _load(path):
         return {}
 
 
-def record(results, now):
+def _wx_at(reports, t_utc):
+    """Airport report closest to the flight time (within 45 min), as raw text + key numbers."""
+    from . import aviation
+    near = [m for m in reports or [] if abs(m.get("obsTime", 0) - t_utc) <= 45 * 60]
+    if not near:
+        return None
+    m = min(near, key=lambda m: abs(m["obsTime"] - t_utc))
+    return {"raw": m.get("rawOb"), "ceiling_ft": aviation.ceiling(m.get("clouds"), m.get("vertVis")),
+            "vis_sm": aviation.vis_sm(m.get("visib")), "wx": m.get("wxString")}
+
+
+def record(results, now, mets=None, stations=None, to_utc=None):
+    """stations: {airport code: weather station}; mets: {station: [reports]} (to save the
+    weather at each flight's time, flown or not)."""
     stamp = now.strftime("%Y-%m-%dT%H:%M")
     files = {}
     for r in results:
@@ -41,20 +54,45 @@ def record(results, now):
             if (last is None or abs(pct - last[1]) >= 5
                     or now - datetime.fromisoformat(last[0]) >= timedelta(hours=3)):
                 rec["p"].append([stamp, pct])
-        if r.get("schedule_source") == "live" and str(r.get("status", "")).lower().startswith(FINAL):
-            rec["outcome"] = r["status"]
+        if r.get("schedule_source") == "live":
+            rec["last_status"], rec["last_status_at"] = r["status"], stamp
+            if str(r.get("status", "")).lower().startswith(FINAL):
+                rec["outcome"] = r["status"]
+        st = (stations or {}).get(r["airport"])
+        if "wx" not in rec and mets and st and to_utc and now >= flight_time:
+            w = _wx_at(mets.get(st), to_utc(flight_time).timestamp())
+            if w:
+                rec["wx"] = w
     os.makedirs(DIR, exist_ok=True)
     for path, recs in files.items():
         with open(path, "w") as f:
             json.dump(recs, f, separators=(",", ":"))
 
 
-def publish(today, days_back=45):
+def settle(rec, date, now):
+    """Final outcome; if the airline never posted 'Departed/Arrived' (our last status check can
+    be before an evening flight), a flight last seen on schedule within 3 h of its time, and now
+    well past, is counted as 'Flew (probably)'."""
+    if rec.get("outcome"):
+        return rec["outcome"]
+    t = datetime.fromisoformat(f"{date}T{rec['sched']}")
+    at = rec.get("last_status_at")
+    if (at and now > t + timedelta(hours=3) and t - datetime.fromisoformat(at) <= timedelta(hours=3)
+            and not str(rec.get("last_status", "")).lower().startswith(("cancel", "divert"))):
+        return "Flew (probably)"
+    return None
+
+
+def publish(today, days_back=45, now=None):
     cutoff = (today - timedelta(days=days_back)).isoformat()
     out = {}
     for path in sorted(glob.glob(f"{DIR}/*.json")):
         for k, v in _load(path).items():
             if k.split("|")[0] >= cutoff:
+                if now is not None:
+                    o = settle(v, k.split("|")[0], now)
+                    if o and not v.get("outcome"):
+                        v = {**v, "outcome": o}
                 out[k] = v
     with open(PUBLIC, "w") as f:
         json.dump(out, f, separators=(",", ":"))

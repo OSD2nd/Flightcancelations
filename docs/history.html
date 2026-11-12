@@ -30,6 +30,8 @@ h2{font-size:1rem;margin:22px 0 8px;color:var(--mute);text-transform:uppercase;l
 .stat b{display:block;font-size:1.4rem}
 .card{background:var(--card);border:1px solid var(--line);border-left:6px solid var(--severe);border-radius:12px;padding:12px 14px;margin:8px 0}
 .card.delayed{border-left-color:var(--watch)}
+.card.miss-fa{border-left-color:var(--watch)}.card.miss-mc{border-left-color:var(--severe)}
+.badge.flew{background:var(--low)}
 .row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
 .badge{font-size:.72rem;font-weight:700;border-radius:6px;padding:1px 7px;color:#fff;background:var(--severe)}
 .badge.delayed{background:var(--watch)}
@@ -59,7 +61,7 @@ details summary{cursor:pointer;font-size:.85rem;color:var(--accent);margin-top:6
   <button type="button" data-ap="YCG">Castlegar (YCG)</button>
   <button type="button" data-ap="YZZ">Trail (YZZ)</button>
 </div>
-<div class="tabs"><button type="button" data-k="cancelled" class="on">Cancellations &amp; diversions</button><button type="button" data-k="delayed">Delays</button></div>
+<div class="tabs"><button type="button" data-k="cancelled" class="on">Cancellations &amp; diversions</button><button type="button" data-k="delayed">Delays</button><button type="button" data-k="wrong">Where we were wrong</button></div>
 <div id="stats" class="stats"></div>
 <div id="check" class="check" hidden></div>
 <div id="list"><div class="sub">Loading…</div></div>
@@ -130,10 +132,41 @@ function stats(list){
    ${w.length?`<div class="stat"><b>${Math.round(wet/w.length*100)}%</b><span class="sub">had rain, snow or mist</span></div>`:''}
    ${med!=null?`<div class="stat"><b>${med.toLocaleString()} ft</b><span class="sub">typical cloud base</span></div>`:''}`;
 }
+// ---- misses: forecast 60%+ but it flew, or under 40% but it was cancelled ----
+const APN={YCG:'Castlegar',YZZ:'Trail'};
+function judged(rec,date){
+  for(const h of [2,12]){const v=lastBefore(rec,date,h);if(v!=null)return [v,h===2?'morning of':'night before']}
+  const v=lastBefore(rec,date,0);return v==null?[null,'']:[v,'just before'];
+}
+function renderWrong(){
+  $('stats').innerHTML='';
+  const rows=Object.entries(preds).filter(([k,v])=>v.outcome&&(selAp==='all'||k.split('|')[1]===selAp)).map(([k,v])=>{
+    const [date,ap,flight]=k.split('|');const [pct,when]=judged(v,date);
+    const cancelled=/cancel|divert/i.test(v.outcome);
+    return {k,date,airport:ap,flight,v,pct,when,cancelled};
+  }).filter(o=>o.pct!=null);
+  const fa=rows.filter(o=>!o.cancelled&&o.pct>=60), mc=rows.filter(o=>o.cancelled&&o.pct<40);
+  const wxBit=w=>w?`<div class="sub" style="margin-top:6px"><b>Weather at flight time</b></div><dl><dt>Cloud base</dt><dd>${esc(ft(w.ceiling_ft))}</dd>${lowestRow(w)}<dt>Visibility</dt><dd>${w.vis_sm!=null?esc(w.vis_sm)+' mi':'—'}</dd>${w.wx?`<dt>Weather</dt><dd>${esc(wxWords(w.wx))}</dd>`:''}</dl>${w.raw?`<div class="raw">${esc(w.raw)}</div>`:''}`:'<div class="sub" style="margin-top:6px">No airport report saved for that time.</div>';
+  const card=(o,cls)=>{
+    const arr=o.v.direction==='arr', io=arr?'in':'out';
+    const badge=o.cancelled?`<span class="badge">${/divert/i.test(o.v.outcome)?'DIVERTED':'CANCELLED'}</span>`:`<span class="badge flew">${/probably/i.test(o.v.outcome)?'FLEW (probably)':'FLEW'}</span>`;
+    return `<div class="card ${cls}"><span class="dir ${io}">${arr?'Arriving from Vancouver':'Departing to Vancouver'}</span><br>
+      <b>${esc(o.flight)}</b> · <span class="route"><b>${esc(o.airport)}</b><span class="arrow ${io}">${arr?'←':'→'}</span>YVR</span> · ${esc(o.v.sched)} ${badge}
+      <div class="sub">${esc(APN[o.airport]||o.airport)} · ${esc(day(o.date))}</div>
+      <div class="pred">We said <b>${o.pct}%</b> (${esc(o.when)})</div>
+      ${trailChart({date:o.date,airport:o.airport,flight:o.flight})}${wxBit(o.v.wx)}</div>`;
+  };
+  const sec=(title,list,cls,none)=>`<h2>${title} (${list.length})</h2>`+(list.length?list.sort((a,b)=>b.date.localeCompare(a.date)).map(o=>card(o,cls)).join(''):`<div class="empty">${none}</div>`);
+  $('list').innerHTML=`<div class="sub">We judge by our last forecast on the morning of the flight (or the night before if that's the latest we have). Out of ${rows.length} finished flight${rows.length===1?'':'s'} with forecasts so far.</div>`+
+    sec('We said it wouldn’t fly (60%+) — but it flew',fa,'miss-fa','None yet. Good.')+
+    sec('We said it would fly (under 40%) — but it was cancelled',mc,'miss-mc','None yet. Good.');
+}
+
 function render(){
   document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.k===kind));
   document.querySelectorAll('#apfilter button').forEach(b=>b.classList.toggle('on',b.dataset.ap===selAp));
   renderCheck();
+  if(kind==='wrong'){renderWrong();return}
   const list=all.filter(e=>(selAp==='all'||e.airport===selAp)&&(kind==='cancelled'?(e.kind==='cancelled'||e.kind==='diverted'):e.kind===kind));
   stats(list);
   if(!list.length){$('list').innerHTML=`<div class="empty">No ${kind==='cancelled'?'cancellations':'delays'} recorded yet${selAp==='YCG'?' at Castlegar':selAp==='YZZ'?' at Trail':''}. They're added automatically from the airline status checks.</div>`;return}
