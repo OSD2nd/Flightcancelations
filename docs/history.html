@@ -22,6 +22,9 @@ h2{font-size:1rem;margin:22px 0 8px;color:var(--mute);text-transform:uppercase;l
 .tabs{display:flex;gap:6px;margin:14px 0}
 .tabs button{font:inherit;font-size:.95rem;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:7px 14px;cursor:pointer}
 .tabs button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.seg{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 4px}
+.seg button{font:inherit;font-size:.85rem;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:4px 10px;cursor:pointer}
+.seg button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:10px 0}
 .stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
 .stat b{display:block;font-size:1.4rem}
@@ -46,6 +49,11 @@ details summary{cursor:pointer;font-size:.85rem;color:var(--accent);margin-top:6
 </style></head><body>
 <div class="row"><h1>Flight history</h1><a href="./">← Back to forecast</a></div>
 <div class="sub">Cancellations and delays between Trail / Castlegar and Vancouver, with the weather and webcams at the time.</div>
+<div class="seg" id="apfilter" style="margin-top:12px">
+  <button type="button" data-ap="all">Both airports</button>
+  <button type="button" data-ap="YCG">Castlegar (YCG)</button>
+  <button type="button" data-ap="YZZ">Trail (YZZ)</button>
+</div>
 <div class="tabs"><button type="button" data-k="cancelled" class="on">Cancellations &amp; diversions</button><button type="button" data-k="delayed">Delays</button></div>
 <div id="stats" class="stats"></div>
 <div id="list"><div class="sub">Loading…</div></div>
@@ -65,6 +73,8 @@ function wxWords(s){if(!s)return '';return String(s).split(/\s+/).map(t=>{let p=
 const day=d=>new Date(d+'T12:00:00').toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});
 const ft=v=>v==null?'No low ceiling':Number(v).toLocaleString()+' ft';
 let all=[],kind='cancelled';
+// same airport choice as the forecast page (remembered in this browser)
+let selAp=(()=>{try{return localStorage.getItem('kfa.ap')||'all'}catch(e){return 'all'}})();
 
 function wxDl(w,title){
   if(!w)return '';
@@ -100,20 +110,22 @@ function stats(list){
   const med=ceils.length?ceils[Math.floor(ceils.length/2)]:null;
   const days=new Set(list.map(e=>e.date)).size;
   $('stats').innerHTML=`<div class="stat"><b>${n}</b><span class="sub">${kind==='cancelled'?'cancelled':'delayed'} flights on ${days} day${days>1?'s':''}</span></div>
-   <div class="stat"><b>${byAp('YCG')} / ${byAp('YZZ')}</b><span class="sub">Castlegar / Trail</span></div>
+   ${selAp==='all'?`<div class="stat"><b>${byAp('YCG')} / ${byAp('YZZ')}</b><span class="sub">Castlegar / Trail</span></div>`:''}
    ${w.length?`<div class="stat"><b>${Math.round(wet/w.length*100)}%</b><span class="sub">had rain, snow or mist</span></div>`:''}
    ${med!=null?`<div class="stat"><b>${med.toLocaleString()} ft</b><span class="sub">typical cloud base</span></div>`:''}`;
 }
 function render(){
   document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.k===kind));
-  const list=all.filter(e=>kind==='cancelled'?(e.kind==='cancelled'||e.kind==='diverted'):e.kind===kind);
+  document.querySelectorAll('#apfilter button').forEach(b=>b.classList.toggle('on',b.dataset.ap===selAp));
+  const list=all.filter(e=>(selAp==='all'||e.airport===selAp)&&(kind==='cancelled'?(e.kind==='cancelled'||e.kind==='diverted'):e.kind===kind));
   stats(list);
-  if(!list.length){$('list').innerHTML=`<div class="empty">No ${kind==='cancelled'?'cancellations':'delays'} recorded yet. They're added automatically from the airline status checks.</div>`;return}
+  if(!list.length){$('list').innerHTML=`<div class="empty">No ${kind==='cancelled'?'cancellations':'delays'} recorded yet${selAp==='YCG'?' at Castlegar':selAp==='YZZ'?' at Trail':''}. They're added automatically from the airline status checks.</div>`;return}
   let html='',last='';
   for(const e of list){if(e.date!==last){html+=`<h2>${esc(day(e.date))}</h2>`;last=e.date}html+=card(e)}
   $('list').innerHTML=html;
 }
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{kind=b.dataset.k;render()});
+document.querySelectorAll('#apfilter button').forEach(b=>b.onclick=()=>{selAp=b.dataset.ap;try{localStorage.setItem('kfa.ap',selAp)}catch(e){}render()});
 fetch('history.json?'+Date.now()).then(r=>r.json()).then(d=>{all=d.events||[];render()})
   .catch(()=>{$('list').innerHTML='<div class="empty">Could not load the history.</div>'});
 </script><script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});</script>
