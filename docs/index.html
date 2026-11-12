@@ -312,6 +312,7 @@ function renderAirportWx(w){
     return `<div class="wx"><div class="row"><b>${esc(x.name||id)}</b>${x.category?`<span class="cat ${esc(x.category)}" title="${esc(CAT[x.category]||'')}">${esc(x.category)}</span>`:''}</div>
     <div class="sub">${esc(id)} report at ${esc(t)}${x.category?' · '+esc(CAT[x.category]||''):''}</div>
     <dl><dt>Cloud base</dt><dd>${x.ceiling_ft!=null?Number(x.ceiling_ft).toLocaleString()+' ft':'No low ceiling'}</dd>
+    ${x.lowest_ft!=null&&(x.ceiling_ft==null||x.lowest_ft<x.ceiling_ft)?`<dt>Lowest cloud</dt><dd>${Number(x.lowest_ft).toLocaleString()} ft (patches)${x.low_remark?' · low cloud all around':''}</dd>`:''}
     <dt>Visibility</dt><dd>${x.vis_sm!=null?x.vis_sm+' mi':'—'}</dd>
     <dt>Wind</dt><dd>${esc(x.wind||'—')}</dd>
     ${x.wx?`<dt>Weather</dt><dd>${esc(wxWords(x.wx))}</dd>`:''}</dl>

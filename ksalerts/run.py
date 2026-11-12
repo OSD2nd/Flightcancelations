@@ -10,7 +10,7 @@ falling back to the sending address SMTP_USER. They are never written to the rep
 import argparse, json, os, re
 from datetime import date, datetime, timedelta, timezone
 
-from . import alert, aviation, clock, events, features as F, flights, history, weather, webcam
+from . import alert, aviation, clock, events, tracking, features as F, flights, history, weather, webcam
 
 OUT = "docs/latest.json"
 STATE = "data/state.json"
@@ -195,6 +195,7 @@ def main():
                 continue
             inb = max(ins, key=lambda r: r["dep_local"])
             dep["inbound"] = inb["flight"]
+            dep["forecast_risk"] = max(dep["forecast_risk"], inb["forecast_risk"])
             if inb["risk"] > dep["risk"]:
                 dep["risk"] = inb["risk"]
                 dep["level"] = F.level(dep["risk"], cfg["watch_threshold"], cfg["alert_threshold"])
@@ -220,6 +221,12 @@ def main():
         except Exception as e:
             print(f"[warn] history log failed: {e}")
     events.publish()
+    if not a.demo:
+        try:
+            tracking.record(results, now)
+        except Exception as e:
+            print(f"[warn] forecast tracking failed: {e}")
+    tracking.publish(today)
     cams = []
     if cfg.get("webcams") and not a.demo:
         try:

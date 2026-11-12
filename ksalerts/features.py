@@ -11,7 +11,7 @@ FEATURES = [
     "snow_03", "snow_10", "freezing", "fog", "tstorm",
     "hub_vis_lt_1_6", "hub_gust_60", "ceil_lt_1000", "ceil_lt_3000",
     "rain", "valley_cloud", "ridge_cloud", "wet_low_cloud", "ceil_lt_4000",
-    "smoke", "smoke_heavy",
+    "smoke", "smoke_heavy", "low_patches",
 ]
 
 PRIOR = {
@@ -32,6 +32,9 @@ PRIOR = {
     # Wildfire smoke (summer): fine particles from the air-quality forecast, or smoke
     # in the airport report. Thick smoke cuts visibility like fog does.
     "smoke": 0.7, "smoke_heavy": 1.6,
+    # Patches of cloud/fog under 1,000 ft (FEW/SCT, not a solid layer). On 11 Nov 2026 this
+    # alone cancelled Trail's morning flights while we said 4%.
+    "low_patches": 2.0,
 }
 
 LABELS = {
@@ -45,6 +48,7 @@ LABELS = {
     "wet_low_cloud": "Low cloud with rain (the usual cancellation pattern)",
     "ceil_lt_4000": "Cloud base under 4,000 ft",
     "smoke": "Wildfire smoke", "smoke_heavy": "Thick wildfire smoke",
+    "low_patches": "Low cloud or fog patches under 1,000 ft",
 }
 
 
@@ -95,7 +99,7 @@ def extract(origin_rows, hub_rows, origin_av=None, hub_av=None):
     if origin_av:
         _apply_airport(f, origin_av)
     # cancellations so far had cloud bases of 3,000-3,500 ft with rain, so "low" here means under 4,000 ft
-    low_cloud = f["lowcloud_90"] or f["ceil_lt_4000"] or f["valley_cloud"]
+    low_cloud = f["lowcloud_90"] or f["ceil_lt_4000"] or f["valley_cloud"] or f["low_patches"]
     wet = f["rain"] or f["snow_03"] or f["freezing"] or f["fog"]
     f["wet_low_cloud"] = int(bool(low_cloud and wet))
     if hub_av:
@@ -109,6 +113,9 @@ def extract(origin_rows, hub_rows, origin_av=None, hub_av=None):
 def _apply_airport(f, av):
     """Official report/forecast can only add warnings, never clear model ones."""
     c, v, g, wx = av["ceiling_ft"], av["vis_sm"], av["gust_kt"], av["wx"]
+    lo = av.get("lowest_ft")
+    if (lo is not None and lo < 1000) or av.get("low_remark"):
+        f["low_patches"] = 1
     if c is not None:
         f["ceil_lt_1000"] |= int(c < 1000)
         f["ceil_lt_3000"] |= int(c < 3000)

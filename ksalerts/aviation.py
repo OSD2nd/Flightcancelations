@@ -123,8 +123,14 @@ def _merge(groups, source):
     viss = [v for v in (vis_sm(g.get("visib")) for g in groups) if v is not None]
     gusts = [g.get("wgst") or g.get("wspd") for g in groups if isinstance(g.get("wgst") or g.get("wspd"), (int, float))]
     wx = " ".join(g.get("wxString") or "" for g in groups).split()
+    # lowest cloud of ANY amount (FEW/SCT patches too) - low patches in the valley stop
+    # visual approaches even when there's no solid ceiling (Trail, 11 Nov 2026)
+    lows = [c.get("base") for g in groups for c in (g.get("clouds") or []) if c.get("base") is not None]
+    lows += [g.get("vertVis") for g in groups if g.get("vertVis")]
+    low_remark = any("LO CLD" in (g.get("rawOb") or "") for g in groups)
     return {"ceiling_ft": min(ceils) if ceils else None, "vis_sm": min(viss) if viss else None,
-            "gust_kt": max(gusts) if gusts else None, "wx": wx, "source": source}
+            "gust_kt": max(gusts) if gusts else None, "wx": wx, "source": source,
+            "lowest_ft": min(lows) if lows else None, "low_remark": low_remark}
 
 
 def taf_at(taf, when_utc):
@@ -169,6 +175,8 @@ def conditions(reports, taf, when_utc):
     a, b = parts
     pick = lambda x, y: min(v for v in (x, y) if v is not None) if (x is not None or y is not None) else None
     return {"ceiling_ft": pick(a["ceiling_ft"], b["ceiling_ft"]), "vis_sm": pick(a["vis_sm"], b["vis_sm"]),
+            "lowest_ft": pick(a.get("lowest_ft"), b.get("lowest_ft")),
+            "low_remark": a.get("low_remark") or b.get("low_remark"),
             "gust_kt": max([v for v in (a["gust_kt"], b["gust_kt"]) if v is not None], default=None),
             "wx": a["wx"] + b["wx"], "source": "airport report + forecast"}
 
@@ -186,5 +194,8 @@ def summary(reports, taf):
             "obs_time": (datetime.fromtimestamp(m["obsTime"], timezone.utc).isoformat(timespec="minutes")
                          if m.get("obsTime") else None),
             "category": m.get("fltCat"), "ceiling_ft": ceiling(m.get("clouds"), m.get("vertVis")),
+            "lowest_ft": min([c.get("base") for c in (m.get("clouds") or []) if c.get("base") is not None]
+                             + ([m["vertVis"]] if m.get("vertVis") else []), default=None),
+            "low_remark": "LO CLD" in (m.get("rawOb") or ""),
             "vis_sm": vis_sm(m.get("visib")), "wind": wind, "wx": m.get("wxString"),
             "raw": m.get("rawOb"), "taf": (taf or {}).get("rawTAF")}
