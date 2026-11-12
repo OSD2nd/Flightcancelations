@@ -3,6 +3,8 @@
   "utc_offset_note": "BC is on permanent Pacific time, UTC-7. Red Mountain's archive file names still use UTC-8.",
   "alert_times": ["06:30", "19:00"],
   "alert_window_hours": 30,
+  "signup_formspree": "",
+  "signup_note": "Formspree form ID (the part after formspree.io/f/). Blank hides the sign-up box. Not secret: it's in the public page.",
   "status_checks": [
     {"time": "06:30", "airports": ["YZZ", "YCG"], "yesterday": ["YZZ"]},
     {"time": "10:00", "airports": ["YZZ", "YCG"]},

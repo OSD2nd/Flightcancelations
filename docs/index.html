@@ -111,7 +111,7 @@ details summary{cursor:pointer;font-size:.85rem;color:var(--accent)}
 
   <label for="emails">Send emails to (separate with commas)</label>
   <input id="emails" type="text" autocomplete="off" placeholder="Leave blank to keep the current list">
-  <div class="hint">Stored privately as a GitHub secret — never shown on this page or in the repo. To change it, type the full new list.</div>
+  <div class="hint">Stored privately as a GitHub secret, never shown to visitors. This device remembers the last list you saved here so you can add or remove one address; on a new device, type the full list.</div>
 
   <div id="keySaved" class="hint" style="margin-top:14px" hidden>🔑 Access key saved in this browser ·
     <a href="#" id="keyChange">change</a> · <a href="#" id="keyRemove">remove</a></div>
@@ -171,6 +171,29 @@ details summary{cursor:pointer;font-size:.85rem;color:var(--accent)}
 <div id="apcams"><div class="sub">Webcams appear after the next check.</div></div>
 <h2>Red Mountain webcams (over the valley)</h2>
 <div id="cams" class="cam"><div class="sub">Webcams appear after the next check.</div></div>
+<section id="signup" hidden>
+  <h2 id="signuphead">Get cancellation alerts by email</h2>
+  <form id="signupform" class="wx" style="margin:8px 0">
+    <div class="sub" id="signupintro">Morning and evening emails when a Trail or Castlegar flight in the next 30 hours looks risky. Free; unsubscribe any time.</div>
+    <label for="su_email">Email</label>
+    <input id="su_email" name="email" type="email" required autocomplete="email" style="width:100%">
+    <div id="su_prefs">
+      <label>Which airport?</label>
+      <div class="seg" id="su_ap">
+        <label><input type="radio" name="airports" value="Both" checked> Both</label>
+        <label><input type="radio" name="airports" value="Castlegar"> Castlegar</label>
+        <label><input type="radio" name="airports" value="Trail"> Trail</label>
+      </div>
+      <label style="font-weight:400;display:flex;gap:8px;align-items:flex-start;margin-top:10px">
+        <input type="checkbox" id="su_ok" name="consent" value="yes" required style="margin-top:3px">
+        <span>Yes, send me Kootenay Flight Risk alert emails. I can unsubscribe any time.</span></label>
+    </div>
+    <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" style="display:none">
+    <div class="tools" style="margin-top:12px"><button type="submit" class="primary" id="su_btn">Sign me up</button></div>
+    <div class="sub" id="su_msg"></div>
+    <div class="sub" style="margin-top:6px"><a href="#unsubscribe" id="su_switch">Unsubscribe instead</a> · Your email is only used for these alerts and isn't shown on this site.</div>
+  </form>
+</section>
 <h2>What past cancellations looked like</h2>
 <div id="hist" class="sub">Builds up once flight history is loaded.</div>
 <p class="foot"><a href="#" id="ownerlink">Owner login</a> · Estimate from weather forecasts and past cancellations. Not an airline notice — always confirm with the airline.<br>
@@ -228,6 +251,8 @@ function render(d){
   $('notes').innerHTML=(d.notes||[]).map(n=>'<div class="banner">'+esc(n)+'</div>').join('');
   renderAirportWx(d.airport_wx||{});
   renderWeek7();
+  setSignup();
+  if(suMode==='unsubscribe'&&!render._jumped){render._jumped=1;setTimeout(()=>$('signup').scrollIntoView(),300)}
   renderCams(d.webcams);
   renderApCams(d.airport_cams);
   if(d.history_stats&&d.history_stats.length){
@@ -504,7 +529,7 @@ function fillForm(c){
   (c.alert_times||['19:00','06:30']).forEach(timeRow);
   $('days').value=c.days_ahead||7;
   $('thresh').value=Math.round((c.alert_threshold||0.3)*100);
-  $('emails').value='';
+  $('emails').value=store.get('kfa.emails');
   $('token').value=store.get('kfa.token');
   showKey(false);
 }
@@ -529,6 +554,39 @@ function showKey(open){
 $('keyChange').onclick=e=>{e.preventDefault();showKey(true);$('token').value='';$('token').focus()};
 $('keyRemove').onclick=e=>{e.preventDefault();store.set('kfa.token','');$('token').value='';showKey(true);ownerMode();
   $('settings').hidden=true;msg('Logged out: access key removed from this browser.')};
+
+// ---- public sign-up / unsubscribe (Formspree emails the owner; owner adds/removes in Settings) ----
+let suMode=location.hash==='#unsubscribe'?'unsubscribe':'subscribe';
+function setSignup(){
+  const id=(current&&current.settings&&current.settings.signup_formspree)||'';
+  $('signup').hidden=!id;if(!id)return;
+  const unsub=suMode==='unsubscribe';
+  $('signuphead').textContent=unsub?'Unsubscribe from alert emails':'Get cancellation alerts by email';
+  $('signupintro').textContent=unsub?"Enter the address to remove. You'll stop getting alerts within a day or so.":'Morning and evening emails when a Trail or Castlegar flight in the next 30 hours looks risky. Free; unsubscribe any time.';
+  $('su_prefs').hidden=unsub;$('su_ok').required=!unsub;
+  $('su_btn').textContent=unsub?'Unsubscribe me':'Sign me up';
+  $('su_switch').textContent=unsub?'Sign up instead':'Unsubscribe instead';
+}
+window.addEventListener('hashchange',()=>{if(location.hash==='#unsubscribe'){suMode='unsubscribe';setSignup();$('signup').scrollIntoView()}});
+$('su_switch').onclick=e=>{e.preventDefault();suMode=suMode==='unsubscribe'?'subscribe':'unsubscribe';$('su_msg').textContent='';setSignup()};
+$('signupform').onsubmit=async e=>{
+  e.preventDefault();
+  const id=current&&current.settings&&current.settings.signup_formspree;if(!id)return;
+  const f=new FormData($('signupform'));
+  const unsub=suMode==='unsubscribe';
+  f.set('request',unsub?'UNSUBSCRIBE':'SUBSCRIBE');
+  f.set('_subject',(unsub?'Unsubscribe: ':'New sign-up: ')+f.get('email'));
+  if(unsub){f.delete('consent');f.delete('airports')}
+  else f.set('consent_text','Yes, send me Kootenay Flight Risk alert emails. I can unsubscribe any time. ('+new Date().toISOString()+')');
+  $('su_btn').disabled=true;$('su_msg').textContent='Sending…';
+  try{
+    const r=await fetch('https://formspree.io/f/'+encodeURIComponent(id),{method:'POST',body:f,headers:{Accept:'application/json'}});
+    if(!r.ok)throw 0;
+    $('signupform').reset();
+    $('su_msg').textContent=unsub?"Got it. You'll be removed shortly.":"Thanks! You'll be added shortly, usually within a day.";
+  }catch(err){$('su_msg').textContent="Sorry, that didn't go through. Please try again later."}
+  finally{$('su_btn').disabled=false}
+};
 
 // ---- owner controls: only shown where the owner's GitHub access key is saved ----
 function ownerMode(){
@@ -583,7 +641,7 @@ $('settings').onsubmit=async e=>{
     if(current){current.settings={alert_times:times,days_ahead:days,alert_threshold:c.alert_threshold};}
     let extra='';
     if(emails.length){await saveEmails(emails);extra=' Email list saved privately ('+emails.length+' address'+(emails.length>1?'es':'')+').';}
-    $('emails').value='';
+    $('emails').value=store.get('kfa.emails');
     showKey(false);
     $('settings').hidden=true;
     msg('Saved. Email checks now run at '+times.join(', ')+'.'+extra+' Tap “Run check now” to see '+days+' days right away.');
@@ -639,6 +697,7 @@ async function saveEmails(list){
   const {key,key_id}=await k.json();
   const r=await gh('/actions/secrets/ALERT_EMAILS',{method:'PUT',body:JSON.stringify({encrypted_value:await sealFor(key,list.join(',')),key_id})});
   if(!r.ok)throw new Error('settings saved, but the email list was not (GitHub said '+r.status+')');
+  store.set('kfa.emails',list.join(', '));   // this device's copy, so the list can be edited next time
 }
 
 // If GitHub's schedule hasn't run lately, start a fresh check when the owner opens the page.

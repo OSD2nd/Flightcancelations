@@ -254,7 +254,7 @@ def main():
                "today": today.isoformat(), "demo": a.demo,
                "model": ("learned" if model else "starting-weights"),
                "model_info": {k: model[k] for k in ("flights", "cancellations", "trained")} if model else None,
-               "settings": {k: cfg.get(k) for k in ("alert_times", "days_ahead", "alert_threshold")},
+               "settings": {k: cfg.get(k) for k in ("alert_times", "days_ahead", "alert_threshold", "signup_formspree")},
                "airport_wx": {s: aviation.summary(mets.get(s), tafs.get(s)) for s in stations
                               if mets.get(s) or tafs.get(s)},
                "flight_status_checked": live.get("checked") if live.get("date") == today.isoformat() else None,
@@ -288,9 +288,12 @@ def main():
                  f"{'arriving' if r['direction'] == 'arr' else 'leaving'} {r['airport_name']} at {r['dep_local']} on "
                  f"{_day_name(r['date'], today)}: {round(r['risk']*100)}% cancellation risk ({r['level']}). "
                  f"{'; '.join(r['reasons']) or 'Elevated overall conditions'}." for r in new]
+        site = "https://osd2nd.github.io/Flightcancelations/"
         body = ("Flight risk heads-up:\n\n" + "\n\n".join(lines) +
                 "\n\nThis is an estimate from weather forecasts and past cancellations, not an airline notice. "
-                "Check with the airline before you travel.")
+                "Check with the airline before you travel.\n\n"
+                f"Dashboard: {site}\n\n--\nKootenay Flight Risk alerts. You're getting this because you signed up.\n"
+                f"Unsubscribe: {site}#unsubscribe")
         subject = f"Flight risk: {', '.join(r['flight'] for r in new)}"
         if a.no_email:
             print(subject, "\n", body)
