@@ -1,6 +1,6 @@
 {
  "date": "2026-11-11",
- "checked": "2026-11-11T10:51",
+ "checked": "2026-11-11T17:33",
  "airports": {
   "YZZ": {
    "dep": [
@@ -16,7 +16,7 @@
      "flight": "8P458",
      "time": "17:05",
      "expected": null,
-     "status": "Expected",
+     "status": "Canceled",
      "diverted_to": null,
      "airline": "Pacific Coastal"
     }
@@ -34,7 +34,7 @@
      "flight": "8P457",
      "time": "16:32",
      "expected": null,
-     "status": "Expected",
+     "status": "Canceled",
      "diverted_to": null,
      "airline": "Pacific Coastal"
     }
@@ -46,7 +46,7 @@
      "flight": "AC8377",
      "time": "12:15",
      "expected": null,
-     "status": "Expected",
+     "status": "Departed",
      "diverted_to": null,
      "airline": "Air Canada"
     }

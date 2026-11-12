@@ -1,6 +1,130 @@
 [
  {
   "date": "2026-11-11",
+  "flight": "8P458",
+  "airline": "Pacific Coastal",
+  "airport": "YZZ",
+  "airport_name": "Trail Regional",
+  "direction": "dep",
+  "from": "YZZ",
+  "to": "YVR",
+  "sched": "17:05",
+  "first_seen": "2026-11-11T17:33",
+  "predicted": 0.45,
+  "predicted_reasons": [
+   "Cloud base under 1,000 ft",
+   "Cloud base under 3,000 ft"
+  ],
+  "wx_when_seen": {
+   "time": "2026-11-12T00:00+00:00",
+   "ceiling_ft": 900,
+   "vis_sm": 15.0,
+   "wx": "",
+   "raw": "METAR CYCG 120000Z 08002KT 15SM OVC009 10/09 A3012 RMK SC8 LAST STFD OBS/NXT 121300Z SLP210"
+  },
+  "taf_when_seen": "TAF AMD CYCG 112339Z 1123/1124 VRB03KT P6SM FEW008 SCT040 BKN200 TEMPO 1123/1124 BKN008 BKN040 RMK NXT FCST BY 121500Z",
+  "photos": [
+   {
+    "name": "Castlegar runway",
+    "src": "history/img/2026-11-11_YZZ_0.jpg"
+   },
+   {
+    "name": "Castlegar north",
+    "src": "history/img/2026-11-11_YZZ_1.jpg"
+   },
+   {
+    "name": "Trail runway north",
+    "src": "history/img/2026-11-11_YZZ_2.jpg"
+   }
+  ],
+  "source": "live",
+  "kind": "cancelled",
+  "status": "Canceled",
+  "expected": null,
+  "diverted_to": null,
+  "delay_min": null,
+  "red": [
+   {
+    "name": "Red Mountain, Granite (17:05)",
+    "src": "history/img/2026-11-11_YZZ_1705_granite.jpg"
+   },
+   {
+    "name": "Red Mountain, Greyline (17:05)",
+    "src": "history/img/2026-11-11_YZZ_1705_greyline.jpg"
+   }
+  ],
+  "wx_at_time": {
+   "time": "2026-11-12T00:00+00:00",
+   "ceiling_ft": 900,
+   "vis_sm": 15.0,
+   "wx": "",
+   "raw": "METAR CYCG 120000Z 08002KT 15SM OVC009 10/09 A3012 RMK SC8 LAST STFD OBS/NXT 121300Z SLP210"
+  }
+ },
+ {
+  "date": "2026-11-11",
+  "flight": "8P457",
+  "airline": "Pacific Coastal",
+  "airport": "YZZ",
+  "airport_name": "Trail Regional",
+  "direction": "arr",
+  "from": "YVR",
+  "to": "YZZ",
+  "sched": "16:32",
+  "first_seen": "2026-11-11T17:33",
+  "predicted": 0.45,
+  "predicted_reasons": [
+   "Cloud base under 1,000 ft",
+   "Cloud base under 3,000 ft"
+  ],
+  "wx_when_seen": {
+   "time": "2026-11-12T00:00+00:00",
+   "ceiling_ft": 900,
+   "vis_sm": 15.0,
+   "wx": "",
+   "raw": "METAR CYCG 120000Z 08002KT 15SM OVC009 10/09 A3012 RMK SC8 LAST STFD OBS/NXT 121300Z SLP210"
+  },
+  "taf_when_seen": "TAF AMD CYCG 112339Z 1123/1124 VRB03KT P6SM FEW008 SCT040 BKN200 TEMPO 1123/1124 BKN008 BKN040 RMK NXT FCST BY 121500Z",
+  "photos": [
+   {
+    "name": "Castlegar runway",
+    "src": "history/img/2026-11-11_YZZ_0.jpg"
+   },
+   {
+    "name": "Castlegar north",
+    "src": "history/img/2026-11-11_YZZ_1.jpg"
+   },
+   {
+    "name": "Trail runway north",
+    "src": "history/img/2026-11-11_YZZ_2.jpg"
+   }
+  ],
+  "source": "live",
+  "kind": "cancelled",
+  "status": "Canceled",
+  "expected": null,
+  "diverted_to": null,
+  "delay_min": null,
+  "red": [
+   {
+    "name": "Red Mountain, Granite (16:30)",
+    "src": "history/img/2026-11-11_YZZ_1632_granite.jpg"
+   },
+   {
+    "name": "Red Mountain, Greyline (16:30)",
+    "src": "history/img/2026-11-11_YZZ_1632_greyline.jpg"
+   }
+  ],
+  "wx_at_time": {
+   "time": "2026-11-11T23:29+00:00",
+   "ceiling_ft": 800,
+   "vis_sm": 15.0,
+   "wx": "",
+   "raw": "SPECI CYCG 112329Z 01004KT 15SM BKN008 BKN140 BKN220 10/09 A3011 RMK SC5AC1CI1 SLP209"
+  }
+ },
+ {
+  "date": "2026-11-11",
   "flight": "8P452",
   "airline": "Pacific Coastal",
   "airport": "YZZ",
@@ -49,7 +173,14 @@
     "name": "Red Mountain, Greyline (10:50)",
     "src": "history/img/2026-11-11_YZZ_1050_greyline.jpg"
    }
-  ]
+  ],
+  "wx_at_time": {
+   "time": "2026-11-11T18:00+00:00",
+   "ceiling_ft": 19000,
+   "vis_sm": 12.0,
+   "wx": "",
+   "raw": "METAR CYCG 111800Z 15003KT 140V210 12SM FEW003 FEW012 SCT045 BKN190 BKN230 09/08 A3019 RMK SF1SC1SC2AS2CI2 SC TR SLP235"
+  }
  },
  {
   "date": "2026-11-11",
