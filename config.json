@@ -3,7 +3,12 @@
   "utc_offset_note": "BC is on permanent Pacific time, UTC-7. Red Mountain's archive file names still use UTC-8.",
   "alert_times": ["06:30", "19:00"],
   "alert_window_hours": 30,
-  "status_times": ["06:30", "10:00", "17:30"],
+  "status_checks": [
+    {"time": "06:30", "airports": ["YZZ", "YCG"], "yesterday": ["YZZ"]},
+    {"time": "10:00", "airports": ["YZZ", "YCG"]},
+    {"time": "16:45", "airports": ["YZZ"]}
+  ],
+  "status_checks_note": "Live airline status (AeroDataBox, 2 units per airport per call, free plan 400/month). 16:45 catches Trail's afternoon cancellations; Castlegar is done by then. 06:30 also asks Trail about yesterday afternoon, to learn whether the 17:05 flew.",
   "status_window": ["06:00", "17:59"],
   "record_history": false,
   "days_ahead": 7,

@@ -97,17 +97,31 @@ def save_status(s):
         json.dump(s, f, indent=1)
 
 
-def fetch_status(cfg, day, key, now):
-    """Ask the API about every airport for `day` and store it."""
-    s = {"date": day.isoformat(), "checked": now.isoformat(timespec="minutes"), "airports": {}}
+def fetch_status(cfg, day, key, now, airports=None):
+    """Ask the API about these airports (default: all) for `day`; keep other airports'
+    earlier answers from the same day."""
+    old = load_status()
+    s = old if old.get("date") == day.isoformat() else {"date": day.isoformat(), "airports": {}}
+    s["checked"] = now.isoformat(timespec="minutes")
     window = tuple(cfg.get("status_window", ["06:00", "17:59"]))
-    for code in cfg["airports"]:
+    for code in airports or list(cfg["airports"]):
         try:
             s["airports"][code] = airport_day(code, day, cfg["hub"]["code"], key, window)
         except Exception as e:
             print(f"[warn] flight status failed for {code}: {e}")
     save_status(s)
     return s
+
+
+def fetch_yesterday(cfg, day, key, airports):
+    """Afternoon/evening of a past day (12:00-23:59): did the late flights go?"""
+    out = {}
+    for code in airports:
+        try:
+            out[code] = airport_day(code, day, cfg["hub"]["code"], key, ("12:00", "23:59"))
+        except Exception as e:
+            print(f"[warn] yesterday's flight status failed for {code}: {e}")
+    return out
 
 
 def schedule(code, day, cfg, arrivals=False, live=None):

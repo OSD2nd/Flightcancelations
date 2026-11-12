@@ -84,14 +84,19 @@ def main():
         slot = due_slot(now, cfg.get("alert_times", ["19:00", "06:30"]), state["runs"])
     may_email = slot is not None or not a.scheduled
 
-    # live flight status: only at config "status_times" (free API plan is ~400 units/month)
+    # live flight status: only at config "status_checks" (free API plan is ~400 units/month)
+    yesterday_status = None
     key = os.environ.get("AERODATABOX_KEY")
     if key and not a.demo:
-        sslot = due_slot(now, cfg.get("status_times", ["06:30", "10:00", "17:30"]), state["status_runs"])
+        checks = cfg.get("status_checks") or [{"time": t} for t in cfg.get("status_times", ["06:30", "10:00", "16:45"])]
+        sslot = due_slot(now, [c["time"] for c in checks], state["status_runs"])
         if sslot:
-            flights.fetch_status(cfg, today, key, now)
+            chk = next(c for c in checks if c["time"] == sslot.split()[1])
+            flights.fetch_status(cfg, today, key, now, chk.get("airports"))
+            if chk.get("yesterday"):
+                yesterday_status = flights.fetch_yesterday(cfg, today - timedelta(days=1), key, chk["yesterday"])
             state["status_runs"].append(sslot)
-            print(f"checked live flight status ({sslot})")
+            print(f"checked live flight status ({sslot}: {', '.join(chk.get('airports') or cfg['airports'])})")
     live = {} if a.demo else flights.load_status()
 
     if a.backfill:
@@ -227,6 +232,15 @@ def main():
                             {c: a_.get("wx_station") for c, a_ in cfg["airports"].items()}, to_utc)
         except Exception as e:
             print(f"[warn] forecast tracking failed: {e}")
+    if yesterday_status:
+        try:
+            rows = yesterday_rows(yesterday_status, cfg, today - timedelta(days=1))
+            tracking.apply_outcomes(rows)
+            events.record(rows, cfg, now, mets, tafs, to_utc)
+            events.publish()
+            print(f"yesterday's final status: {[(r['flight'], r['status']) for r in rows]}")
+        except Exception as e:
+            print(f"[warn] yesterday's outcomes failed: {e}")
     tracking.publish(today, now=now)
     cams = []
     if cfg.get("webcams") and not a.demo:
@@ -308,6 +322,26 @@ def main():
 def recipients():
     raw = os.environ.get("ALERT_EMAILS") or os.environ.get("SMTP_USER") or ""
     return [e.strip() for e in raw.replace("\n", ",").split(",") if e.strip()]
+
+
+def yesterday_rows(status, cfg, day):
+    """Turn the airline's answers about yesterday into result-like rows for the history logs."""
+    hub = cfg["hub"]["code"]
+    preds = tracking._load(f"{tracking.DIR}/{day:%Y-%m}.json")
+    rows = []
+    for code, dirs in status.items():
+        name = cfg["airports"][code]["name"]
+        for direction, lst in dirs.items():
+            for f in lst:
+                p = preds.get(f"{day.isoformat()}|{code}|{f['flight']}", {}).get("p") or [[None, None]]
+                rows.append({"schedule_source": "live", "status": f["status"], "dep_local": f["time"],
+                             "expected_local": f.get("expected"), "date": day.isoformat(), "flight": f["flight"],
+                             "airport": code, "airport_name": name, "airline": f["airline"],
+                             "direction": direction, "from": hub if direction == "arr" else code,
+                             "to": code if direction == "arr" else hub, "diverted_to": f.get("diverted_to"),
+                             "forecast_risk": (p[-1][1] / 100) if p[-1][1] is not None else None,
+                             "forecast_reasons": []})
+    return rows
 
 
 def day_forecast(wx, days, cfg, hours=range(7, 20)):

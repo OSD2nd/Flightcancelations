@@ -153,7 +153,8 @@ def record(results, cfg, now, mets, tafs, to_utc):
         if e is None:
             tag = f"{r['date']}_{r['airport']}"
             if tag not in snapped:
-                snapped[tag] = snapshots(cfg, tag)
+                # webcam photos "now" only make sense for today's flights, not ones learned about next morning
+                snapped[tag] = snapshots(cfg, tag) if r["date"] == now.date().isoformat() else []
             e = {"date": r["date"], "flight": r["flight"], "airline": r["airline"], "airport": r["airport"],
                  "airport_name": r["airport_name"], "direction": r["direction"], "from": r["from"], "to": r["to"],
                  "sched": r["dep_local"], "first_seen": now.isoformat(timespec="minutes"),

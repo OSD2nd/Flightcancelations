@@ -11,7 +11,7 @@ flight in the next 30 hours looks risky. Dashboard: https://osd2nd.github.io/Fli
 - **Weather map**: embedded from Windy.com.
 - **Flights**: timetable in `config.json` (`static_schedule`, `static_arrivals`). With an
   `AERODATABOX_KEY` secret, real status (cancelled, delayed, new times) is checked at
-  `status_times` (default 06:30, 10:00, 17:30 - after the 17:05 Trail departure, so its outcome is known). Each check costs 4 API units
+  `status_checks` (06:30 both airports + Trail yesterday afternoon, 10:00 both, 16:45 Trail only). Each airport request costs 2 API units
   (Trail + Castlegar, arrivals and departures together), about 372 units a month,
   under the free plan's 400. Credit to AeroDataBox is shown on the dashboard (required).
   `record_history` (off by default) saves each day's real outcomes to `data/history.csv`;

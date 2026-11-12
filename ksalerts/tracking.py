@@ -88,6 +88,22 @@ def opensky_index():
     return idx
 
 
+def apply_outcomes(rows):
+    """Final airline status for past flights (e.g. yesterday afternoon, asked the next morning)."""
+    files = {}
+    for r in rows:
+        if not str(r.get("status", "")).lower().startswith(FINAL):
+            continue
+        path = f"{DIR}/{r['date'][:7]}.json"
+        recs = files.setdefault(path, _load(path))
+        rec = recs.setdefault(f"{r['date']}|{r['airport']}|{r['flight']}",
+                              {"sched": r["dep_local"], "direction": r["direction"], "p": []})
+        rec["outcome"] = r["status"]
+    for path, recs in files.items():
+        with open(path, "w") as f:
+            json.dump(recs, f, separators=(",", ":"))
+
+
 def settle(rec, date, now, airport=None, seen=None):
     """Final outcome. If the airline never posted 'Departed/Arrived':
     - the nightly OpenSky log saw a plane leave/arrive within 90 min of the time -> 'Flew (seen by OpenSky)'
