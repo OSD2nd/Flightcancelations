@@ -150,6 +150,13 @@ details summary{cursor:pointer;font-size:.85rem;color:var(--accent)}
 </div>
 <div class="mapwrap"><iframe id="windy" title="Windy weather map" loading="lazy"></iframe></div>
 <div class="sub" style="margin-top:4px">Map by Windy.com. Use the timeline at the bottom of the map to look ahead.</div>
+<h2>Planes in the air</h2>
+<div class="seg" id="trkviews">
+  <button type="button" data-v="kootenay" class="on">Kootenays</button>
+  <button type="button" data-v="route">Whole route to Vancouver</button>
+</div>
+<div class="mapwrap"><iframe id="tracker" title="Live flight tracker" loading="lazy"></iframe></div>
+<div class="sub" style="margin-top:4px"><a id="trkfull" href="https://globe.adsbexchange.com/?lat=49.2&lon=-117.62&zoom=9" target="_blank" rel="noopener">Open full tracker ↗</a> (use this if the map above says it couldn't verify). Live map from <a href="https://www.adsbexchange.com/" target="_blank" rel="noopener">ADS-B Exchange</a> (volunteer receivers). Planes low in the valleys around Trail and Castlegar can drop off it. Tap a plane for details.</div>
 <h2>Red Mountain webcams (over the valley)</h2>
 <div id="cams" class="cam"><div class="sub">Webcams appear after the next check.</div></div>
 <h2>What past cancellations looked like</h2>
@@ -381,6 +388,16 @@ function seg(id,attr,fn){$(id).querySelectorAll('button').forEach(b=>b.onclick=(
   $(id).querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));fn(b.dataset[attr]);setMap();});}
 seg('layers','o',o=>mapO=o);seg('views','v',v=>mapV=v);
 setMap();
+
+// ---- live flight tracker (ADS-B Exchange globe) ----
+const TRK={kootenay:{lat:49.2,lon:-117.62,zoom:9},route:{lat:49.35,lon:-120.4,zoom:7}};
+let trkV='kootenay';
+function setTracker(){const v=TRK[trkV];
+  $('tracker').src=`https://globe.adsbexchange.com/?lat=${v.lat}&lon=${v.lon}&zoom=${v.zoom}&hideSidebar&hideButtons`;
+  $('trkfull').href=`https://globe.adsbexchange.com/?lat=${v.lat}&lon=${v.lon}&zoom=${v.zoom}`;}
+$('trkviews').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+  $('trkviews').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));trkV=b.dataset.v;setTracker();});
+setTracker();
 
 function load(){
   return fetch('latest.json?'+Date.now()).then(r=>{if(!r.ok)throw 0;return r.json()})
