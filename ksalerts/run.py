@@ -129,10 +129,24 @@ def main():
     mets, tafs = {}, {}
     if stations and not a.demo:
         try:
-            mets, tafs = aviation.metars(stations, hours=24), aviation.tafs(stations)
+            mets = aviation.metars(stations, hours=24)
         except Exception as e:
-            print(f"[warn] airport weather failed: {e}")
-            notes.append("Official airport weather unavailable this run.")
+            print(f"[warn] airport reports failed: {e}; trying the backup archive")
+            try:
+                mets = aviation.metars_backup(stations)
+                names = {c.get("wx_station"): c["name"] for c in list(cfg["airports"].values()) + [cfg["hub"]]}
+                for st, reports in mets.items():
+                    for m in reports:
+                        m["name"] = names.get(st, st)
+                notes.append(f"Airport reports came from the backup archive ({e}).")
+            except Exception as e2:
+                print(f"[warn] backup airport reports failed: {e2}")
+                notes.append(f"Official airport reports unavailable this run ({e}).")
+        try:
+            tafs = aviation.tafs(stations)
+        except Exception as e:
+            print(f"[warn] airport forecasts failed: {e}")
+            notes.append(f"Pilots' forecast (TAF) unavailable this run ({e}).")
     to_utc = clock.to_utc
     hub_st = cfg["hub"].get("wx_station")
 

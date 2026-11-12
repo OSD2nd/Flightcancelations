@@ -6,16 +6,81 @@ TAF   = the official aviation forecast for the airport (Castlegar's covers ~8 da
 These see what actually grounds Kootenay flights - how low the cloud base is -
 which the general weather-model forecast does not report.
 """
-import json, urllib.request
-from datetime import datetime, timezone
+import csv, io, json, re, time, urllib.error, urllib.request
+from datetime import datetime, timedelta, timezone
 
 API = "https://aviationweather.gov/api/data"
+IEM = "https://mesonet.agron.iastate.edu/cgi-bin/request/asos.py"
+UA = "kootenay-flight-risk/1.0 (personal flight-weather dashboard)"
 
 
 def _get(path):
-    with urllib.request.urlopen(API + path, timeout=30) as r:
-        body = r.read()
-    return json.loads(body) if body.strip() else []
+    last = None
+    for attempt in range(3):
+        try:
+            req = urllib.request.Request(API + path, headers={"User-Agent": UA})
+            with urllib.request.urlopen(req, timeout=30) as r:
+                body = r.read()
+            return json.loads(body) if body.strip() else []
+        except urllib.error.HTTPError as e:
+            last = f"aviationweather.gov answered {e.code}"
+            if e.code < 500 and e.code != 429:
+                break
+        except Exception as e:
+            last = f"aviationweather.gov: {type(e).__name__} {e}"
+        time.sleep(5 * (attempt + 1))
+    raise RuntimeError(last)
+
+
+# ---- backup: the same airport reports from the Iowa Environmental Mesonet archive ----
+def _parse_metar(raw):
+    """Just the parts we use, from the raw report text."""
+    clouds = [{"cover": c, "base": int(h) * 100}
+              for c, h in re.findall(r"\b(FEW|SCT|BKN|OVC|VV)(\d{3})\b", raw)]
+    vv = next((c["base"] for c in clouds if c["cover"] == "VV"), None)
+    clouds = [c for c in clouds if c["cover"] != "VV"]
+    m = re.search(r"\s(M?)(?:(\d+)\s)?(\d+)(?:/(\d+))?SM\b", raw)
+    vis = None
+    if m:
+        whole = int(m.group(2) or 0)
+        vis = whole + (int(m.group(3)) / int(m.group(4)) if m.group(4) else int(m.group(3)))
+    if "P6SM" in raw:
+        vis = 6
+    w = re.search(r"\b(\d{3}|VRB)(\d{2,3})(?:G(\d{2,3}))?KT\b", raw)
+    wx = [t for t in raw.split() if re.fullmatch(r"[-+]?(VC)?(MI|BC|SH|FZ|BL|TS)?(RA|SN|DZ|BR|FG|HZ|FU|GR|GS|PL|SG|UP)+", t)]
+    cat = None
+    ceil = min([c["base"] for c in clouds if c["cover"] in ("BKN", "OVC")] + ([vv] if vv else []), default=None)
+    if vis is not None or ceil is not None:
+        v, c = (vis if vis is not None else 99), (ceil if ceil is not None else 99999)
+        cat = "LIFR" if v < 1 or c < 500 else "IFR" if v < 3 or c < 1000 else "MVFR" if v <= 5 or c <= 3000 else "VFR"
+    return {"clouds": clouds, "vertVis": vv, "visib": vis,
+            "wdir": (0 if w and w.group(1) == "VRB" else int(w.group(1))) if w else None,
+            "wspd": int(w.group(2)) if w else None, "wgst": int(w.group(3)) if w and w.group(3) else None,
+            "wxString": " ".join(wx) or None, "fltCat": cat, "rawOb": raw}
+
+
+def metars_backup(ids, hours=24):
+    end = datetime.now(timezone.utc) + timedelta(hours=1)
+    start = end - timedelta(hours=hours + 1)
+    q = "&".join(f"station={i}" for i in ids)
+    url = (f"{IEM}?{q}&data=metar&tz=Etc/UTC&format=onlycomma&"
+           f"year1={start:%Y}&month1={start.month}&day1={start.day}&hour1={start.hour}&"
+           f"year2={end:%Y}&month2={end.month}&day2={end.day}&hour2={end.hour}")
+    req = urllib.request.Request(url, headers={"User-Agent": UA})
+    with urllib.request.urlopen(req, timeout=60) as r:
+        text = r.read().decode("utf-8", "ignore")
+    out = {}
+    for row in csv.DictReader(io.StringIO(text)):
+        raw = (row.get("metar") or "").strip()
+        if not raw:
+            continue
+        t = datetime.fromisoformat(row["valid"]).replace(tzinfo=timezone.utc)
+        m = _parse_metar(raw)
+        m.update(icaoId=row["station"], obsTime=int(t.timestamp()), name=row["station"])
+        out.setdefault(row["station"], []).append(m)
+    for v in out.values():
+        v.sort(key=lambda m: m["obsTime"], reverse=True)
+    return out
 
 
 def ceiling(clouds, vert_vis=None):

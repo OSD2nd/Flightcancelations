@@ -54,8 +54,8 @@ def fetch_smoke(lat, lon, start, end):
     """Wildfire smoke forecast: {naive local hour: pm2_5 µg/m³} (Open-Meteo air quality, ~5 days ahead)."""
     from . import clock
     base = "https://air-quality-api.open-meteo.com/v1/air-quality"
-    q = dict(latitude=lat, longitude=lon, hourly="pm2_5", timezone="GMT",
-             start_date=start.isoformat(), end_date=(end + timedelta(days=1)).isoformat())
+    # the smoke forecast only reaches ~5 days ahead; asking for more gets "400 Bad Request"
+    q = dict(latitude=lat, longitude=lon, hourly="pm2_5", timezone="GMT", past_days=1, forecast_days=5)
     data = _get(base + "?" + urllib.parse.urlencode(q))
     h = data["hourly"]
     return {datetime.fromisoformat(t) + timedelta(hours=clock.OFFSET): v
