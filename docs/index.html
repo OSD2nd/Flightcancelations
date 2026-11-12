@@ -92,8 +92,8 @@ details summary{cursor:pointer;font-size:.85rem;color:var(--accent)}
 <div id="demo"></div>
 <div class="tools">
   <button id="refresh">↻ Refresh</button>
-  <button id="runnow">Run check now</button>
-  <button id="toggleSettings">⚙ Settings</button>
+  <button id="runnow" hidden>Run check now</button>
+  <button id="toggleSettings" hidden>⚙ Settings</button>
 </div>
 <div id="msg"></div>
 
@@ -173,7 +173,7 @@ details summary{cursor:pointer;font-size:.85rem;color:var(--accent)}
 <div id="cams" class="cam"><div class="sub">Webcams appear after the next check.</div></div>
 <h2>What past cancellations looked like</h2>
 <div id="hist" class="sub">Builds up once flight history is loaded.</div>
-<p class="foot">Estimate from weather forecasts and past cancellations. Not an airline notice — always confirm with the airline.<br>
+<p class="foot"><a href="#" id="ownerlink">Owner login</a> · Estimate from weather forecasts and past cancellations. Not an airline notice — always confirm with the airline.<br>
 Flight status data: <a href="https://aerodatabox.com" target="_blank" rel="noopener">AeroDataBox</a>. Airport weather: aviationweather.gov. Forecast: Open-Meteo.</p>
 <script id="seed" type="application/json">null</script>
 <script>
@@ -527,11 +527,32 @@ function showKey(open){
   $('keyBox').hidden=has&&!open;
 }
 $('keyChange').onclick=e=>{e.preventDefault();showKey(true);$('token').value='';$('token').focus()};
-$('keyRemove').onclick=e=>{e.preventDefault();store.set('kfa.token','');$('token').value='';showKey(true);msg('Access key removed from this browser.')};
+$('keyRemove').onclick=e=>{e.preventDefault();store.set('kfa.token','');$('token').value='';showKey(true);ownerMode();
+  $('settings').hidden=true;msg('Logged out: access key removed from this browser.')};
+
+// ---- owner controls: only shown where the owner's GitHub access key is saved ----
+function ownerMode(){
+  const on=!!store.get('kfa.token');
+  $('runnow').hidden=!on;$('toggleSettings').hidden=!on;
+  $('ownerlink').textContent=on?'Owner: log out':'Owner login';
+}
+$('ownerlink').onclick=async e=>{
+  e.preventDefault();
+  if(store.get('kfa.token')){store.set('kfa.token','');ownerMode();$('settings').hidden=true;msg('Logged out on this device.');return}
+  const k=(prompt('Owner login: paste your GitHub access key (github_pat_…). It stays in this browser only.')||'').trim();
+  if(!k)return;
+  // check the key really can change this repo before unlocking anything
+  const r=await fetch(API,{cache:'no-store',headers:{Accept:'application/vnd.github+json',Authorization:'Bearer '+k}}).catch(()=>null);
+  const j=r&&r.ok?await r.json():null;
+  if(!j||!(j.permissions&&(j.permissions.push||j.permissions.admin))){msg('That key was not accepted for this repo.');return}
+  store.set('kfa.token',k);ownerMode();msg('Logged in. Run check now and ⚙ Settings are unlocked on this device.');
+  window.scrollTo({top:0,behavior:'smooth'});
+};
+ownerMode();
 
 $('settings').onsubmit=async e=>{
   e.preventDefault();
-  {const v=$('token').value.trim();if(v)store.set('kfa.token',v);}
+  {const v=$('token').value.trim();if(v)store.set('kfa.token',v);ownerMode();}
   if(!store.get('kfa.token')){msg('Add a GitHub access key to save settings.');return}
   const times=[...new Set([...$('times').querySelectorAll('input')].map(i=>i.value).filter(Boolean))].sort();
   const days=Math.round(+$('days').value), th=+$('thresh').value;

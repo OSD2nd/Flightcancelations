@@ -12,7 +12,9 @@ def send(subject, body, to):
         print("[alert] SMTP_USER / SMTP_PASS not set - printing instead:\n", subject, "\n", body)
         return None
     msg = EmailMessage()
-    msg["From"], msg["To"], msg["Subject"] = user, ", ".join(to or [user]), subject
+    # recipients go in BCC (not shown in the email), so subscribers never see each other's addresses
+    msg["From"], msg["To"], msg["Subject"] = user, user, subject
+    rcpt = list(dict.fromkeys((to or []) + [user]))
     msg.set_content(body)
     # safe diagnostic for the run log: no secret values, just their shape
     name, _, domain = user.partition("@")
@@ -29,7 +31,7 @@ def send(subject, body, to):
                 s.starttls()
             with s:
                 s.login(user, pw)
-                s.send_message(msg)
+                s.send_message(msg, to_addrs=rcpt)
             return None
         except smtplib.SMTPAuthenticationError as e:
             last = f"Gmail rejected the login ({e.smtp_code})"
