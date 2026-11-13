@@ -126,7 +126,7 @@ def main():
                 return data
         try:
             # fresh every 2 h; if both sources fail, keep using the last good forecast for up to 7 days
-            wx[code], note = weather.cached(f"model_{code}", fetch_model, fresh_hours=2, keep_hours=168)
+            wx[code], note = weather.cached(f"models2_{code}", fetch_model, fresh_hours=2, keep_hours=168)
             if backup:
                 notes.append(f"{ap_cfg['name']}: forecast from the backup source (MET Norway) this time.")
             if note:
@@ -327,9 +327,9 @@ def main():
                                    "warnings": fc["warnings"],
                                    "periods": eccc.period_dates(fc["periods"], today)[:12]}
                             for code, fc in official.items()},
-               "weather_updated": (datetime.fromtimestamp(min(v for k, v in weather.FETCHED.items() if k.startswith("model_")),
+               "weather_updated": (datetime.fromtimestamp(min(v for k, v in weather.FETCHED.items() if k.startswith("models2_")),
                                                           timezone.utc).isoformat(timespec="minutes")
-                                   if any(k.startswith("model_") for k in weather.FETCHED) else None),
+                                   if any(k.startswith("models2_") for k in weather.FETCHED) else None),
                "notes": notes, "webcams": cams, "airport_cams": cfg.get("airport_cams", []),
                "flights": results, "history_stats": [] if a.demo else _safe_stats(cfg)}
     with open(OUT, "w") as f:
