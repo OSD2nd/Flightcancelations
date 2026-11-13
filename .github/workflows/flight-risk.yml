@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
+      url: ${{ steps.deploy.outputs.page_url || steps.deploy_first.outputs.page_url }}
     steps:
       # always start from the newest main (runs queue one after another), not the commit that
       # triggered this run - otherwise a queued run can't save on top of the previous run's data
@@ -67,5 +67,12 @@ jobs:
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with: {path: docs}
+      # GitHub Pages sometimes answers 502 for a moment: try again once before calling it a failure
+      - id: deploy_first
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+      - if: steps.deploy_first.outcome == 'failure'
+        run: sleep 30
       - id: deploy
+        if: steps.deploy_first.outcome == 'failure'
         uses: actions/deploy-pages@v4
