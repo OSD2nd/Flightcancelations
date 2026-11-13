@@ -412,9 +412,14 @@ document.querySelectorAll('#apfilter button').forEach(b=>b.onclick=()=>{
 
 // ---- when each part was last updated ----
 function renderWhen(d){
-  const bits=[`page <b>${esc(tUTC(d.generated,{weekday:'short',...HM}))}</b>`];
-  if(d.flight_status_checked)bits.push(`airline status <b>${esc(tLocal(d.flight_status_checked,HM))}</b>`);
-  if(d.weather_updated)bits.push(`weather forecast <b>${esc(tUTC(d.weather_updated,HM))}</b>`);
+  const day={weekday:'short',...HM};
+  const bits=[`page <b>${esc(tUTC(d.generated,day))}</b>`];
+  const st=d.flight_status_last||d.flight_status_checked;
+  if(st)bits.push(`airline status <b>${esc(tLocal(st,day))}</b>`);
+  // Castlegar's own report (Trail uses it too); its station only reports ~6 am - 5 pm
+  const yc=(d.airport_wx||{}).CYCG;
+  if(yc&&yc.obs_time)bits.push(`Castlegar weather report <b>${esc(tUTC(yc.obs_time,day))}</b>`);
+  if(d.weather_updated)bits.push(`weather forecast <b>${esc(tUTC(d.weather_updated,day))}</b>`);
   $('when').hidden=false;
   $('when').innerHTML='<b>Last updated:</b> '+bits.join(' · ');
 }
