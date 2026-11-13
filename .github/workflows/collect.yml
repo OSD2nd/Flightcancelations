@@ -26,6 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with: {ref: main}
       - uses: actions/setup-python@v5
         with: {python-version: "3.12"}
       - name: Log yesterday's arrivals and departures
@@ -44,5 +45,5 @@ jobs:
           git add data/collect/ 2>/dev/null || true
           if git diff --staged --quiet; then exit 0; fi
           git commit -m "Flight log update"
-          git pull --rebase --autostash origin main
+          git pull --rebase --autostash -X theirs origin main
           git push
