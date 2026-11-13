@@ -289,7 +289,10 @@ def main():
     cams = []
     if cfg.get("webcams") and not a.demo:
         try:
-            cams = webcam.frames(cfg["webcams"])
+            # the resort's page is ~2 MB: read it at most once an hour and reuse the list in between
+            cams, _ = weather.cached("redmountain", lambda: {datetime(2000, 1, 1): webcam.frames(cfg["webcams"])},
+                                     fresh_hours=1, keep_hours=24)
+            cams = next(iter(cams.values()))
         except Exception as e:
             print(f"[warn] webcams failed: {e}")
 
