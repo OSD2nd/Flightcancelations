@@ -201,6 +201,7 @@ function trailChart(e){
    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Forecast history chart">${grid}${ticks}${line}${dots}</svg>
    <div class="t">${marks.length?marks.join(' · '):'Only checked close to the flight.'} · dashed line = 30% alert level</div></div>`;
 }
+const FLAG=60;   // 'we flagged it' = forecast at 60%+ (matches the 'Where we were wrong' tab)
 function renderCheck(){
   const done=Object.entries(preds).filter(([k,v])=>v.outcome&&(selAp==='all'||k.split('|')[1]===selAp));
   const box=$('check');
@@ -208,14 +209,14 @@ function renderCheck(){
   const groups={c:[],f:[]};
   done.forEach(([k,v])=>{const d=k.split('|')[0];(/cancel|divert/i.test(v.outcome)?groups.c:groups.f).push({d,v})});
   const avg=(g,h)=>{const xs=g.map(o=>lastBefore(o.v,o.d,h)).filter(x=>x!=null);return xs.length?Math.round(xs.reduce((a,b)=>a+b,0)/xs.length)+'%':'—'};
-  const hit=(g,h,want)=>{const xs=g.map(o=>lastBefore(o.v,o.d,h)).filter(x=>x!=null);return xs.length?Math.round(100*xs.filter(x=>want?x>=30:x<30).length/xs.length)+'%':'—'};
+  const hit=(g,h,want)=>{const xs=g.map(o=>lastBefore(o.v,o.d,h)).filter(x=>x!=null);return xs.length?Math.round(100*xs.filter(x=>want?x>=FLAG:x<FLAG).length/xs.length)+'%':'—'};
   box.hidden=false;
   box.innerHTML=`<h3>How good is our forecast?</h3>
    <table><tr><th></th><th>flights</th><th>3 days out</th><th>night before</th><th>morning of</th></tr>
    <tr><td>Cancelled / diverted — average forecast</td><td>${groups.c.length}</td><td>${avg(groups.c,72)}</td><td>${avg(groups.c,12)}</td><td>${avg(groups.c,2)}</td></tr>
    <tr><td>Flew — average forecast</td><td>${groups.f.length}</td><td>${avg(groups.f,72)}</td><td>${avg(groups.f,12)}</td><td>${avg(groups.f,2)}</td></tr>
-   <tr><td>Cancellations we flagged (30%+)</td><td></td><td>${hit(groups.c,72,true)}</td><td>${hit(groups.c,12,true)}</td><td>${hit(groups.c,2,true)}</td></tr>
-   <tr><td>Flights that flew, correctly under 30%</td><td></td><td>${hit(groups.f,72,false)}</td><td>${hit(groups.f,12,false)}</td><td>${hit(groups.f,2,false)}</td></tr></table>
+   <tr><td>Cancellations we flagged (${FLAG}%+)</td><td></td><td>${hit(groups.c,72,true)}</td><td>${hit(groups.c,12,true)}</td><td>${hit(groups.c,2,true)}</td></tr>
+   <tr><td>Flights that flew, correctly under ${FLAG}%</td><td></td><td>${hit(groups.f,72,false)}</td><td>${hit(groups.f,12,false)}</td><td>${hit(groups.f,2,false)}</td></tr></table>
    <div class="sub" style="margin-top:6px">A good forecast has a big gap between the two "average" rows, and both bottom rows near 100%. Since Nov 12, 2026.</div>`;
 }
 
