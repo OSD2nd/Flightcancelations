@@ -128,6 +128,6 @@
     {"name": "Castlegar north", "url": "https://webcams.castlegar.ca/north.jpg"},
     {"name": "Trail runway north", "url": "https://aircams.trail.ca:8081/axis-cgi/jpg/image.cgi"}
   ],
-  "weather_model": "gem_seamless",
-  "weather_model_note": "Open-Meteo model: gem_seamless = Environment Canada's GEM models (HRDPS 2.5 km near-term, then RDPS/GDPS). Any variable it lacks is filled from Open-Meteo's default blend."
+  "weather_model": "gem_seamless,best_match",
+  "weather_model_note": "Two models in one Open-Meteo request: gem_seamless = Environment Canada's GEM models (HRDPS 2.5 km near-term, then RDPS/GDPS) and best_match = Open-Meteo's default blend. Each flight is scored with both and the higher risk is shown. GEM has no visibility, so that comes from the blend."
 }

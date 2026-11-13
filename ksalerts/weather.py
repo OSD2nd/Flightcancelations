@@ -35,22 +35,44 @@ def fetch_hourly(lat, lon, start, end, historical=False, tz=None):
             return _get(base + "?" + urllib.parse.urlencode({**q, **extra, "hourly": HOURLY + "," + LEVELS}))
         except RuntimeError:
             return _get(base + "?" + urllib.parse.urlencode({**q, **extra}))
-    data = get({"models": MODEL} if MODEL and not historical else {})
+    names = (HOURLY + "," + LEVELS).split(",")
+    models = [m.strip() for m in (MODEL or "").split(",") if m.strip()] if not historical else []
+    data = get({"models": ",".join(models)} if models else {})
     h = data["hourly"]
-    if MODEL and not historical:
-        # anything this model doesn't provide (all empty) is filled from the default blend
-        missing = [k for k in (HOURLY + "," + LEVELS).split(",") if k in h and all(v is None for v in h[k])]
-        missing += [k for k in (HOURLY + "," + LEVELS).split(",") if k not in h]
+
+    def series(model):
+        """{var: [values]} for one model; with several models Open-Meteo suffixes each name."""
+        if len(models) > 1:
+            return {k: h.get(f"{k}_{model}") for k in names}
+        return {k: h.get(k) for k in names}
+
+    def usable(v):
+        return v is not None and any(x is not None for x in v)
+
+    per = [series(m) for m in models] if models else [series(None)]
+    if len(per) > 1:
+        # fill what the first model doesn't have (e.g. Environment Canada's has no visibility) from the second
+        for k in names:
+            if not usable(per[0][k]) and usable(per[1][k]):
+                per[0][k] = per[1][k]
+            if not usable(per[1][k]) and usable(per[0][k]):
+                per[1][k] = per[0][k]
+    elif models:
+        missing = [k for k in names if not usable(per[0][k])]
         if missing:
             fill = _get(base + "?" + urllib.parse.urlencode({**q, "hourly": ",".join(missing)}))["hourly"]
             idx = {t: i for i, t in enumerate(fill["time"])}
             for k in missing:
                 if k in fill:
-                    h[k] = [fill[k][idx[t]] if t in idx else None for t in h["time"]]
-    keys = [k for k in (HOURLY + "," + LEVELS).split(",") if k in h]
+                    per[0][k] = [fill[k][idx[t]] if t in idx else None for t in h["time"]]
     out = {}
     for i, t in enumerate(h["time"]):
-        out[datetime.fromisoformat(t) + timedelta(hours=clock.OFFSET)] = {k: h[k][i] for k in keys}
+        row = {k: v[i] for k, v in per[0].items() if usable(v)}
+        if len(per) > 1:
+            # the second model rides along so each flight can be scored with both
+            row["alt"] = {k: v[i] for k, v in per[1].items() if usable(v)}
+            row["model"], row["alt_model"] = models[0], models[1]
+        out[datetime.fromisoformat(t) + timedelta(hours=clock.OFFSET)] = row
     return out
 
 

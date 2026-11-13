@@ -156,6 +156,8 @@ def main():
                 for t, v in smoke.items():
                     if t in wx[code]:
                         wx[code][t]["pm2_5"] = v
+                        if wx[code][t].get("alt") is not None:
+                            wx[code][t]["alt"]["pm2_5"] = v
             except Exception as e:
                 print(f"[warn] smoke forecast failed for {code}: {e}")
 
@@ -204,9 +206,23 @@ def main():
         o_av = aviation.conditions(mets.get(st), tafs.get(st), to_utc(here)) if st else None
         h_av = aviation.conditions(mets.get(hub_st), tafs.get(hub_st), to_utc(there)) if hub_st else None
         ec = eccc.signals(official.get(code), here, to_utc, today)
-        feats = F.extract(weather.window(wx[code], here, 1, 1), weather.window(wx["HUB"], there, 1, 1), o_av, h_av, ec)
+        o_rows, h_rows = weather.window(wx[code], here, 1, 1), weather.window(wx["HUB"], there, 1, 1)
+        feats = F.extract(o_rows, h_rows, o_av, h_av, ec)
         p = F.probability(feats, weights)
         why = F.reasons(feats, weights)
+        # score again with the second weather model (if we have it) and keep the higher risk
+        models = None
+        alt_o = [r["alt"] for r in o_rows if r.get("alt")]
+        if alt_o:
+            alt_h = [r["alt"] for r in h_rows if r.get("alt")] or h_rows
+            feats_b = F.extract(alt_o, alt_h, o_av, h_av, ec)
+            p_b = F.probability(feats_b, weights)
+            models = {"Environment Canada model": round(p, 3), "Other model (Open-Meteo blend)": round(p_b, 3)}
+            if p_b > p:
+                feats, p, why = feats_b, p_b, F.reasons(feats_b, weights)
+            if abs(models["Environment Canada model"] - models["Other model (Open-Meteo blend)"]) >= 0.25:
+                lo, hi = sorted(models.items(), key=lambda kv: kv[1])
+                why = why + [f"Models disagree: {hi[0].split(' (')[0]} {round(hi[1]*100)}%, {lo[0].split(' (')[0]} {round(lo[1]*100)}%"]
         forecast_p, forecast_why = p, why
         # no weather-model hours and no airport report/forecast: the number would just be the base rate
         no_fc = not weather.window(wx[code], here, 1, 1) and o_av is None and ec is None
@@ -228,7 +244,7 @@ def main():
             "reasons": why, "schedule_source": source,
             "airport_wx": (o_av["source"] + (f" ({st})" if st != code and st else "")) if o_av else None,
             "ceiling_ft": o_av["ceiling_ft"] if o_av else None,
-            "forecast_risk": round(forecast_p, 3), "forecast_reasons": forecast_why,
+            "forecast_risk": round(forecast_p, 3), "forecast_reasons": forecast_why, "models": models,
             "no_forecast": no_fc and not history.is_cancelled(f["status"]) and "divert" not in str(f["status"]).lower(),
             "flags": [k for k, v in feats.items() if v]}
 
