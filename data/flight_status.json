@@ -1,12 +1,11 @@
 {
- "date": "2026-11-12",
- "checked": "2026-11-12T10:04",
+ "date": "2026-11-13",
  "airports": {
   "YZZ": {
    "dep": [
     {
      "flight": "8P452",
-     "time": "11:50",
+     "time": "10:50",
      "expected": null,
      "status": "Expected",
      "diverted_to": null,
@@ -24,7 +23,7 @@
    "arr": [
     {
      "flight": "8P451",
-     "time": "11:24",
+     "time": "10:24",
      "expected": null,
      "status": "Expected",
      "diverted_to": null,
@@ -56,11 +55,12 @@
      "flight": "AC8376",
      "time": "11:43",
      "expected": null,
-     "status": "Canceled",
+     "status": "Expected",
      "diverted_to": null,
      "airline": "Air Canada"
     }
    ]
   }
- }
+ },
+ "checked": "2026-11-13T06:30"
 }
