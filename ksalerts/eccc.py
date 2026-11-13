@@ -86,17 +86,22 @@ def signals(fc, when_local, to_utc, today):
     if not fc:
         return None
     t = to_utc(when_local)
-    # within the next 24 h: the hourly condition nearest the flight time
+    # the hourly wording near the flight time (next 24 h) AND that day's written forecast:
+    # the hourly list often just says "Mainly cloudy" while the text says "fog patches
+    # dissipating in the morning" - either one counts
     near = [h for h in fc["hours"] if h.get("utc") and
             abs(datetime.fromisoformat(h["utc"].replace("Z", "+00:00")) - t) <= timedelta(minutes=90)]
-    if near:
-        text = " / ".join(sorted({h["condition"] or "" for h in near}))
-    else:
-        # further out: that day's daytime period text
-        day = when_local.date().isoformat()
-        per = [p for p in period_dates(fc["periods"], today) if p["date"] == day and not p["night"]]
-        if not per:
-            return None
-        text = per[0]["summary"] or ""
+    hourly = " / ".join(sorted({h["condition"] or "" for h in near}))
+    day = when_local.date().isoformat()
+    per = [p for p in period_dates(fc["periods"], today) if p["date"] == day and not p["night"]]
+    period = per[0]["summary"] if per else ""
+    # fog said to develop the night before and dissipate "in the morning" belongs to that morning too
+    eve = [p for p in period_dates(fc["periods"], today)
+           if p["night"] and p["date"] == (when_local.date() - timedelta(days=1)).isoformat()]
+    if not near and not per:
+        return None
+    text = " ".join(x for x in (hourly + "." if hourly else "", period) if x)
+    if eve and when_local.hour < 11 and re.search(r"fog", eve[0]["summary"] or "", re.I) and FOG.search(period or ""):
+        text += " Fog patches."
     return {"fog": fog_at(text, when_local.hour), "wintry": bool(WINTRY.search(text)),
             "snow": bool(SNOW.search(text)), "text": text, "warnings": fc.get("warnings") or []}

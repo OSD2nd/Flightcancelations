@@ -36,7 +36,8 @@ PRIOR = {
     # alone cancelled Trail's morning flights while we said 4%.
     "low_patches": 2.0,
     # Environment Canada's official forecast wording around the flight time
-    "ec_fog": 1.2, "ec_wintry": 1.2, "ec_warning": 0.6,
+    # fog wording raised after 11 Nov (Trail cancelled in fog patches while we said 4%)
+    "ec_fog": 1.8, "ec_wintry": 1.2, "ec_warning": 0.6,
 }
 
 LABELS = {
