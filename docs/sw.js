@@ -1,6 +1,6 @@
 // Lets the installed app open offline. Always tries the network first so you
 // see fresh data; the saved copy is only used when there's no connection.
-const CACHE = 'flight-risk-v1';
+const CACHE = 'flight-risk-v2';
 const SHELL = ['./', 'index.html', 'history.html', 'latest.json', 'history.json', 'nacl-fast.min.js',
                'manifest.webmanifest', 'icons/icon-192.png'];
 self.addEventListener('install', e => {
