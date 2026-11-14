@@ -10,7 +10,7 @@ data/predictions/YYYY-MM.json (month of the flight):
                             "outcome": "Canceled"}}
 A new point is saved at most every 3 hours unless the forecast moves 5+ points.
 """
-import glob, json, os
+import glob, json, os, re
 from datetime import datetime, timedelta
 
 DIR = "data/predictions"
@@ -149,5 +149,19 @@ def publish(today, days_back=45, now=None):
                     if o and not v.get("outcome"):
                         v = {**v, "outcome": o}
                 out[k] = v
+    # the plane that flies in is the one that flies back out: if the departure left,
+    # its inbound arrival must have landed (the feed often never updates arrivals)
+    for k, v in list(out.items()):
+        if v.get("outcome") or v.get("direction") != "arr":
+            continue
+        date, ap, fl = k.split("|")
+        t = datetime.fromisoformat(f"{date}T{v['sched']}")
+        for k2, d in out.items():
+            d_date, d_ap, d_fl = k2.split("|")
+            if (d_date, d_ap) == (date, ap) and d.get("direction") == "dep" and d_fl[:2] == fl[:2] \
+                    and timedelta(0) <= datetime.fromisoformat(f"{date}T{d['sched']}") - t <= timedelta(hours=2) \
+                    and re.match(r"(departed|flew)", str(d.get("outcome", "")), re.I):
+                out[k] = {**v, "outcome": f"Arrived (its plane flew out on {d_fl})"}
+                break
     with open(PUBLIC, "w") as f:
         json.dump(out, f, separators=(",", ":"))
