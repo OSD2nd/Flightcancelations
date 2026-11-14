@@ -46,6 +46,31 @@ def load_state():
     return s
 
 
+def smooth_risk(results, state, now, cfg):
+    """Calm the number down: each run moves the risk only part of the way toward the new
+    forecast, so one odd run (a source timing out, a model wobble) can't swing it from 8% to 86%.
+    Far-out flights move slowly (half-way in ~2 h); in the last 6 h it follows almost at once.
+    A cancellation or diversion from the airline always shows straight away."""
+    import math
+    sm = state.setdefault("smooth", {})
+    for r in results:
+        if r.get("no_forecast") or history.is_cancelled(r["status"]) or "divert" in str(r["status"]).lower():
+            continue
+        key = f"{r['date']}|{r['airport']}|{r['flight']}"
+        raw = r["forecast_risk"]
+        hrs = (datetime.fromisoformat(f"{r['date']}T{r['dep_local']}") - now).total_seconds() / 3600
+        tau = 3.0 if hrs > 24 else 1.5 if hrs > 6 else 0.5
+        prev = sm.get(key)
+        v = raw
+        if prev:
+            dt = max(0.0, (now - datetime.fromisoformat(prev["at"])).total_seconds() / 3600)
+            v = prev["v"] + (1 - math.exp(-dt / tau)) * (raw - prev["v"])
+        sm[key] = {"v": round(v, 3), "at": now.isoformat(timespec="minutes")}
+        r["raw_risk"] = raw
+        r["forecast_risk"] = r["risk"] = r["own_risk"] = round(v, 3)
+        r["level"] = F.level(v, cfg["watch_threshold"], cfg["alert_threshold"])
+
+
 def due_slot(now, times, done):
     """The alert time that is due now and not yet handled, as 'YYYY-MM-DD HH:MM', else None."""
     for t in times:
@@ -167,10 +192,26 @@ def main():
     if not a.demo:
         for code, ap_cfg in list(cfg["airports"].items()) + [("HUB", cfg["hub"])]:
             if ap_cfg.get("eccc_city"):
-                try:
-                    official[code] = eccc.fetch(ap_cfg["eccc_city"])
-                except Exception as e:
-                    print(f"[warn] Environment Canada forecast failed for {code}: {e}")
+                # keep the last good copy (up to 12 h): one timeout used to swing a flight from 86% to 8%
+                saved = os.path.join(weather.CACHE_DIR, f"eccc_{code}.json")
+                for attempt in (1, 2):
+                    try:
+                        official[code] = eccc.fetch(ap_cfg["eccc_city"])
+                        os.makedirs(weather.CACHE_DIR, exist_ok=True)
+                        with open(saved, "w") as fh:
+                            json.dump({"at": now.isoformat(), "fc": official[code]}, fh)
+                        break
+                    except Exception as e:
+                        print(f"[warn] Environment Canada forecast failed for {code} (try {attempt}): {e}")
+                if code not in official:
+                    try:
+                        with open(saved) as fh:
+                            old = json.load(fh)
+                        if now - datetime.fromisoformat(old["at"]) <= timedelta(hours=12):
+                            official[code] = old["fc"]
+                            print(f"[info] using the saved Environment Canada forecast for {code} from {old['at']}")
+                    except Exception:
+                        pass
 
     # official airport reports + forecasts (Trail has none, so it borrows Castlegar's)
     stations = sorted({c.get("wx_station") for c in list(cfg["airports"].values()) + [cfg["hub"]]} - {None})
@@ -227,8 +268,11 @@ def main():
         forecast_p, forecast_why = p, why
         # no weather-model hours and no airport report/forecast: the number would just be the base rate
         no_fc = not weather.window(wx[code], here, 1, 1) and o_av is None and ec is None
-        if history.is_cancelled(f["status"]):
-            p, why = 1.0, ["Airline already shows this flight as cancelled"]
+        if f.get("dropped"):
+            p, why = 1.0, ["Dropped from the airline's flight list since the last check: probably cancelled"]
+        elif history.is_cancelled(f["status"]):
+            p, why = 1.0, ["Airline already shows this flight as cancelled" +
+                           (" (not certain)" if "uncertain" in str(f["status"]).lower() else "")]
         elif "divert" in str(f["status"]).lower():
             p, why = 1.0, ["Airline shows this flight as diverted" +
                            (f" to {f['diverted_to']}" if f.get("diverted_to") else "")]
@@ -287,6 +331,7 @@ def main():
                     if said and history.is_cancelled(r["status"]):
                         r["reasons"] = ["Reported cancelled (the airline feed hasn't shown it)"]
                     results.append(r)
+    smooth_risk(results, state, now, cfg)
     link_aircraft(results)
     if cfg.get("record_history") and live.get("date") == today.isoformat():
         history.record_outcomes(results, now)
@@ -393,7 +438,8 @@ def main():
     cutoff = (today - timedelta(days=2)).isoformat()
     state = {"alerts": {k: v for k, v in state["alerts"].items() if k.split("|")[0] >= today.isoformat()},
              "runs": [s for s in state["runs"] if s >= cutoff],
-             "status_runs": [s for s in state["status_runs"] if s >= cutoff]}
+             "status_runs": [s for s in state["status_runs"] if s >= cutoff],
+             "smooth": {k: v for k, v in state.get("smooth", {}).items() if k.split("|")[0] >= today.isoformat()}}
     os.makedirs("data", exist_ok=True)
     with open(STATE, "w") as f:
         json.dump(state, f, indent=1)

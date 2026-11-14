@@ -16,6 +16,12 @@ from datetime import datetime, timedelta
 DIR = "data/predictions"
 PUBLIC = "docs/predictions.json"
 FINAL = ("arrived", "departed", "landed", "cancel", "divert")
+def _final(status):
+    """A status that settles the outcome. 'CanceledUncertain' (maybe cancelled) does not."""
+    s = str(status or "").lower()
+    return s.startswith(FINAL) and "uncertain" not in s
+
+
 IN_PROGRESS = {"boarding", "gateclosed", "enroute", "approaching"}
 
 
@@ -57,7 +63,7 @@ def record(results, now, mets=None, stations=None, to_utc=None):
                 rec["p"].append([stamp, pct])
         if r.get("schedule_source") == "live":
             rec["last_status"], rec["last_status_at"] = r["status"], stamp
-            if str(r.get("status", "")).lower().startswith(FINAL) and rec.get("outcome_by") != "owner":
+            if _final(r.get("status")) and rec.get("outcome_by") != "owner":
                 rec["outcome"] = r["status"]
         st = (stations or {}).get(r["airport"])
         if "wx" not in rec and mets and st and to_utc and now >= flight_time:
@@ -93,7 +99,7 @@ def apply_outcomes(rows):
     """Final airline status for past flights (e.g. yesterday afternoon, asked the next morning)."""
     files = {}
     for r in rows:
-        if not str(r.get("status", "")).lower().startswith(FINAL):
+        if not _final(r.get("status")):
             continue
         path = f"{DIR}/{r['date'][:7]}.json"
         recs = files.setdefault(path, _load(path))

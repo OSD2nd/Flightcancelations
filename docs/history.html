@@ -102,7 +102,7 @@ function wxDl(w,title){
 }
 function card(e){
   const arr=e.direction==='arr';
-  const badge=e.kind==='cancelled'?'<span class="badge">CANCELLED</span>':e.kind==='diverted'?`<span class="badge">DIVERTED${e.diverted_to?' to '+esc(e.diverted_to):''}</span>`:`<span class="badge delayed">${e.delay_min} min late${e.expected?' · '+esc(e.expected):''}</span>`;
+  const badge=e.kind==='cancelled'?`<span class="badge">${/uncertain/i.test(e.status)?'MAYBE CANCELLED':'CANCELLED'}</span>`:e.kind==='diverted'?`<span class="badge">DIVERTED${e.diverted_to?' to '+esc(e.diverted_to):''}</span>`:`<span class="badge delayed">${e.delay_min} min late${e.expected?' · '+esc(e.expected):''}</span>`;
   const pred=e.predicted!=null?`<div class="pred">Our forecast said <b>${Math.round(e.predicted*100)}%</b> risk${e.predicted_reasons&&e.predicted_reasons.length?' ('+esc(e.predicted_reasons.slice(0,3).join(', '))+')':''}</div>`:'';
   const photos=(e.photos||[]).map(p=>`<figure><a href="${esc(p.src)}" target="_blank" rel="noopener"><img loading="lazy" src="${esc(p.src)}" alt="${esc(p.name)}"></a><figcaption>${esc(p.name)}</figcaption></figure>`).join('')+
     (e.red||[]).map(p=>`<figure><a href="${esc(p.src)}" target="_blank" rel="noopener"><img loading="lazy" src="${esc(p.src)}" alt="${esc(p.name)}"></a><figcaption>${esc(p.name)}</figcaption></figure>`).join('');

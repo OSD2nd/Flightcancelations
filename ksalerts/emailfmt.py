@@ -41,7 +41,7 @@ def build(flights, today, site):
     def short(r):
         return f"{PLACE.get(r['airport'], r['airport'])} {_time(r['dep_local'])} {_day(r['date'], today).lower()}"
     if canc:
-        subject = "CANCELLED: " + ", ".join(f"{_route(r)} {_time(r['dep_local'])} {_day(r['date'], today).lower()}"
+        subject = ("PROBABLY CANCELLED: " if all("uncertain" in str(r.get("status", "")).lower() for r in canc) else "CANCELLED: ") + ", ".join(f"{_route(r)} {_time(r['dep_local'])} {_day(r['date'], today).lower()}"
                                             for r in canc)
     else:
         top = max(flights, key=lambda r: r["risk"])
@@ -57,7 +57,9 @@ def build(flights, today, site):
         verb = "arriving" if r["direction"] == "arr" else "departing"
         reasons = [x for x in r.get("reasons") or [] if x and "already shows" not in x][:4]
         if _cancelled(r):
-            headline, colour = "CANCELLED by the airline", COLOUR["SEVERE"]
+            headline = ("PROBABLY CANCELLED (dropped from the airline's list)" if "uncertain" in str(r.get("status", "")).lower()
+                        else "CANCELLED by the airline")
+            colour = COLOUR["SEVERE"]
         else:
             headline, colour = f"{pct}% cancel risk · {r['level']}", COLOUR.get(r["level"], "#444")
         text.append(f"{day} {t} · {route}\n{r['airline']} {r['flight']} ({verb} {r['airport_name']})\n"

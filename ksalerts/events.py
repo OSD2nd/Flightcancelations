@@ -145,9 +145,13 @@ def record(results, cfg, now, mets, tafs, to_utc):
         cancelled = str(r["status"]).lower().startswith("cancel")
         diverted = "divert" in str(r["status"]).lower()
         late = _minutes(r["dep_local"], r["expected_local"]) if r.get("expected_local") else 0
-        if not cancelled and not diverted and late < DELAY_MIN:
-            continue
         key = f"{r['date']}|{r['flight']}"
+        if not cancelled and not diverted and late < DELAY_MIN:
+            # a "maybe cancelled" (dropped from the feed) flight that came back wasn't cancelled
+            if "uncertain" in str((evs.get(key) or {}).get("status", "")).lower():
+                del evs[key]
+                changed = True
+            continue
         st = cfg["airports"][r["airport"]].get("wx_station")
         e = evs.get(key)
         if e is None:

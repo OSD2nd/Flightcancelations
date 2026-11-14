@@ -108,6 +108,11 @@ def fetch_status(cfg, day, key, now, airports=None):
         try:
             s["airports"][code] = airport_day(code, day, cfg["hub"]["code"], key, window)
             s.setdefault("checked_by", {})[code] = s["checked"]
+            # every flight the feed has listed today, so we notice one that later disappears
+            seen = s.setdefault("seen", {}).setdefault(code, {})
+            for d in ("dep", "arr"):
+                for r in s["airports"][code].get(d) or []:
+                    seen.setdefault(d, {})[r["flight"]] = r["time"]
         except Exception as e:
             print(f"[warn] flight status failed for {code}: {e}")
     save_status(s)
@@ -147,6 +152,14 @@ def schedule(code, day, cfg, arrivals=False, live=None):
                                              if r.get("expected") else None),
                                 "status": r["status"], "diverted_to": r.get("diverted_to"),
                                 "airline": r["airline"] or base["airline"]}
+        # listed by the feed earlier today, missing now: Pacific Coastal often just drops cancelled flights
+        listed = {r["flight"] for r in rows}
+        for fl, t in ((live.get("seen") or {}).get(code) or {}).get("arr" if arrivals else "dep", {}).items():
+            if fl not in listed:
+                base = out.get(fl, {"block_min": 75, "airline": cfg["airports"][code]["airline"], "flight": fl,
+                                    "dep": datetime(day.year, day.month, day.day, *map(int, t.split(":")))})
+                out[fl] = {**base, "dep": datetime(day.year, day.month, day.day, *map(int, t.split(":"))),
+                           "status": "CanceledUncertain", "dropped": True}
         return sorted(out.values(), key=lambda f: f["dep"]), "live"
     return sorted(out.values(), key=lambda f: f["dep"]), "static"
 
