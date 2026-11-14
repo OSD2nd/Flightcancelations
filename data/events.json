@@ -88,7 +88,14 @@
   "status": "Canceled",
   "expected": null,
   "diverted_to": null,
-  "delay_min": null
+  "delay_min": null,
+  "wx_at_time": {
+   "time": "2026-11-14T22:48+00:00",
+   "ceiling_ft": 4600,
+   "vis_sm": 12.0,
+   "wx": "",
+   "raw": "SPECI CYCG 142248Z VRB02KT 12SM FEW005 SCT034 BKN046 BKN058 BKN070 08/07 A2980 RMK SF1SC2SC2SC1AC1 AC TR VIS LWR S SLP102"
+  }
  },
  {
   "date": "2026-11-14",

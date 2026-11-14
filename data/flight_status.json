@@ -7,7 +7,7 @@
      "flight": "8P452",
      "time": "11:35",
      "expected": null,
-     "status": "Expected",
+     "status": "Canceled",
      "diverted_to": null,
      "airline": "Pacific Coastal"
     }
@@ -46,5 +46,8 @@
    ]
   }
  },
- "checked": "2026-11-14T11:00"
+ "checked": "2026-11-14T16:00",
+ "checked_by": {
+  "YZZ": "2026-11-14T16:00"
+ }
 }
