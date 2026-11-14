@@ -1,5 +1,224 @@
 [
  {
+  "date": "2026-11-14",
+  "flight": "8P458",
+  "airline": "Pacific Coastal",
+  "airport": "YZZ",
+  "airport_name": "Trail Regional",
+  "direction": "dep",
+  "from": "YZZ",
+  "to": "YVR",
+  "sched": "17:05",
+  "first_seen": "2026-11-14T15:24",
+  "predicted": 0.917,
+  "predicted_reasons": [
+   "Low cloud or fog patches under 1,000 ft"
+  ],
+  "wx_when_seen": {
+   "time": "2026-11-14T22:00+00:00",
+   "ceiling_ft": 4400,
+   "vis_sm": 15.0,
+   "wx": "",
+   "raw": "METAR CYCG 142200Z 18004KT 15SM FEW005 SCT034 BKN044 OVC068 08/07 A2978 RMK SF1SC3SC3AC2 SF TR SLP098"
+  },
+  "taf_when_seen": "TAF CYCG 141944Z 1420/1424 15005KT P6SM BKN040 TEMPO 1420/1424 P6SM -SHRA SCT020 BKN030 RMK NXT FCST BY 151500Z",
+  "photos": [
+   {
+    "name": "Castlegar runway",
+    "src": "history/img/2026-11-14_YZZ_0.jpg"
+   },
+   {
+    "name": "Castlegar north",
+    "src": "history/img/2026-11-14_YZZ_1.jpg"
+   },
+   {
+    "name": "Trail runway north",
+    "src": "history/img/2026-11-14_YZZ_2.jpg"
+   }
+  ],
+  "source": "live",
+  "kind": "cancelled",
+  "status": "Canceled",
+  "expected": null,
+  "diverted_to": null,
+  "delay_min": null
+ },
+ {
+  "date": "2026-11-14",
+  "flight": "8P457",
+  "airline": "Pacific Coastal",
+  "airport": "YZZ",
+  "airport_name": "Trail Regional",
+  "direction": "arr",
+  "from": "YVR",
+  "to": "YZZ",
+  "sched": "16:32",
+  "first_seen": "2026-11-14T15:24",
+  "predicted": 0.917,
+  "predicted_reasons": [
+   "Low cloud with rain (the usual cancellation pattern)",
+   "Low cloud or fog patches under 1,000 ft",
+   "Heavy low cloud",
+   "Rain or drizzle"
+  ],
+  "wx_when_seen": {
+   "time": "2026-11-14T22:00+00:00",
+   "ceiling_ft": 4400,
+   "vis_sm": 15.0,
+   "wx": "",
+   "raw": "METAR CYCG 142200Z 18004KT 15SM FEW005 SCT034 BKN044 OVC068 08/07 A2978 RMK SF1SC3SC3AC2 SF TR SLP098"
+  },
+  "taf_when_seen": "TAF CYCG 141944Z 1420/1424 15005KT P6SM BKN040 TEMPO 1420/1424 P6SM -SHRA SCT020 BKN030 RMK NXT FCST BY 151500Z",
+  "photos": [
+   {
+    "name": "Castlegar runway",
+    "src": "history/img/2026-11-14_YZZ_0.jpg"
+   },
+   {
+    "name": "Castlegar north",
+    "src": "history/img/2026-11-14_YZZ_1.jpg"
+   },
+   {
+    "name": "Trail runway north",
+    "src": "history/img/2026-11-14_YZZ_2.jpg"
+   }
+  ],
+  "source": "live",
+  "kind": "cancelled",
+  "status": "Canceled",
+  "expected": null,
+  "diverted_to": null,
+  "delay_min": null
+ },
+ {
+  "date": "2026-11-14",
+  "flight": "8P452",
+  "airline": "Pacific Coastal",
+  "airport": "YZZ",
+  "airport_name": "Trail Regional",
+  "direction": "dep",
+  "from": "YZZ",
+  "to": "YVR",
+  "sched": "11:35",
+  "first_seen": "2026-11-14T15:24",
+  "predicted": 0.525,
+  "predicted_reasons": [
+   "Low cloud with rain (the usual cancellation pattern)",
+   "Heavy low cloud",
+   "Rain or drizzle",
+   "Models disagree: Other model 52%, Environment Canada model 6%"
+  ],
+  "wx_when_seen": {
+   "time": "2026-11-14T22:00+00:00",
+   "ceiling_ft": 4400,
+   "vis_sm": 15.0,
+   "wx": "",
+   "raw": "METAR CYCG 142200Z 18004KT 15SM FEW005 SCT034 BKN044 OVC068 08/07 A2978 RMK SF1SC3SC3AC2 SF TR SLP098"
+  },
+  "taf_when_seen": "TAF CYCG 141944Z 1420/1424 15005KT P6SM BKN040 TEMPO 1420/1424 P6SM -SHRA SCT020 BKN030 RMK NXT FCST BY 151500Z",
+  "photos": [
+   {
+    "name": "Castlegar runway",
+    "src": "history/img/2026-11-14_YZZ_0.jpg"
+   },
+   {
+    "name": "Castlegar north",
+    "src": "history/img/2026-11-14_YZZ_1.jpg"
+   },
+   {
+    "name": "Trail runway north",
+    "src": "history/img/2026-11-14_YZZ_2.jpg"
+   }
+  ],
+  "source": "live",
+  "kind": "cancelled",
+  "status": "Canceled",
+  "expected": null,
+  "diverted_to": null,
+  "delay_min": null,
+  "red": [
+   {
+    "name": "Red Mountain, Granite (11:35)",
+    "src": "history/img/2026-11-14_YZZ_1135_granite.jpg"
+   },
+   {
+    "name": "Red Mountain, Greyline (11:35)",
+    "src": "history/img/2026-11-14_YZZ_1135_greyline.jpg"
+   }
+  ],
+  "wx_at_time": {
+   "time": "2026-11-14T19:00+00:00",
+   "ceiling_ft": 3200,
+   "vis_sm": 8.0,
+   "wx": "",
+   "raw": "METAR CYCG 141900Z 15005KT 8SM FEW005 FEW024 BKN032 BKN045 BKN072 07/06 A2977 RMK SC1SC1SC3SC2AC1 AC TR SLP093"
+  }
+ },
+ {
+  "date": "2026-11-14",
+  "flight": "8P451",
+  "airline": "Pacific Coastal",
+  "airport": "YZZ",
+  "airport_name": "Trail Regional",
+  "direction": "arr",
+  "from": "YVR",
+  "to": "YZZ",
+  "sched": "11:02",
+  "first_seen": "2026-11-14T15:24",
+  "predicted": 0.525,
+  "predicted_reasons": [
+   "Low cloud with rain (the usual cancellation pattern)",
+   "Heavy low cloud",
+   "Rain or drizzle",
+   "Models disagree: Other model 52%, Environment Canada model 6%"
+  ],
+  "wx_when_seen": {
+   "time": "2026-11-14T22:00+00:00",
+   "ceiling_ft": 4400,
+   "vis_sm": 15.0,
+   "wx": "",
+   "raw": "METAR CYCG 142200Z 18004KT 15SM FEW005 SCT034 BKN044 OVC068 08/07 A2978 RMK SF1SC3SC3AC2 SF TR SLP098"
+  },
+  "taf_when_seen": "TAF CYCG 141944Z 1420/1424 15005KT P6SM BKN040 TEMPO 1420/1424 P6SM -SHRA SCT020 BKN030 RMK NXT FCST BY 151500Z",
+  "photos": [
+   {
+    "name": "Castlegar runway",
+    "src": "history/img/2026-11-14_YZZ_0.jpg"
+   },
+   {
+    "name": "Castlegar north",
+    "src": "history/img/2026-11-14_YZZ_1.jpg"
+   },
+   {
+    "name": "Trail runway north",
+    "src": "history/img/2026-11-14_YZZ_2.jpg"
+   }
+  ],
+  "source": "live",
+  "kind": "cancelled",
+  "status": "Canceled",
+  "expected": null,
+  "diverted_to": null,
+  "delay_min": null,
+  "red": [
+   {
+    "name": "Red Mountain, Granite (11:00)",
+    "src": "history/img/2026-11-14_YZZ_1102_granite.jpg"
+   },
+   {
+    "name": "Red Mountain, Greyline (11:00)",
+    "src": "history/img/2026-11-14_YZZ_1102_greyline.jpg"
+   }
+  ],
+  "wx_at_time": {
+   "time": "2026-11-14T18:00+00:00",
+   "ceiling_ft": 3600,
+   "vis_sm": 8.0,
+   "wx": "-RA",
+   "raw": "METAR CYCG 141800Z 15006KT 8SM -RA FEW004 FEW024 BKN036 OVC079 07/06 A2975 RMK SF2SC1SC5AC1 SC TR XTNSV LO CLD DNWND VIS LWR S SLP087"
+  }
+ },
+ {
   "date": "2026-11-12",
   "flight": "AC8376",
   "airline": "Air Canada",
