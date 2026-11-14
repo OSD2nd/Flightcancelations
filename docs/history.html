@@ -217,11 +217,11 @@ function renderCheck(){
    <tr><td><b>Cancelled flights</b> (${groups.c.length}) — our typical risk</td><td>${avg(groups.c,72)}</td><td>${avg(groups.c,12)}</td><td>${avg(groups.c,2)}</td></tr>
    <tr><td><b>Flights that flew</b> (${groups.f.length}) — our typical risk</td><td>${avg(groups.f,72)}</td><td>${avg(groups.f,12)}</td><td>${avg(groups.f,2)}</td></tr></table>
    <div class="sub" style="margin:6px 0 12px">We want cancelled flights high and flights that flew low.</div>
-   <div style="margin-bottom:6px"><b>How often did we call it right?</b></div>
+   <div style="margin-bottom:6px"><b>How often we were right</b></div>
    <table><tr><th></th><th>3 days before</th><th>night before</th><th>morning of</th></tr>
-   <tr><td><b>Cancelled flights</b> we warned about (${FLAG}%+)</td><td>${hit(groups.c,72,true)}</td><td>${hit(groups.c,12,true)}</td><td>${hit(groups.c,2,true)}</td></tr>
-   <tr><td><b>Flights that flew</b> that we said were fine (under ${FLAG}%)</td><td>${hit(groups.f,72,false)}</td><td>${hit(groups.f,12,false)}</td><td>${hit(groups.f,2,false)}</td></tr></table>
-   <div class="sub" style="margin-top:6px">We want both near 100%. "—" = no forecast saved that far ahead yet. Tracking since Nov 12, 2026.</div>`;
+   <tr><td><b>Cancelled</b> → we warned (${FLAG}%+)</td><td>${hit(groups.c,72,true)}</td><td>${hit(groups.c,12,true)}</td><td>${hit(groups.c,2,true)}</td></tr>
+   <tr><td><b>Flew</b> → we said fine (under ${FLAG}%)</td><td>${hit(groups.f,72,false)}</td><td>${hit(groups.f,12,false)}</td><td>${hit(groups.f,2,false)}</td></tr></table>
+   <div class="sub" style="margin-top:6px">Both should be near 100%. "—" = no forecast saved that far ahead yet. Tracking since Nov 12, 2026.</div>`;
 }
 
 Promise.all([fetch('history.json?'+Date.now()).then(r=>r.json()),
