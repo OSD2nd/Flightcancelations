@@ -125,13 +125,24 @@ def cached(name, fetch, fresh_hours=2, keep_hours=30):
     age = (time.time() - saved["at"]) / 3600 if saved else None
     def unpack(d):
         return {datetime.fromisoformat(k): v for k, v in d.items()}
-    if saved and age < fresh_hours:
+    # a copy that came from the backup source gets replaced sooner (try the main source again next run)
+    from_backup = bool(saved) and saved.get("backup", False)
+    if saved and age < (0.4 if from_backup else fresh_hours):
         FETCHED[name] = saved["at"]
         return unpack(saved["data"]), None
     try:
         data = fetch()
+        backup = any(isinstance(v, dict) and v.get("source") == "MET Norway" for v in data.values())
+        if saved:
+            # merge, don't replace: hours the new forecast doesn't cover (e.g. earlier today, which
+            # the backup source leaves out) keep the last good forecast; drop anything > 2 days old
+            cutoff = datetime.now() - timedelta(days=2)
+            for k, v in unpack(saved["data"]).items():
+                if k not in data and k >= cutoff:
+                    data[k] = v
         with open(path, "w") as f:
-            json.dump({"at": time.time(), "data": {k.isoformat(): v for k, v in data.items()}}, f)
+            json.dump({"at": time.time(), "backup": backup,
+                       "data": {k.isoformat(): v for k, v in sorted(data.items())}}, f)
         FETCHED[name] = time.time()
         return data, None
     except Exception as e:
