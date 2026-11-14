@@ -18,7 +18,7 @@ UA = "kootenay-flight-risk/1.0 github.com/OSD2nd/Flightcancelations"
 
 FOG = re.compile(r"\bfog|mist|low cloud|drizzle", re.I)
 WINTRY = re.compile(r"freezing|ice pellets|blowing snow|heavy snow", re.I)
-SNOW = re.compile(r"\bsnow|flurr", re.I)
+SNOW = re.compile(r"\bsnow(?!\s*(level|squall))|flurr", re.I)  # "snow level 1700 metres" is not snow at the airport
 
 
 def _en(x):
