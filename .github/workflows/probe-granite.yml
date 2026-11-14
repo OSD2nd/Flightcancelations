@@ -1,0 +1,19 @@
+name: Probe Granite weather page (one-off)
+on:
+  push:
+    branches: [main]
+    paths: [".github/workflows/probe-granite.yml"]
+permissions: {contents: write}
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          mkdir -p research/granite
+          UA="kootenay-flight-risk/1.0 github.com/OSD2nd/Flightcancelations"
+          curl -sL -m 30 -A "$UA" -D research/granite/headers.txt http://gweather.redresort.com/ -o research/granite/index.html || true
+          curl -sL -m 30 -A "$UA" http://gweather.redresort.com/robots.txt -o research/granite/robots.txt || true
+          ls -la research/granite
+          git config user.name "flight-risk-bot"; git config user.email "bot@users.noreply.github.com"
+          git add research/granite && git commit -m "Granite page probe" && git pull --rebase origin main && git push || true
