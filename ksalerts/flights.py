@@ -107,6 +107,7 @@ def fetch_status(cfg, day, key, now, airports=None):
     for code in airports or list(cfg["airports"]):
         try:
             s["airports"][code] = airport_day(code, day, cfg["hub"]["code"], key, window)
+            s.setdefault("checked_by", {})[code] = s["checked"]
         except Exception as e:
             print(f"[warn] flight status failed for {code}: {e}")
     save_status(s)

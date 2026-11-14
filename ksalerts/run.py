@@ -324,6 +324,7 @@ def main():
                               if mets.get(s) or tafs.get(s)},
                "flight_status_checked": live.get("checked") if live.get("date") == today.isoformat() else None,
                "flight_status_last": live.get("checked"),
+               "flight_status_by": live.get("checked_by") or {},
                "utc_offset": clock.OFFSET, "day_wx": day_forecast(wx, days, cfg),
                "official": {code: {"name": fc["name"], "updated": fc["updated"], "url": fc["url"],
                                    "warnings": fc["warnings"],
