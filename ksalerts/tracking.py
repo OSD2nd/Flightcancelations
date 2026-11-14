@@ -16,6 +16,7 @@ from datetime import datetime, timedelta
 DIR = "data/predictions"
 PUBLIC = "docs/predictions.json"
 FINAL = ("arrived", "departed", "landed", "cancel", "divert")
+IN_PROGRESS = {"boarding", "gateclosed", "enroute", "approaching"}
 
 
 def _load(path):
@@ -56,7 +57,7 @@ def record(results, now, mets=None, stations=None, to_utc=None):
                 rec["p"].append([stamp, pct])
         if r.get("schedule_source") == "live":
             rec["last_status"], rec["last_status_at"] = r["status"], stamp
-            if str(r.get("status", "")).lower().startswith(FINAL):
+            if str(r.get("status", "")).lower().startswith(FINAL) and rec.get("outcome_by") != "owner":
                 rec["outcome"] = r["status"]
         st = (stations or {}).get(r["airport"])
         if "wx" not in rec and mets and st and to_utc and now >= flight_time:
@@ -98,7 +99,8 @@ def apply_outcomes(rows):
         recs = files.setdefault(path, _load(path))
         rec = recs.setdefault(f"{r['date']}|{r['airport']}|{r['flight']}",
                               {"sched": r["dep_local"], "direction": r["direction"], "p": []})
-        rec["outcome"] = r["status"]
+        if rec.get("outcome_by") != "owner":
+            rec["outcome"] = r["status"]
     for path, recs in files.items():
         with open(path, "w") as f:
             json.dump(recs, f, separators=(",", ":"))
@@ -107,7 +109,9 @@ def apply_outcomes(rows):
 def settle(rec, date, now, airport=None, seen=None):
     """Final outcome. If the airline never posted 'Departed/Arrived':
     - the nightly OpenSky log saw a plane leave/arrive within 90 min of the time -> 'Flew (seen by OpenSky)'
-    - last seen on schedule within 3 h of the flight, now well past -> 'Flew (probably)'."""
+    - last seen boarding / gate closed / in the air, now well past -> 'Flew (probably)'.
+    A plain 'Expected' is NOT proof it flew: Pacific Coastal sometimes never posts a
+    cancellation, so the flight stays 'not confirmed' instead."""
     if rec.get("outcome"):
         return rec["outcome"]
     t = datetime.fromisoformat(f"{date}T{rec['sched']}")
@@ -117,18 +121,29 @@ def settle(rec, date, now, airport=None, seen=None):
             return "Flew (seen by OpenSky)"
     at = rec.get("last_status_at")
     if (at and now > t + timedelta(hours=3) and t - datetime.fromisoformat(at) <= timedelta(hours=3)
-            and not str(rec.get("last_status", "")).lower().startswith(("cancel", "divert"))):
+            and str(rec.get("last_status", "")).lower() in IN_PROGRESS):
         return "Flew (probably)"
     return None
+
+
+OWNER = "data/owner_outcomes.json"
+
+
+def owner_outcomes():
+    """Outcomes the owner entered by hand - these beat anything the airline feed said."""
+    return {k: v for k, v in _load(OWNER).items() if not k.startswith("_")}
 
 
 def publish(today, days_back=45, now=None):
     cutoff = (today - timedelta(days=days_back)).isoformat()
     out = {}
+    owner = owner_outcomes()
     seen = opensky_index()
     for path in sorted(glob.glob(f"{DIR}/*.json")):
         for k, v in _load(path).items():
             if k.split("|")[0] >= cutoff:
+                if k in owner:
+                    v = {**v, "outcome": owner[k], "outcome_by": "owner"}
                 if now is not None:
                     o = settle(v, k.split("|")[0], now, k.split("|")[1], seen)
                     if o and not v.get("outcome"):

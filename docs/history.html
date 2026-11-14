@@ -149,7 +149,7 @@ function renderWrong(){
   const wxBit=w=>w?`<div class="sub" style="margin-top:6px"><b>Weather at flight time</b></div><dl><dt>Cloud base</dt><dd>${esc(ft(w.ceiling_ft))}</dd>${lowestRow(w)}<dt>Visibility</dt><dd>${w.vis_sm!=null?esc(w.vis_sm)+' mi':'—'}</dd>${w.wx?`<dt>Weather</dt><dd>${esc(wxWords(w.wx))}</dd>`:''}</dl>${w.raw?`<div class="raw">${esc(w.raw)}</div>`:''}`:'<div class="sub" style="margin-top:6px">No airport report saved for that time.</div>';
   const card=(o,cls)=>{
     const arr=o.v.direction==='arr', io=arr?'in':'out';
-    const badge=o.cancelled?`<span class="badge">${/divert/i.test(o.v.outcome)?'DIVERTED':'CANCELLED'}</span>`:`<span class="badge flew">${/probably/i.test(o.v.outcome)?'FLEW (probably)':'FLEW'}</span>`;
+    const badge=o.cancelled?`<span class="badge">${/divert/i.test(o.v.outcome)?'DIVERTED':'CANCELLED'}${o.v.outcome_by==='owner'?' (reported)':''}</span>`:`<span class="badge flew">${/probably/i.test(o.v.outcome)?'FLEW (probably)':'FLEW'}</span>`;
     return `<div class="card ${cls}"><span class="dir ${io}">${arr?'Arriving from Vancouver':'Departing to Vancouver'}</span><br>
       <b>${esc(o.flight)}</b> · <span class="route"><b>${esc(o.airport)}</b><span class="arrow ${io}">${arr?'←':'→'}</span>YVR</span> · ${esc(o.v.sched)} ${badge}
       <div class="sub">${esc(APN[o.airport]||o.airport)} · ${esc(day(o.date))}</div>

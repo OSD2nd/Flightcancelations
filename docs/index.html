@@ -53,6 +53,8 @@ button:disabled{opacity:.55;cursor:default}
 .w7 button .d,.w7 button .tx,.w7 button .ic{color:var(--ink)}.w7 button .tx span,.w7 button .d small,.w7 button .rk small{color:var(--mute)}
 .w7 button.LOW .rk{color:var(--low)}.w7 button.WATCH .rk{color:var(--watch)}.w7 button.HIGH .rk{color:var(--high)}.w7 button.SEVERE .rk{color:var(--severe)}#dayfilter{font-size:.85rem;color:var(--mute);margin:4px 0}
 .day.LOW{border-top-color:var(--low)}.day.WATCH{border-top-color:var(--watch)}.day.HIGH{border-top-color:var(--high)}.day.SEVERE{border-top-color:var(--severe)}
+.card.past{opacity:.6}
+details.earlier summary{cursor:pointer;color:var(--muted,#666);margin:8px 0}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:8px 0;border-left-width:6px}
 .card.LOW{border-left-color:var(--low)}.card.WATCH{border-left-color:var(--watch)}.card.HIGH{border-left-color:var(--high)}.card.SEVERE{border-left-color:var(--severe)}
 .row{display:flex;justify-content:space-between;align-items:baseline;gap:8px}.big{font-size:1.5rem;font-weight:700}
@@ -331,18 +333,23 @@ function renderOfficial(){
 // ---- flight list: airport filter + tap a day to see just that day ----
 const AP={YCG:'Castlegar',YZZ:'Trail'};
 let selDay=null, selAp=(()=>{try{return localStorage.getItem('kfa.ap')||'all'}catch(e){return 'all'}})();
+// local "now" (BC is UTC-7 all year) as "YYYY-MM-DDTHH:MM"
+const nowLocal=()=>new Date(Date.now()-7*3600e3).toISOString().slice(0,16);
+const isPast=f=>`${f.date}T${f.expected_local||f.dep_local}`<nowLocal();
+const FLEW=/^(departed|arrived|landed|enroute|approaching)/i;
 function card(f){
+  const past=isPast(f), unconfirmed=past&&f.schedule_source==='live'&&!FLEW.test(f.status)&&!/^(cancel|divert)/i.test(f.status);
   const pct=Math.round(f.risk*100), nofc=!!f.no_forecast;
   const arr=f.direction==='arr', canc=/^cancel/i.test(f.status), maybe=/uncertain/i.test(f.status), div=/divert/i.test(f.status);
   const badge=canc?`<span class="badge">${maybe?'MAYBE CANCELLED':'CANCELLED'}</span>`:div?`<span class="badge">DIVERTED${f.diverted_to?' to '+esc(f.diverted_to):''}</span>`:f.expected_local?`<span class="badge late">now ${esc(f.expected_local)}</span>`:'';
   const other=arr?(f.from||'YVR'):(f.to||'YVR'), io=arr?'in':'out';
   const route=`<span class="route"><b>${esc(f.airport)}</b><span class="arrow ${io}">${arr?'←':'→'}</span>${esc(other)}</span>`;
-  return `<div class="card ${f.level} ${esc(f.airport)}"><div class="row"><div><span class="dir ${io}">${arr?'Arriving from Vancouver':'Departing to Vancouver'}</span><br><b>${esc(f.flight)}</b> · ${route} · ${esc(f.dep_local)}${badge}
+  return `<div class="card ${f.level} ${esc(f.airport)}${past?' past':''}"><div class="row"><div><span class="dir ${io}">${arr?'Arriving from Vancouver':'Departing to Vancouver'}</span><br><b>${esc(f.flight)}</b> · ${route} · ${esc(f.dep_local)}${badge}
   <div class="sub">${esc(f.airline)}${f.inbound?' · plane comes in on '+esc(f.inbound):''}</div></div>
   <div class="big">${nofc?'—':pct+'%'}</div></div>
   <div class="bar"><i style="width:${nofc?0:Math.max(pct,2)}%"></i></div>
   <div>${nofc?'<span class="tag">No weather forecast this run — check back later</span>':(f.reasons.map(r=>'<span class="tag">'+esc(r)+'</span>').join('')||'<span class="tag">Nothing unusual in the forecast</span>')}</div>
-  <div class="sub" style="margin-top:6px">${esc(f.level)} · ${f.schedule_source==='live'?'airline status: <b>'+esc(STATUS[f.status]||f.status)+'</b>':'status not checked yet · schedule from config'}${f.airport_wx?' · uses '+esc(f.airport_wx)+(f.ceiling_ft!=null?', cloud base '+Number(f.ceiling_ft).toLocaleString()+' ft':', no low ceiling'):''}</div></div>`;
+  <div class="sub" style="margin-top:6px">${esc(f.level)} · ${f.schedule_source==='live'?'airline status: <b>'+(unconfirmed?'not confirmed — time has passed and the airline hasn\'t posted whether it flew'+(f.airport==='YZZ'&&f.dep_local>='12:00'?' (checked again at 6:30 am)':''):esc(STATUS[f.status]||f.status))+'</b>':'status not checked yet · schedule from config'}${f.airport_wx?' · uses '+esc(f.airport_wx)+(f.ceiling_ft!=null?', cloud base '+Number(f.ceiling_ft).toLocaleString()+' ft':', no low ceiling'):''}</div></div>`;
 }
 // hourly forecast table for one day (Castlegar, Trail, Vancouver)
 function dayForecast(d,day,fl){
@@ -391,7 +398,9 @@ function renderFlights(){
     aps.forEach(a=>{
       const x=fl.filter(f=>f.airport===a).sort((p,q)=>p.dep_local.localeCompare(q.dep_local));
       if(!x.length)return;
-      html+=`<div class="aphead"><span class="apcode ap-${a}">${a}</span>${esc(x[0].airport_name)}</div>`+x.map(card).join('');
+      const gone=x.filter(isPast), left=x.filter(f=>!isPast(f));
+      html+=`<div class="aphead"><span class="apcode ap-${a}">${a}</span>${esc(x[0].airport_name)}</div>`+left.map(card).join('')+
+        (gone.length?(left.length?'':'<div class="sub">No more flights today.</div>')+`<details class="earlier"><summary>Earlier today (${gone.length})</summary>${gone.map(card).join('')}</details>`:'');
     });
     if(selDay===day)html+=`<h2>Forecast · ${esc(dayLabel(day,today,i))}</h2>`+dayForecast(d,day,fl);
   });
