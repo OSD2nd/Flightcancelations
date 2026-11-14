@@ -1,27 +1,48 @@
 {
   "utc_offset": -7,
   "utc_offset_note": "BC is on permanent Pacific time, UTC-7. Red Mountain's archive file names still use UTC-8.",
-  "alert_times": ["06:30", "19:00"],
+  "alert_times": [
+    "06:30",
+    "19:00"
+  ],
   "alert_window_hours": 30,
   "signup_formspree": "",
   "signup_note": "Formspree form ID (the part after formspree.io/f/). Blank hides the sign-up box. Not secret: it's in the public page.",
   "status_checks": [
     {
       "time": "06:30",
-      "airports": ["YZZ", "YCG"],
-      "yesterday": ["YZZ"]
+      "airports": [
+        "YZZ",
+        "YCG"
+      ],
+      "yesterday": [
+        "YZZ"
+      ]
     },
     {
-      "time": "10:00",
-      "airports": ["YZZ", "YCG"]
+      "time": "09:30",
+      "airports": [
+        "YZZ"
+      ]
     },
     {
-      "time": "16:45",
-      "airports": ["YZZ"]
+      "time": "10:45",
+      "airports": [
+        "YCG"
+      ]
+    },
+    {
+      "time": "15:45",
+      "airports": [
+        "YZZ"
+      ]
     }
   ],
-  "status_checks_note": "Live airline status (AeroDataBox, 2 units per airport per call, free plan 400/month). 16:45 catches Trail's afternoon cancellations; Castlegar is done by then. 06:30 also asks Trail about yesterday afternoon, to learn whether the 17:05 flew.",
-  "status_window": ["06:00", "17:59"],
+  "status_checks_note": "Live airline status (AeroDataBox, 2 units per airport per call, free plan 400/month; this is ~372). Each check runs before the flights: 09:30 Trail (10:24 in / 10:50 out), 10:45 Castlegar (11:43 in / 12:15 out), 15:45 Trail (16:32 in / 17:05 out). A cancellation found is emailed right away. 06:30 also asks Trail about yesterday afternoon, to learn whether the 17:05 flew.",
+  "status_window": [
+    "06:00",
+    "17:59"
+  ],
   "record_history": false,
   "days_ahead": 7,
   "alert_threshold": 0.3,
@@ -57,20 +78,44 @@
   "static_schedule_note": "Fallback schedule used only when no flight API key is set. Checked against the airport departure boards on 2026-11-10.",
   "static_schedule": {
     "YZZ": [
-      {"flight": "8P452", "dep": "10:50", "block_min": 75},
-      {"flight": "8P458", "dep": "17:05", "block_min": 75}
+      {
+        "flight": "8P452",
+        "dep": "10:50",
+        "block_min": 75
+      },
+      {
+        "flight": "8P458",
+        "dep": "17:05",
+        "block_min": 75
+      }
     ],
     "YCG": [
-      {"flight": "AC8377", "dep": "12:15", "block_min": 70}
+      {
+        "flight": "AC8377",
+        "dep": "12:15",
+        "block_min": 70
+      }
     ]
   },
   "static_arrivals": {
     "YZZ": [
-      {"flight": "8P451", "arr": "10:24", "block_min": 75},
-      {"flight": "8P457", "arr": "16:32", "block_min": 75}
+      {
+        "flight": "8P451",
+        "arr": "10:24",
+        "block_min": 75
+      },
+      {
+        "flight": "8P457",
+        "arr": "16:32",
+        "block_min": 75
+      }
     ],
     "YCG": [
-      {"flight": "AC8376", "arr": "11:43", "block_min": 70}
+      {
+        "flight": "AC8376",
+        "arr": "11:43",
+        "block_min": 70
+      }
     ]
   },
   "webcams": {
@@ -78,11 +123,31 @@
     "base": "https://wxdata.redresort.com/wxdata/",
     "live": "https://wxdata.redresort.com/cams/",
     "cams": [
-      {"id": "granite", "name": "Granite (down the valley)", "file": "granitecam"},
-      {"id": "paradise", "name": "Paradise", "file": "paradisecam"},
-      {"id": "grey", "name": "Grey", "file": "greycam"},
-      {"id": "red", "name": "Red", "file": "redcam"},
-      {"id": "greyline", "name": "Greyline", "file": "greyline"}
+      {
+        "id": "granite",
+        "name": "Granite (down the valley)",
+        "file": "granitecam"
+      },
+      {
+        "id": "paradise",
+        "name": "Paradise",
+        "file": "paradisecam"
+      },
+      {
+        "id": "grey",
+        "name": "Grey",
+        "file": "greycam"
+      },
+      {
+        "id": "red",
+        "name": "Red",
+        "file": "redcam"
+      },
+      {
+        "id": "greyline",
+        "name": "Greyline",
+        "file": "greyline"
+      }
     ]
   },
   "airport_cams": [
@@ -124,9 +189,18 @@
     }
   ],
   "history_snapshots": [
-    {"name": "Castlegar runway", "url": "https://webcams.castlegar.ca/south.jpg"},
-    {"name": "Castlegar north", "url": "https://webcams.castlegar.ca/north.jpg"},
-    {"name": "Trail runway north", "url": "https://aircams.trail.ca:8081/axis-cgi/jpg/image.cgi"}
+    {
+      "name": "Castlegar runway",
+      "url": "https://webcams.castlegar.ca/south.jpg"
+    },
+    {
+      "name": "Castlegar north",
+      "url": "https://webcams.castlegar.ca/north.jpg"
+    },
+    {
+      "name": "Trail runway north",
+      "url": "https://aircams.trail.ca:8081/axis-cgi/jpg/image.cgi"
+    }
   ],
   "weather_model": "gem_seamless,best_match",
   "weather_model_note": "Two models in one Open-Meteo request: gem_seamless = Environment Canada's GEM models (HRDPS 2.5 km near-term, then RDPS/GDPS) and best_match = Open-Meteo's default blend. Each flight is scored with both and the higher risk is shown. GEM has no visibility, so that comes from the blend."

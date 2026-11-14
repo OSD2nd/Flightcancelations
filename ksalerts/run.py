@@ -87,6 +87,7 @@ def main():
 
     # live flight status: only at config "status_checks" (free API plan is ~400 units/month)
     yesterday_status = None
+    sslot = None
     key = os.environ.get("AERODATABOX_KEY")
     if key and not a.demo:
         checks = cfg.get("status_checks") or [{"time": t} for t in cfg.get("status_times", ["06:30", "10:00", "16:45"])]
@@ -347,7 +348,12 @@ def main():
     # ---- alerts: flights leaving in the next alert_window_hours, once per flight per level ----
     horizon = now + timedelta(hours=cfg.get("alert_window_hours", 30))
     new = []
-    for r in ([r for r in results if not r.get("no_forecast")] if may_email else []):
+    # a cancellation found by an airline status check goes out right away, not at the next email time
+    if may_email:
+        pool = [r for r in results if not r.get("no_forecast")]
+    else:
+        pool = [r for r in results if sslot and history.is_cancelled(r["status"])]
+    for r in pool:
         dep = datetime.fromisoformat(f"{r['date']}T{r['dep_local']}")
         if not (now <= dep <= horizon) or r["risk"] < cfg["alert_threshold"]:
             continue
