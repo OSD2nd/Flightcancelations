@@ -220,8 +220,11 @@ function renderCheck(){
    <div style="margin-bottom:6px"><b>How often we were right</b></div>
    <table><tr><th></th><th>3 days before</th><th>night before</th><th>morning of</th></tr>
    <tr><td><b>Cancelled</b> → we warned (${FLAG}%+)</td><td>${hit(groups.c,72,true)}</td><td>${hit(groups.c,12,true)}</td><td>${hit(groups.c,2,true)}</td></tr>
-   <tr><td><b>Flew</b> → we said fine (under ${FLAG}%)</td><td>${hit(groups.f,72,false)}</td><td>${hit(groups.f,12,false)}</td><td>${hit(groups.f,2,false)}</td></tr></table>
-   <div class="sub" style="margin-top:6px">Both should be near 100%. "—" = no forecast saved that far ahead yet. Tracking since Nov 12, 2026.</div>`;
+   <tr><td><b>Flew</b> → we said fine (under ${FLAG}%)</td><td>${hit(groups.f,72,false)}</td><td>${hit(groups.f,12,false)}</td><td>${hit(groups.f,2,false)}</td></tr>
+   <tr><th colspan="4" style="text-align:left;padding-top:10px">How often we were wrong</th></tr>
+   <tr><td><b>Cancelled</b> → we said fine (under ${FLAG}%)</td><td>${hit(groups.c,72,false)}</td><td>${hit(groups.c,12,false)}</td><td>${hit(groups.c,2,false)}</td></tr>
+   <tr><td><b>Flew</b> → we warned (${FLAG}%+)</td><td>${hit(groups.f,72,true)}</td><td>${hit(groups.f,12,true)}</td><td>${hit(groups.f,2,true)}</td></tr></table>
+   <div class="sub" style="margin-top:6px">Right should be near 100%, wrong near 0%. See the flights we got wrong in the "Where we were wrong" tab. "—" = no forecast saved that far ahead yet. Tracking since Nov 12, 2026.</div>`;
 }
 
 Promise.all([fetch('history.json?'+Date.now()).then(r=>r.json()),
