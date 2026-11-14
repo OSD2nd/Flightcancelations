@@ -362,21 +362,13 @@ def main():
             new.append(r)
             state["alerts"][key] = r["level"]
     if new:
-        lines = [f"{r['airline']} {r['flight']} {r['from']}→{r['to']} "
-                 f"{'arriving' if r['direction'] == 'arr' else 'leaving'} {r['airport_name']} at {r['dep_local']} on "
-                 f"{_day_name(r['date'], today)}: {round(r['risk']*100)}% cancellation risk ({r['level']}). "
-                 f"{'; '.join(r['reasons']) or 'Elevated overall conditions'}." for r in new]
+        from . import emailfmt
         site = "https://osd2nd.github.io/Flightcancelations/"
-        body = ("Flight risk heads-up:\n\n" + "\n\n".join(lines) +
-                "\n\nThis is an estimate from weather forecasts and past cancellations, not an airline notice. "
-                "Check with the airline before you travel.\n\n"
-                f"Dashboard: {site}\n\n--\nKootenay Flight Risk alerts. You're getting this because you signed up.\n"
-                f"Unsubscribe: {site}#unsubscribe")
-        subject = f"Flight risk: {', '.join(r['flight'] for r in new)}"
+        subject, body, html = emailfmt.build(new, today, site)
         if a.no_email:
             print(subject, "\n", body)
         else:
-            err = alert.send(subject, body, recipients())
+            err = alert.send(subject, body, recipients(), html)
             if err:
                 print(f"[warn] email not sent: {err}")
                 for r in new:  # try again next email check

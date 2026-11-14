@@ -3,7 +3,7 @@ import os, smtplib
 from email.message import EmailMessage
 
 
-def send(subject, body, to):
+def send(subject, body, to, html=None):
     """Returns None if sent (or no login set up), otherwise a short reason it failed."""
     user = (os.environ.get("SMTP_USER") or "").strip()
     # Google shows app passwords as "abcd efgh ijkl mnop"; the spaces aren't part of it
@@ -16,6 +16,8 @@ def send(subject, body, to):
     msg["From"], msg["To"], msg["Subject"] = user, user, subject
     rcpt = list(dict.fromkeys((to or []) + [user]))
     msg.set_content(body)
+    if html:
+        msg.add_alternative(html, subtype="html")
     # safe diagnostic for the run log: no secret values, just their shape
     name, _, domain = user.partition("@")
     print(f"[alert] login as {name[:2]}***@{domain or '(no @ in SMTP_USER!)'}, app password length {len(pw)}"
