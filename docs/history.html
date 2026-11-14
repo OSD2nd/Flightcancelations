@@ -211,13 +211,18 @@ function renderCheck(){
   const avg=(g,h)=>{const xs=g.map(o=>lastBefore(o.v,o.d,h)).filter(x=>x!=null);return xs.length?Math.round(xs.reduce((a,b)=>a+b,0)/xs.length)+'%':'—'};
   const hit=(g,h,want)=>{const xs=g.map(o=>lastBefore(o.v,o.d,h)).filter(x=>x!=null);return xs.length?Math.round(100*xs.filter(x=>want?x>=FLAG:x<FLAG).length/xs.length)+'%':'—'};
   box.hidden=false;
+  const n=g=>`${g.length} flight${g.length===1?'':'s'}`;
   box.innerHTML=`<h3>How good is our forecast?</h3>
-   <table><tr><th></th><th>flights</th><th>3 days out</th><th>night before</th><th>morning of</th></tr>
-   <tr><td>Cancelled / diverted — average forecast</td><td>${groups.c.length}</td><td>${avg(groups.c,72)}</td><td>${avg(groups.c,12)}</td><td>${avg(groups.c,2)}</td></tr>
-   <tr><td>Flew — average forecast</td><td>${groups.f.length}</td><td>${avg(groups.f,72)}</td><td>${avg(groups.f,12)}</td><td>${avg(groups.f,2)}</td></tr>
-   <tr><td>Cancellations we flagged (${FLAG}%+)</td><td></td><td>${hit(groups.c,72,true)}</td><td>${hit(groups.c,12,true)}</td><td>${hit(groups.c,2,true)}</td></tr>
-   <tr><td>Flights that flew, correctly under ${FLAG}%</td><td></td><td>${hit(groups.f,72,false)}</td><td>${hit(groups.f,12,false)}</td><td>${hit(groups.f,2,false)}</td></tr></table>
-   <div class="sub" style="margin-top:6px">A good forecast has a big gap between the two "average" rows, and both bottom rows near 100%. Since Nov 12, 2026.</div>`;
+   <div class="sub" style="margin-bottom:6px"><b>Part 1 — what we forecast, on average.</b> Take every flight that was cancelled, look up the cancel risk we showed for it, and average those numbers. Then do the same for every flight that flew.</div>
+   <table><tr><th></th><th>3 days before</th><th>night before</th><th>morning of</th></tr>
+   <tr><td>Flights that were <b>cancelled / diverted</b> (${n(groups.c)}) — we said on average</td><td>${avg(groups.c,72)}</td><td>${avg(groups.c,12)}</td><td>${avg(groups.c,2)}</td></tr>
+   <tr><td>Flights that <b>flew</b> (${n(groups.f)}) — we said on average</td><td>${avg(groups.f,72)}</td><td>${avg(groups.f,12)}</td><td>${avg(groups.f,2)}</td></tr></table>
+   <div class="sub" style="margin:6px 0 12px">Good: cancelled flights high (say 70%), flights that flew low (say 10%). If the two rows are close together, the forecast couldn't tell them apart.</div>
+   <div class="sub" style="margin-bottom:6px"><b>Part 2 — how often we got it right</b>, counting ${FLAG}% or more as "we said it won't fly".</div>
+   <table><tr><th></th><th>3 days before</th><th>night before</th><th>morning of</th></tr>
+   <tr><td>Cancelled flights we warned about (${FLAG}%+)</td><td>${hit(groups.c,72,true)}</td><td>${hit(groups.c,12,true)}</td><td>${hit(groups.c,2,true)}</td></tr>
+   <tr><td>Flights that flew where we said under ${FLAG}%</td><td>${hit(groups.f,72,false)}</td><td>${hit(groups.f,12,false)}</td><td>${hit(groups.f,2,false)}</td></tr></table>
+   <div class="sub" style="margin-top:6px">Good: both rows near 100%. "—" = no forecast saved that far ahead yet. Tracking since Nov 12, 2026.</div>`;
 }
 
 Promise.all([fetch('history.json?'+Date.now()).then(r=>r.json()),
