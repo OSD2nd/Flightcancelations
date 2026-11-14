@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <meta charset='UTF-8'>
+      <title>WXData Live</title>
+      <meta name='author' content='Web Publisher v5.0.1.48, RTMC Pro Development 5.0.1.48'>
+      <meta name='viewport' content='width=1000'/>
+      <meta name='format-detection' content='telephone=no' />
+      <meta name='apple-mobile-web-app-capable' content='yes' />
+      <meta name='apple-mobile-web-app-status-bar-style' content='black'>
+      <meta name='format-detection' content='telephone=no'>
+      <meta http-equiv='X-UA-Compatible' content='IE=edge, chrome=1' />
+      <link href='bootstrap.css.jgz' rel='stylesheet' type='text/css'/>
+      <link href='custom.css' rel='stylesheet' type='text/css'>
+   </head>
+   <body>
+      <noscript><h1>JavaScript must be enabled to view this page</h1></noscript>
+      <div class='container-fluid w-100 h-100' id='tab_container'>
+      <div id='tabs' class='w-100 h-100' >
+         <ul class='nav nav-tabs d-flex flex-nowrap'>
+            <li class='nav-item'><a class='nav-link' tabIndex='0' href='#canvas_container'><span id='tabs-0' style='color:#c91010; display:none;'>&#x2691; </span>Current Conditions</a></li>
+            <li class='nav-item'><a class='nav-link' tabIndex='1' href='#canvas_container'><span id='tabs-1' style='color:#c91010; display:none;'>&#x2691; </span>Wind 5 Min</a></li>
+            <li class='nav-item'><a class='nav-link' tabIndex='2' href='#canvas_container'><span id='tabs-2' style='color:#c91010; display:none;'>&#x2691; </span>7 Day</a></li>
+            <li class='nav-item'><a class='nav-link' tabIndex='3' href='#canvas_container'><span id='tabs-3' style='color:#c91010; display:none;'>&#x2691; </span>30 Day</a></li>
+            <li class='nav-item'><a class='nav-link' tabIndex='4' href='#canvas_container'><span id='tabs-4' style='color:#c91010; display:none;'>&#x2691; </span>Wind Rose</a></li>
+            <li class='nav-item'><a class='nav-link' tabIndex='5' id='data-browse-tab' href='#data-browse-id'>Browse Data</a></li>
+            <li class='nav-item'><a class='nav-link' tabIndex='6' id='status-tab' href='#status-id'>Network Status</a></li>
+         </ul>
+         <div id='canvas_container'>
+            <canvas id='rtmc_canvas' width='1000' height='1610'></canvas>
+         </div>
+         <iframe class='d-none non-canvas-tab' id='data-browse-id' tabIndex='5' src='/data_browse.html'></iframe>
+         <iframe class='d-none non-canvas-tab' id='status-id' tabIndex='6'  src='network_status.html'></iframe>
+      </div>
+      <div class='dropdown' id='menu_dropdown'>
+         <button class='btn btn-secondary' id='menu_btn' type='button' data-toggle='dropdown'>&#9660;</button>
+         <div class='dropdown-menu dropdown-menu-right' style='max-height:90vh;overflow-y:auto'>
+            <a class='dropdown-item screen-dropdown-item' tabIndex='0' href='#canvas_container'>Current Conditions</a>
+            <a class='dropdown-item screen-dropdown-item' tabIndex='1' href='#canvas_container'>Wind 5 Min</a>
+            <a class='dropdown-item screen-dropdown-item' tabIndex='2' href='#canvas_container'>7 Day</a>
+            <a class='dropdown-item screen-dropdown-item' tabIndex='3' href='#canvas_container'>30 Day</a>
+            <a class='dropdown-item screen-dropdown-item' tabIndex='4' href='#canvas_container'>Wind Rose</a>
+            <a class='dropdown-item screen-dropdown-item' tabIndex='5' href='#data-browse-id'>Browse Data</a>
+            <a class='dropdown-item screen-dropdown-item' tabIndex='6' href='#status-id'>Network Status</a>
+         </div>
+      </div>
+<!-- Date Picker Modal -->
+      <div id='date_picker_modal' class='modal' tabindex='-1' role='dialog'>
+         <div class='modal-dialog' role='document'>
+            <div class='modal-content'>
+               <div class='modal-header alert-info'>
+                  <h5 class='modal-title'>Select Report Range</h5>
+                  <button type='button' class='close' data-dismiss='modal' aria-label='Close'>
+                     <span aria-hidden='true'>&times;</span>
+                  </button>
+               </div>
+               <div class='modal-body'>
+                  <div class='form-group row' id='begin_date_row'>
+                     <label for='begindatetimepicker' class='col-sm-2 col-form-label text-nowrap'>Begin Date</label>
+                     <div class='col-sm-10 input-group date' id='begindatetimepicker' data-target-input='nearest'>
+                        <input type='text' class='form-control datetimepicker-input' id='begindatetimepicker_input' data-target='#begindatetimepicker' />
+                        <div class='input-group-append' data-target='#begindatetimepicker' data-toggle='datetimepicker'>
+                           <div class='input-group-text'>
+                              <img width='20' src='data:image/svg+xml;utf8,<svg aria-hidden="true" data-prefix="far" data-icon="calendar-alt" class="svg-inline--fa fa-calendar-alt fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentColor" d="M148 288h-40c-6.6 0-12-5.4-12-12v-40c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v40c0 6.6-5.4 12-12 12zm108-12v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm96 0v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm-96 96v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm-96 0v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm192 0v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm96-260v352c0 26.5-21.5 48-48 48H48c-26.5 0-48-21.5-48-48V112c0-26.5 21.5-48 48-48h48V12c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v52h128V12c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v52h48c26.5 0 48 21.5 48 48zm-48 346V160H48v298c0 3.3 2.7 6 6 6h340c3.3 0 6-2.7 6-6z"></path></svg>'>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+                  <div class='form-group row' id='end_date_row'>
+                     <label for='enddatetimepicker' class='col-sm-2 col-form-label text-nowrap'>End Date</label>
+                     <div class='col-sm-10 input-group date' id='enddatetimepicker' data-target-input='nearest'>
+                        <input type='text' class='form-control datetimepicker-input' id='enddatetimepicker_input' data-target='#enddatetimepicker' />
+                        <div class='input-group-append' data-target='#enddatetimepicker' data-toggle='datetimepicker'>
+                           <div class='input-group-text'>
+                              <img width='20' src='data:image/svg+xml;utf8,<svg aria-hidden="true" data-prefix="far" data-icon="calendar-alt" class="svg-inline--fa fa-calendar-alt fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentColor" d="M148 288h-40c-6.6 0-12-5.4-12-12v-40c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v40c0 6.6-5.4 12-12 12zm108-12v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm96 0v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm-96 96v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm-96 0v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm192 0v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm96-260v352c0 26.5-21.5 48-48 48H48c-26.5 0-48-21.5-48-48V112c0-26.5 21.5-48 48-48h48V12c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v52h128V12c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v52h48c26.5 0 48 21.5 48 48zm-48 346V160H48v298c0 3.3 2.7 6 6 6h340c3.3 0 6-2.7 6-6z"></path></svg>'>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+               <div class='modal-footer'>
+                  <button type='button' class='btn btn-secondary' data-dismiss='modal'>Cancel</button>
+                  <button type='button' class='btn btn-primary' id='date_picker_apply_btn'>Apply</button>
+               </div>
+            </div>
+         </div>
+      </div>
+<!-- Step Size Modal -->
+      <div id='step_size_modal' class='modal' tabindex='-1' role='dialog'>
+         <div class='modal-dialog' role='document'>
+            <div class='modal-content'>
+               <div class='modal-header alert-info'>
+                  <h5 class='modal-title'>Select Step for Navigation Buttons</h5>
+                  <button type='button' class='close' data-dismiss='modal' aria-label='Close'>
+                     <span aria-hidden='true'>&times;</span>
+                  </button>
+               </div>
+               <div class='modal-body'>
+                  <input type="radio" 
+                     name="step_type" 
+                     onclick=onMyClickedRadio()
+                     id = "myRadioCurrent"
+                     value="current_range"> 
+                     Use the current range as the navigation step size<br>
+
+                  <input type="radio" 
+                     name="step_type" 
+                     onclick=onMyClickedRadio()
+                     id = "myRadioCustom"
+                     value="custom_range"> 
+                     Use a different step size for the navigation buttons<br>
+
+                  <div id = "customStepDiv" style.display = "none"
+                       <p>
+                       Step Size
+
+                       <input type="number" name="points" id = "stepSizeValue" value = "1" max="1000" min = "1" step="1">
+                       <select id = "stepSizeUnits">
+                                   <option value = 6>Second(s)</option>
+                                   <option value = 0>Minute(s)</option>
+                                   <option value = 1>Hour(s)</option>
+                                   <option value = 2>Day(s)</option>
+                                   <option value = 3>Week(s)</option>
+                                   <option value = 4>Month(s)</option>
+                                   <option value = 5>Year(s)</option>
+                                   value = "step_weeks"
+                       </select>
+                       <p>
+                  </div>
+               </div>
+               <div class='modal-footer'>
+                  <button type='button' class='btn btn-secondary' data-dismiss='modal'>Cancel</button>
+                  <button type='button' class='btn btn-primary' id='step_size_apply_btn'>Apply</button>
+               </div>
+                   <script>
+                       function onMyClickedRadio() {
+                            var radioSelected = $("input[name='step_type']:checked"). val();
+                            var x = document.getElementById("customStepDiv");
+                            if (radioSelected == "current_range")
+                               x.style.display = "none"
+                            else // custom_range
+                               x.style.display = "block"
+                       }
+                   </script>
+
+            </div>
+         </div>
+      </div>
+<!-- Report Note Modal -->
+      <div id='report_note_modal' class='modal' tabindex='-1' role='dialog'>
+         <div class='modal-dialog' role='document'>
+            <div class='modal-content'>
+               <div class='modal-header alert-info'>
+                  <h5 class='modal-title'>Edit the note for this report</h5>
+                  <button type='button' class='close' data-dismiss='modal' aria-label='Close'>
+                     <span aria-hidden='true'>&times;</span>
+                  </button>
+               </div>
+               <div class='modal-body'>
+                   <form id = 'note_form'>
+                       <textarea rows = '5' cols ='40' id = 'textNote'>
+                         Type notes here
+                       </textarea>
+                       <p>Alignment 
+                       <select id = "reportNoteAlignment">
+                                   <option value = 0>Left</option>
+                                   <option value = 1>Center</option>
+                                   <option value = 2>Right</option>
+                                   value = "left"
+                       </select>          
+                       Color <input type='color' id = 'reportNoteColor' value="#ff0000"><br><br>
+                       <p><p>
+                       Width  <input type="number" name="width" id = "compWidth" value = "1" max="1280" min = "10" step="1">  
+                       <p>
+                       Height <input type="number" name="height" id = "compHeight" value = "1" max="1024" min = "10" step="1">
+                       <p><p>
+                       <p>
+                       Left   <input type="number" name="left" id = "compLeft" value = "1" max="1024" min = "0" step="1">      
+                       <p>
+                       Top    <input type="number" name="top" id = "compTop" value = "1" max="1024" min = "0" step="1">        
+                   </form> 
+               </div>
+               <div class='modal-footer'>
+                   <button type='button' class='btn btn-primary' data-dismiss='modal'>Ok</button>
+               </div>
+            </div>
+         </div>
+      </div>
+<!-- Set Point Modal -->
+      <div id='set_point_modal' class='modal' tabindex='-1' role='dialog'>
+         <style>
+             #set_point_modal
+                draggable:true
+         </style>
+         <div class='modal-dialog' role='document'>
+            <div class='modal-content'>
+               <div class='modal-header alert-info'>
+                  <h5 class='modal-title'>Set Variable</h5>
+                  <button type='button' class='close' data-dismiss='modal' aria-label='Close'>
+                     <span aria-hidden='true'>&times;</span>
+                  </button>
+               </div>
+               <div class='modal-body'>
+                   <div id='numeric_value'>
+                       <input type='number' id = 'setPointNumber' value="" min = "1" max = "5">
+                   </div>
+                   <div id='text_value'>
+                       <input type='text' id = 'setPointText'>
+                   </div>
+               </div>
+               <div class='modal-footer'>
+                   <button type='submit' class='btn btn-primary' id = 'setPointApply' data-dismiss='modal'>Apply</button>
+                   <button type='button' class='btn btn-secondary' data-dismiss='modal'>Close</button>
+               </div>
+            </div>
+         </div>
+      </div>
+      <div id='bottom_tracker' style='position: relative'>
+         <script type='text/javascript'>
+         </script>
+      </div>
+      <script src='bootstrap.bundle.js.jgz' type='text/javascript'></script>
+      <script src='RTMCProject.js.jgz' type='text/javascript'></script>
+      <script type='text/javascript'>
+         $(document).ready(
+         function()
+         {
+            if(typeof start === 'function'){ start(); }
+            $('.nav-link').click(function (){graphicsManager.activateTab(this.tabIndex, true, false);});
+
+            $('.screen-dropdown-item').click(function (){graphicsManager.activateTab(this.tabIndex, true, true);});
+
+            if(typeof graphicsManager !== 'undefined')
+            {
+               graphicsManager.setTotalTabCount(7);
+               var parameters = getUrlVars();
+               var tab_id = parameters['tab_id'];
+               var stop_auto = false;
+               if(typeof tab_id === 'undefined')
+               { tab_id = 0; }
+               else
+               { tab_id = Number(tab_id).valueOf(); stop_auto = true}
+               graphicsManager.activateTab(tab_id, stop_auto, true);
+            }
+         });
+      </script>
+   </body>
+</html>

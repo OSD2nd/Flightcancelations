@@ -1,0 +1,17 @@
+HTTP/1.1 302 Found
+Date: Sat, 14 Nov 2026 14:45:03 GMT
+Transfer-Encoding: chunked
+Connection: keep-alive
+Location: http://redresort.fortiddns.com:30001/index.html
+
+HTTP/1.1 200 OK
+Date: Sat, 14 Nov 2026 14:45:03 GMT
+Content-Type: text/html; charset=utf-8
+Content-Disposition: inline;filename=index.html
+Content-Length: 16177
+Accept-Ranges: bytes
+WWW-Authenticate: Basic realm="Default Realm", charset="UTF-8"
+Last-Modified: Sun, 09 Mar 2025 18:04:33 GMT
+Cache-Control: must-revalidate
+Csi-ServerType: csiwebs
+
