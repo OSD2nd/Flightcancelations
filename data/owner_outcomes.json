@@ -1,4 +1,8 @@
 {
   "_about": "Outcomes the owner knows for sure (e.g. the airline never posted the cancellation). These always win over airline status. Format: \"date|airport|flight\": \"Canceled\" / \"Departed\" / \"Arrived\" / \"Diverted\".",
-  "2026-11-13|YZZ|8P458": "Departed"
+  "2026-11-13|YZZ|8P458": "Departed",
+  "2026-11-14|YZZ|8P451": "Canceled",
+  "2026-11-14|YZZ|8P452": "Canceled",
+  "2026-11-14|YZZ|8P457": "Canceled",
+  "2026-11-14|YZZ|8P458": "Canceled"
 }
