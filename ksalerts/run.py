@@ -272,12 +272,21 @@ def main():
                 dep["reasons"] = ([lead] if inb["risk"] >= cfg["watch_threshold"] else []) + extra + dep["reasons"]
 
     results = []
+    # outcomes the owner reported (data/owner_outcomes.json) beat the airline feed
+    owner = tracking.owner_outcomes()
     for code, ap_cfg in cfg["airports"].items():
         for i, d in enumerate(days):
             for arriving in (False, True):
                 fl, source = flights.schedule(code, d, cfg, arriving, live)
                 for f in fl:
-                    results.append(score(f, code, ap_cfg, d, arriving, source))
+                    said = owner.get(f"{d.isoformat()}|{code}|{f['flight']}", "")
+                    if re.match(r"cancel|divert", said, re.I) and not re.match(r"cancel|divert", str(f["status"]), re.I):
+                        f = {**f, "status": said}
+                    r = score(f, code, ap_cfg, d, arriving, source)
+                    r["reported"] = bool(said)
+                    if said and history.is_cancelled(r["status"]):
+                        r["reasons"] = ["Reported cancelled (the airline feed hasn't shown it)"]
+                    results.append(r)
     link_aircraft(results)
     if cfg.get("record_history") and live.get("date") == today.isoformat():
         history.record_outcomes(results, now)
@@ -353,7 +362,7 @@ def main():
     if may_email:
         pool = [r for r in results if not r.get("no_forecast")]
     else:
-        pool = [r for r in results if sslot and history.is_cancelled(r["status"])]
+        pool = [r for r in results if sslot and history.is_cancelled(r["status"]) and not r.get("reported")]
     for r in pool:
         dep = datetime.fromisoformat(f"{r['date']}T{r['dep_local']}")
         if not (now <= dep <= horizon) or r["risk"] < cfg["alert_threshold"]:
