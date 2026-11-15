@@ -48,7 +48,17 @@
    "vis_sm": 15.0,
    "wx": "",
    "raw": "SPECI CYCG 142339Z 17007KT 120V190 15SM FEW006 FEW024 BKN035 BKN050 BKN083 08/07 A2982 RMK SC1SC1SC5SC1AC1 SC TR AC TR VIS LWR NW SLP108"
-  }
+  },
+  "red": [
+   {
+    "name": "Red Mountain, Granite (17:05)",
+    "src": "history/img/2026-11-14_YZZ_1705_granite.jpg"
+   },
+   {
+    "name": "Red Mountain, Greyline (17:05)",
+    "src": "history/img/2026-11-14_YZZ_1705_greyline.jpg"
+   }
+  ]
  },
  {
   "date": "2026-11-14",
