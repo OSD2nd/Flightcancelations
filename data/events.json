@@ -1,6 +1,54 @@
 [
  {
   "date": "2026-11-15",
+  "flight": "8P457",
+  "airline": "Pacific Coastal",
+  "airport": "YZZ",
+  "airport_name": "Trail Regional",
+  "direction": "arr",
+  "from": "YVR",
+  "to": "YZZ",
+  "sched": "16:32",
+  "first_seen": "2026-11-15T16:00",
+  "predicted": 0.948,
+  "predicted_reasons": [
+   "Low cloud with rain (the usual cancellation pattern)",
+   "Low cloud or fog patches under 1,000 ft",
+   "Heavy low cloud",
+   "Cloud on the ridges",
+   "Rain or drizzle"
+  ],
+  "wx_when_seen": {
+   "time": "2026-11-15T22:00+00:00",
+   "ceiling_ft": 3300,
+   "vis_sm": 5.0,
+   "wx": "-RA BR",
+   "raw": "METAR CYCG 152200Z 00000KT 5SM -RA BR FEW007 BKN033 OVC045 08/08 A2989 RMK ST2SC5SC1 LO CLD DNWND SLP132"
+  },
+  "taf_when_seen": "TAF CYCG 151942Z 1520/1524 VRB03KT P6SM BKN040 TEMPO 1520/1524 3SM -SHRA BR FEW004 BKN030 RMK NXT FCST BY 161500Z",
+  "photos": [
+   {
+    "name": "Castlegar runway",
+    "src": "history/img/2026-11-15_YZZ_0.jpg"
+   },
+   {
+    "name": "Castlegar north",
+    "src": "history/img/2026-11-15_YZZ_1.jpg"
+   },
+   {
+    "name": "Trail runway north",
+    "src": "history/img/2026-11-15_YZZ_2.jpg"
+   }
+  ],
+  "source": "live",
+  "kind": "cancelled",
+  "status": "Canceled",
+  "expected": null,
+  "diverted_to": null,
+  "delay_min": null
+ },
+ {
+  "date": "2026-11-15",
   "flight": "AC8376",
   "airline": "Air Canada",
   "airport": "YCG",
@@ -63,6 +111,128 @@
     "src": "history/img/2026-11-15_YCG_1143_greyline.jpg"
    }
   ]
+ },
+ {
+  "date": "2026-11-15",
+  "flight": "8P452",
+  "airline": "Pacific Coastal",
+  "airport": "YZZ",
+  "airport_name": "Trail Regional",
+  "direction": "dep",
+  "from": "YZZ",
+  "to": "YVR",
+  "sched": "10:50",
+  "first_seen": "2026-11-15T16:00",
+  "predicted": 0.083,
+  "predicted_reasons": [
+   "Heavy low cloud"
+  ],
+  "wx_when_seen": {
+   "time": "2026-11-15T22:00+00:00",
+   "ceiling_ft": 3300,
+   "vis_sm": 5.0,
+   "wx": "-RA BR",
+   "raw": "METAR CYCG 152200Z 00000KT 5SM -RA BR FEW007 BKN033 OVC045 08/08 A2989 RMK ST2SC5SC1 LO CLD DNWND SLP132"
+  },
+  "taf_when_seen": "TAF CYCG 151942Z 1520/1524 VRB03KT P6SM BKN040 TEMPO 1520/1524 3SM -SHRA BR FEW004 BKN030 RMK NXT FCST BY 161500Z",
+  "photos": [
+   {
+    "name": "Castlegar runway",
+    "src": "history/img/2026-11-15_YZZ_0.jpg"
+   },
+   {
+    "name": "Castlegar north",
+    "src": "history/img/2026-11-15_YZZ_1.jpg"
+   },
+   {
+    "name": "Trail runway north",
+    "src": "history/img/2026-11-15_YZZ_2.jpg"
+   }
+  ],
+  "source": "live",
+  "kind": "cancelled",
+  "status": "Canceled",
+  "expected": null,
+  "diverted_to": null,
+  "delay_min": null,
+  "red": [
+   {
+    "name": "Red Mountain, Granite (10:50)",
+    "src": "history/img/2026-11-15_YZZ_1050_granite.jpg"
+   },
+   {
+    "name": "Red Mountain, Greyline (10:50)",
+    "src": "history/img/2026-11-15_YZZ_1050_greyline.jpg"
+   }
+  ],
+  "wx_at_time": {
+   "time": "2026-11-15T18:00+00:00",
+   "ceiling_ft": 3700,
+   "vis_sm": 7.0,
+   "wx": "-RA",
+   "raw": "METAR CYCG 151800Z VRB02KT 7SM -RA FEW002 SCT012 BKN037 OVC075 07/07 A2989 RMK ST2SF1SC3AC2 VIS W-NW 1 SLP135"
+  }
+ },
+ {
+  "date": "2026-11-15",
+  "flight": "8P451",
+  "airline": "Pacific Coastal",
+  "airport": "YZZ",
+  "airport_name": "Trail Regional",
+  "direction": "arr",
+  "from": "YVR",
+  "to": "YZZ",
+  "sched": "10:24",
+  "first_seen": "2026-11-15T16:00",
+  "predicted": 0.083,
+  "predicted_reasons": [
+   "Heavy low cloud"
+  ],
+  "wx_when_seen": {
+   "time": "2026-11-15T22:00+00:00",
+   "ceiling_ft": 3300,
+   "vis_sm": 5.0,
+   "wx": "-RA BR",
+   "raw": "METAR CYCG 152200Z 00000KT 5SM -RA BR FEW007 BKN033 OVC045 08/08 A2989 RMK ST2SC5SC1 LO CLD DNWND SLP132"
+  },
+  "taf_when_seen": "TAF CYCG 151942Z 1520/1524 VRB03KT P6SM BKN040 TEMPO 1520/1524 3SM -SHRA BR FEW004 BKN030 RMK NXT FCST BY 161500Z",
+  "photos": [
+   {
+    "name": "Castlegar runway",
+    "src": "history/img/2026-11-15_YZZ_0.jpg"
+   },
+   {
+    "name": "Castlegar north",
+    "src": "history/img/2026-11-15_YZZ_1.jpg"
+   },
+   {
+    "name": "Trail runway north",
+    "src": "history/img/2026-11-15_YZZ_2.jpg"
+   }
+  ],
+  "source": "live",
+  "kind": "cancelled",
+  "status": "Canceled",
+  "expected": null,
+  "diverted_to": null,
+  "delay_min": null,
+  "red": [
+   {
+    "name": "Red Mountain, Granite (10:25)",
+    "src": "history/img/2026-11-15_YZZ_1024_granite.jpg"
+   },
+   {
+    "name": "Red Mountain, Greyline (10:25)",
+    "src": "history/img/2026-11-15_YZZ_1024_greyline.jpg"
+   }
+  ],
+  "wx_at_time": {
+   "time": "2026-11-15T17:00+00:00",
+   "ceiling_ft": 4700,
+   "vis_sm": 8.0,
+   "wx": "-RA",
+   "raw": "METAR CYCG 151700Z VRB02KT 8SM -RA SCT002 SCT020 BKN047 BKN054 BKN075 07/07 A2989 RMK ST3SC1SC3SC1AC1 SC TR AC TR XTNSV LO CLD S-NW VIS S 3 SLP135"
+  }
  },
  {
   "date": "2026-11-14",
