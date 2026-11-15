@@ -45,7 +45,14 @@
   "status": "Canceled",
   "expected": null,
   "diverted_to": null,
-  "delay_min": null
+  "delay_min": null,
+  "wx_at_time": {
+   "time": "2026-11-15T23:00+00:00",
+   "ceiling_ft": 3300,
+   "vis_sm": 5.0,
+   "wx": "-RA BR",
+   "raw": "METAR CYCG 152300Z 15005KT 5SM -RA BR FEW003 SCT007 SCT015 BKN033 OVC040 08/08 A2989 RMK ST2SF1SF1SC3SC2 SF TR XTNSV LO CLD E+W-NW SLP135"
+  }
  },
  {
   "date": "2026-11-15",
