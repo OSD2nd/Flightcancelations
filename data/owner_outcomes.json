@@ -1,5 +1,5 @@
 {
-  "_about": "Outcomes the owner knows for sure (e.g. the airline never posted the cancellation). These always win over airline status. Format: \"date|airport|flight\": \"Canceled\" / \"Departed\" / \"Arrived\" / \"Diverted\".",
+  "_about": "Outcomes the owner knows for sure (e.g. the airline never posted the cancellation). These always win over airline status. Format: \"date|airport|flight\": \"Canceled\" / \"Canceled (not weather)\" / \"Departed\" / \"Arrived\" / \"Diverted\". \"Canceled (not weather)\" = cancelled for an airline reason (crew, maintenance, few bookings): it's labelled and not counted against the forecast.",
   "2026-11-13|YZZ|8P458": "Departed",
   "2026-11-14|YZZ|8P451": "Canceled",
   "2026-11-14|YZZ|8P452": "Canceled",
