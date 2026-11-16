@@ -194,14 +194,14 @@ function trailChart(e){
   const t0=ftime(e.date,rec.sched), W=320,H=90,L=26,R=8,T=8,B=18, days=7;
   const x=t=>L+(W-L-R)*(1-Math.min(days,Math.max(0,(t0-t)/864e5))/days), y=v=>T+(H-T-B)*(1-v/100);
   const pts=rec.p.map(q=>[x(ptime(q[0])),y(q[1]),q[1]]);
-  const grid=[0,30,100].map(v=>`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="currentColor" stroke-opacity="${v===30?.35:.15}" ${v===30?'stroke-dasharray="3 3"':''}/><text x="${L-4}" y="${y(v)+3}" font-size="8" text-anchor="end" fill="currentColor" fill-opacity=".6">${v}%</text>`).join('');
+  const grid=[0,FLAG,100].map(v=>`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="currentColor" stroke-opacity="${v===FLAG?.35:.15}" ${v===FLAG?'stroke-dasharray="3 3"':''}/><text x="${L-4}" y="${y(v)+3}" font-size="8" text-anchor="end" fill="currentColor" fill-opacity=".6">${v}%</text>`).join('');
   const ticks=[7,5,3,1,0].map(dd=>`<text x="${x(t0-dd*864e5)}" y="${H-5}" font-size="8" text-anchor="middle" fill="currentColor" fill-opacity=".6">${dd?dd+'d':'flight'}</text>`).join('');
   const line=pts.length>1?`<polyline fill="none" stroke="var(--accent)" stroke-width="2" points="${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}"/>`:'';
   const dots=pts.map(p=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.5" fill="var(--accent)"/>`).join('');
   const marks=[[72,'3 days out'],[12,'night before'],[2,'morning of']].map(([h,l])=>{const v=lastBefore(rec,e.date,h);return v==null?null:`${l} <b>${v}%</b>`}).filter(Boolean);
   return `<div class="trail"><div class="sub">Our forecast in the days before:</div>
    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Forecast history chart">${grid}${ticks}${line}${dots}</svg>
-   <div class="t">${marks.length?marks.join(' · '):'Only checked close to the flight.'} · dashed line = 30% alert level</div></div>`;
+   <div class="t">${marks.length?marks.join(' · '):'Only checked close to the flight.'} · dashed line = ${FLAG}% (above it = we said it wouldn't fly)</div></div>`;
 }
 const FLAG=60;   // 'we flagged it' = forecast at 60%+ (matches the 'Where we were wrong' tab)
 function renderCheck(){
