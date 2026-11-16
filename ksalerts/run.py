@@ -46,6 +46,14 @@ def load_state():
     return s
 
 
+def in_quiet_hours(now, cfg):
+    """Night hours (config "quiet_hours", default 21:00-05:00) when we don't fetch new weather:
+    nothing flies, and the forecasts are fetched again before the morning flights."""
+    start, end = cfg.get("quiet_hours", ["21:00", "05:00"])
+    t = now.strftime("%H:%M")
+    return (t >= start or t < end) if start > end else (start <= t < end)
+
+
 def smooth_risk(results, state, now, cfg):
     """Calm the number down: each run moves the risk only part of the way toward the new
     forecast, so one odd run (a source timing out, a model wobble) can't swing it from 8% to 86%.
@@ -102,6 +110,10 @@ def main():
     weather.MODEL = cfg.get("weather_model")
     now = (datetime.fromisoformat(a.now) if a.now
            else clock.now())
+    quiet = in_quiet_hours(now, cfg)
+    weather.HOLD = quiet and not a.demo
+    if quiet:
+        print("quiet hours: using the saved weather forecasts, not fetching new ones")
     today = now.date()
     state = load_state()
 
@@ -194,7 +206,7 @@ def main():
             if ap_cfg.get("eccc_city"):
                 # keep the last good copy (up to 12 h): one timeout used to swing a flight from 86% to 8%
                 saved = os.path.join(weather.CACHE_DIR, f"eccc_{code}.json")
-                for attempt in (1, 2):
+                for attempt in ((1, 2) if not (quiet and os.path.exists(saved)) else ()):
                     try:
                         official[code] = eccc.fetch(ap_cfg["eccc_city"])
                         os.makedirs(weather.CACHE_DIR, exist_ok=True)
@@ -207,7 +219,7 @@ def main():
                     try:
                         with open(saved) as fh:
                             old = json.load(fh)
-                        if now - datetime.fromisoformat(old["at"]) <= timedelta(hours=12):
+                        if quiet or now - datetime.fromisoformat(old["at"]) <= timedelta(hours=12):
                             official[code] = old["fc"]
                             print(f"[info] using the saved Environment Canada forecast for {code} from {old['at']}")
                     except Exception:

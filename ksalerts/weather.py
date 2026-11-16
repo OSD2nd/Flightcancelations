@@ -101,6 +101,7 @@ def fetch_smoke(lat, lon, start, end):
 
 # ---- cache: fetch the model forecast every couple of hours and reuse it in between ----
 CACHE_DIR = ".cache/weather"     # kept between GitHub runs with actions/cache (not committed)
+HOLD = False                     # quiet hours (night): use any saved copy, don't fetch
 FETCHED = {}                     # name -> when the data in use was actually fetched (epoch seconds)
 
 
@@ -127,7 +128,7 @@ def cached(name, fetch, fresh_hours=2, keep_hours=30):
         return {datetime.fromisoformat(k): v for k, v in d.items()}
     # a copy that came from the backup source gets replaced sooner (try the main source again next run)
     from_backup = bool(saved) and saved.get("backup", False)
-    if saved and age < (0.4 if from_backup else fresh_hours):
+    if saved and (HOLD or age < (0.4 if from_backup else fresh_hours)):
         FETCHED[name] = saved["at"]
         return unpack(saved["data"]), None
     try:

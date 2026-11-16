@@ -5,6 +5,11 @@
     "06:30",
     "19:00"
   ],
+  "quiet_hours": [
+    "21:00",
+    "05:00"
+  ],
+  "quiet_hours_note": "No new weather is fetched between these local times (nothing flies); the saved forecast is used until 05:00.",
   "alert_window_hours": 30,
   "signup_formspree": "",
   "signup_note": "Formspree form ID (the part after formspree.io/f/). Blank hides the sign-up box. Not secret: it's in the public page.",
