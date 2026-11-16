@@ -51,13 +51,24 @@ def fetch(city_id):
             "hours": hours, "periods": periods, "warnings": warnings}
 
 
+DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+
+
 def period_dates(periods, today):
-    """Give each forecast period a date and day/night. The first is today (or tonight)."""
-    out, d = [], today
+    """Give each forecast period its real date and day/night, from the weekday ECCC names
+    ("Sunday night", "Monday"). Between midnight and ECCC's ~5 am update the first period is
+    still last night ("Tonight" = Sunday night while it's already Monday): counting periods
+    from today would shift every day's forecast one day late."""
+    out = []
     for i, p in enumerate(periods):
-        night = "night" in (p["name"] or "").lower() or (p["name"] or "").lower() == "tonight"
-        if i > 0 and not night:
-            d = d + timedelta(days=1)
+        label = (p.get("day") or p.get("name") or "").lower()
+        night = "night" in label or (p.get("name") or "").lower() == "tonight"
+        wd = next((n for n, d in enumerate(DAYS) if label.startswith(d)), None)
+        if wd is not None:
+            # the date with that weekday closest to today, from yesterday up to 6 days ahead
+            d = next(today + timedelta(days=k) for k in range(-1, 7) if (today + timedelta(days=k)).weekday() == wd)
+        else:   # no weekday in the label (shouldn't happen): fall back to counting
+            d = datetime.fromisoformat(out[-1]["date"]).date() + timedelta(days=0 if night else 1) if out else today
         out.append({**p, "date": d.isoformat(), "night": night})
     return out
 
