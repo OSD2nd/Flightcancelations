@@ -53,6 +53,7 @@ details summary{cursor:pointer;font-size:.85rem;color:var(--accent);margin-top:6
 .check h3{margin:0 0 6px;font-size:.95rem}.check table{width:100%;border-collapse:collapse;font-size:.88rem}
 .check td,.check th{padding:4px 6px;border-bottom:1px solid var(--line);text-align:right}.check th:first-child,.check td:first-child{text-align:left}
 .foot{color:var(--mute);font-size:.8rem;margin:24px 0}
+.badge.notwx{background:#6b7280;color:#fff}
 </style></head><body>
 <div class="row"><h1>Flight history</h1><a href="./">← Back to forecast</a></div>
 <div class="sub">Cancellations and delays between Trail / Castlegar and Vancouver, with the weather and webcams at the time.</div>
@@ -100,16 +101,30 @@ function wxDl(w,title){
   <dl><dt>Cloud base</dt><dd>${esc(ft(w.ceiling_ft))}</dd>${lowestRow(w)}<dt>Visibility</dt><dd>${w.vis_sm!=null?esc(w.vis_sm)+' mi':'—'}</dd>
   ${w.wx?`<dt>Weather</dt><dd>${esc(wxWords(w.wx))}</dd>`:''}</dl>${w.raw?`<div class="raw">${esc(w.raw)}</div>`:''}`;
 }
+// cancelled while the airport weather was fine = probably not weather (crew, maintenance, few bookings).
+// The owner can also mark one by hand: "Canceled (not weather)" in data/owner_outcomes.json.
+function wxFine(w){
+  if(!w||!w.raw)return false;
+  const raw=w.raw, lows=[...raw.matchAll(/\b(FEW|SCT|BKN|OVC|VV)(\d{3})\b/g)].map(x=>+x[2]*100);
+  const lowest=lows.length?Math.min(...lows):99999;
+  // strict on purpose: Castlegar's approach needs a high cloud base, so 2,000 ft cloud can still stop flights
+  return (w.ceiling_ft==null||w.ceiling_ft>=5000)&&lowest>=3000&&(w.vis_sm==null||w.vis_sm>=6)&&
+    !/\b(FG|BR|SN|FZ\w*|SHSN|BLSN)\b|LO CLD|\bVV\d/.test(raw);
+}
+function notWeather(outcome,w){return /not weather/i.test(outcome||'')||wxFine(w)}
+const NOTWX='<span class="badge notwx">PROBABLY NOT WEATHER</span>';
+const NOTWX_WHY='<div class="sub" style="margin-top:4px">The weather at flight time looked fine, so this was likely an airline reason (crew, maintenance, few bookings). It doesn\'t count against our forecast.</div>';
 function card(e){
   const arr=e.direction==='arr';
   const badge=e.kind==='cancelled'?`<span class="badge">${/uncertain/i.test(e.status)?'MAYBE CANCELLED':'CANCELLED'}</span>`:e.kind==='diverted'?`<span class="badge">DIVERTED${e.diverted_to?' to '+esc(e.diverted_to):''}</span>`:`<span class="badge delayed">${e.delay_min} min late${e.expected?' · '+esc(e.expected):''}</span>`;
   const rec=preds[pkey(e)], jd=rec?judged(rec,e.date):[null,''];
-  const pred=jd[0]!=null?`<div class="pred">Our forecast said <b>${jd[0]}%</b> risk (${esc(jd[1])})${e.predicted_reasons&&e.predicted_reasons.length?' · '+esc(e.predicted_reasons.slice(0,3).join(', ')):''}</div>`:
-    e.predicted!=null?`<div class="pred">Our forecast said <b>${Math.round(e.predicted*100)}%</b> risk${e.predicted_reasons&&e.predicted_reasons.length?' ('+esc(e.predicted_reasons.slice(0,3).join(', '))+')':''}</div>`:'';
+  const nw=e.kind==='cancelled'&&notWeather(rec&&rec.outcome,e.wx_at_time||(rec&&rec.wx));
+  const pred=(nw?NOTWX_WHY:'')+(jd[0]!=null?`<div class="pred">Our forecast said <b>${jd[0]}%</b> risk (${esc(jd[1])})${e.predicted_reasons&&e.predicted_reasons.length?' · '+esc(e.predicted_reasons.slice(0,3).join(', ')):''}</div>`:
+    e.predicted!=null?`<div class="pred">Our forecast said <b>${Math.round(e.predicted*100)}%</b> risk${e.predicted_reasons&&e.predicted_reasons.length?' ('+esc(e.predicted_reasons.slice(0,3).join(', '))+')':''}</div>`:'');
   const photos=(e.photos||[]).map(p=>`<figure><a href="${esc(p.src)}" target="_blank" rel="noopener"><img loading="lazy" src="${esc(p.src)}" alt="${esc(p.name)}"></a><figcaption>${esc(p.name)}</figcaption></figure>`).join('')+
     (e.red||[]).map(p=>`<figure><a href="${esc(p.src)}" target="_blank" rel="noopener"><img loading="lazy" src="${esc(p.src)}" alt="${esc(p.name)}"></a><figcaption>${esc(p.name)}</figcaption></figure>`).join('');
   const io=arr?'in':'out', other=arr?e.from:e.to;
-  return `<div class="card ${esc(e.kind)}"><div class="row"><div><span class="dir ${io}">${arr?'Arriving from Vancouver':'Departing to Vancouver'}</span><br><b>${esc(e.flight)}</b> · <span class="route"><b>${esc(e.airport)}</b><span class="arrow ${io}">${arr?'←':'→'}</span>${esc(other)}</span> · ${esc(e.sched)} ${badge}
+  return `<div class="card ${esc(e.kind)}"><div class="row"><div><span class="dir ${io}">${arr?'Arriving from Vancouver':'Departing to Vancouver'}</span><br><b>${esc(e.flight)}</b> · <span class="route"><b>${esc(e.airport)}</b><span class="arrow ${io}">${arr?'←':'→'}</span>${esc(other)}</span> · ${esc(e.sched)} ${badge}${nw?' '+NOTWX:''}
     <div class="sub">${esc(e.airline)} · ${esc(e.airport_name)}</div></div></div>
     ${pred}
     ${trailChart(e)}
@@ -145,13 +160,13 @@ function renderWrong(){
   const rows=Object.entries(preds).filter(([k,v])=>v.outcome&&(selAp==='all'||k.split('|')[1]===selAp)).map(([k,v])=>{
     const [date,ap,flight]=k.split('|');const [pct,when]=judged(v,date);
     const cancelled=/cancel|divert/i.test(v.outcome);
-    return {k,date,airport:ap,flight,v,pct,when,cancelled};
+    return {k,date,airport:ap,flight,v,pct,when,cancelled,nw:cancelled&&!/divert/i.test(v.outcome)&&notWeather(v.outcome,v.wx)};
   }).filter(o=>o.pct!=null);
-  const fa=rows.filter(o=>!o.cancelled&&o.pct>=60), mc=rows.filter(o=>o.cancelled&&o.pct<40);
+  const fa=rows.filter(o=>!o.cancelled&&o.pct>=60), mc=rows.filter(o=>o.cancelled&&!o.nw&&o.pct<40), nwx=rows.filter(o=>o.nw);
   const wxBit=w=>w?`<div class="sub" style="margin-top:6px"><b>Weather at flight time</b></div><dl><dt>Cloud base</dt><dd>${esc(ft(w.ceiling_ft))}</dd>${lowestRow(w)}<dt>Visibility</dt><dd>${w.vis_sm!=null?esc(w.vis_sm)+' mi':'—'}</dd>${w.wx?`<dt>Weather</dt><dd>${esc(wxWords(w.wx))}</dd>`:''}</dl>${w.raw?`<div class="raw">${esc(w.raw)}</div>`:''}`:'<div class="sub" style="margin-top:6px">No airport report saved for that time.</div>';
   const card=(o,cls)=>{
     const arr=o.v.direction==='arr', io=arr?'in':'out';
-    const badge=o.cancelled?`<span class="badge">${/divert/i.test(o.v.outcome)?'DIVERTED':'CANCELLED'}${o.v.outcome_by==='owner'?' (reported)':''}</span>`:`<span class="badge flew">${/probably/i.test(o.v.outcome)?'FLEW (probably)':'FLEW'}</span>`;
+    const badge=o.cancelled?`<span class="badge">${/divert/i.test(o.v.outcome)?'DIVERTED':'CANCELLED'}${o.v.outcome_by==='owner'?' (reported)':''}</span>${o.nw?' '+NOTWX:''}`:`<span class="badge flew">${/probably/i.test(o.v.outcome)?'FLEW (probably)':'FLEW'}</span>`;
     return `<div class="card ${cls}"><span class="dir ${io}">${arr?'Arriving from Vancouver':'Departing to Vancouver'}</span><br>
       <b>${esc(o.flight)}</b> · <span class="route"><b>${esc(o.airport)}</b><span class="arrow ${io}">${arr?'←':'→'}</span>YVR</span> · ${esc(o.v.sched)} ${badge}
       <div class="sub">${esc(APN[o.airport]||o.airport)} · ${esc(day(o.date))}</div>
@@ -161,7 +176,9 @@ function renderWrong(){
   const sec=(title,list,cls,none)=>`<h2>${title} (${list.length})</h2>`+(list.length?list.sort((a,b)=>b.date.localeCompare(a.date)).map(o=>card(o,cls)).join(''):`<div class="empty">${none}</div>`);
   $('list').innerHTML=`<div class="sub">We judge by our last forecast on the morning of the flight (or the night before if that's the latest we have). Out of ${rows.length} finished flight${rows.length===1?'':'s'} with forecasts so far.</div>`+
     sec('We said it wouldn’t fly (60%+) — but it flew',fa,'miss-fa','None yet. Good.')+
-    sec('We said it would fly (under 40%) — but it was cancelled',mc,'miss-mc','None yet. Good.');
+    sec('We said it would fly (under 40%) — but it was cancelled',mc,'miss-mc','None yet. Good.')+
+    sec('Cancelled, but the weather was fine — probably not weather',nwx,'notwx','None so far.')+
+    (nwx.length?'<div class="sub">These don\'t count as forecast misses: crew, maintenance or few bookings can\'t be forecast from the weather.</div>':'');
 }
 
 function render(){
@@ -209,7 +226,10 @@ function renderCheck(){
   const box=$('check');
   if(!done.length){box.hidden=false;box.innerHTML='<h3>How good is our forecast?</h3><div class="sub">Fills in as flights happen: for every flight we compare what we forecast with whether it flew. Tracking started Nov 12, 2026.</div>';return}
   const groups={c:[],f:[]};
-  done.forEach(([k,v])=>{const d=k.split('|')[0];(/cancel|divert/i.test(v.outcome)?groups.c:groups.f).push({d,v})});
+  let skipped=0;
+  done.forEach(([k,v])=>{const d=k.split('|')[0];const c=/cancel|divert/i.test(v.outcome);
+    if(c&&!/divert/i.test(v.outcome)&&notWeather(v.outcome,v.wx)){skipped++;return}
+    (c?groups.c:groups.f).push({d,v})});
   const avg=(g,h)=>{const xs=g.map(o=>lastBefore(o.v,o.d,h)).filter(x=>x!=null);return xs.length?Math.round(xs.reduce((a,b)=>a+b,0)/xs.length)+'%':'—'};
   const hit=(g,h,want)=>{const xs=g.map(o=>lastBefore(o.v,o.d,h)).filter(x=>x!=null);return xs.length?Math.round(100*xs.filter(x=>want?x>=FLAG:x<FLAG).length/xs.length)+'%':'—'};
   box.hidden=false;
@@ -226,7 +246,7 @@ function renderCheck(){
    <tr><th colspan="4" style="text-align:left;padding-top:10px">How often we were wrong</th></tr>
    <tr><td><b>Cancelled</b> → we said fine (under ${FLAG}%)</td><td>${hit(groups.c,72,false)}</td><td>${hit(groups.c,12,false)}</td><td>${hit(groups.c,2,false)}</td></tr>
    <tr><td><b>Flew</b> → we warned (${FLAG}%+)</td><td>${hit(groups.f,72,true)}</td><td>${hit(groups.f,12,true)}</td><td>${hit(groups.f,2,true)}</td></tr></table>
-   <div class="sub" style="margin-top:6px">Right should be near 100%, wrong near 0%. See the flights we got wrong in the "Where we were wrong" tab. "—" = no forecast saved that far ahead yet. Tracking since Nov 12, 2026.</div>`;
+   <div class="sub" style="margin-top:6px">Right should be near 100%, wrong near 0%. See the flights we got wrong in the "Where we were wrong" tab. "—" = no forecast saved that far ahead yet. Tracking since Nov 12, 2026.${skipped?` Left out: ${skipped} cancellation${skipped===1?'':'s'} with fine weather (probably not weather).`:''}</div>`;
 }
 
 Promise.all([fetch('history.json?'+Date.now()).then(r=>r.json()),
