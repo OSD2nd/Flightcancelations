@@ -54,6 +54,9 @@ button:disabled{opacity:.55;cursor:default}
 .w7 button.LOW .rk{color:var(--low)}.w7 button.WATCH .rk{color:var(--watch)}.w7 button.HIGH .rk{color:var(--high)}.w7 button.SEVERE .rk{color:var(--severe)}#dayfilter{font-size:.85rem;color:var(--mute);margin:4px 0}
 .day.LOW{border-top-color:var(--low)}.day.WATCH{border-top-color:var(--watch)}.day.HIGH{border-top-color:var(--high)}.day.SEVERE{border-top-color:var(--severe)}
 .card.past{opacity:.6}
+details.trend{margin-top:8px}details.trend>summary{cursor:pointer;color:var(--accent);font-size:.9rem;list-style:none}
+details.trend>summary::-webkit-details-marker{display:none}details.trend>summary::before{content:"▸ "}details.trend[open]>summary::before{content:"▾ "}
+.trend svg{width:100%;height:auto;display:block;margin-top:6px}.trend .t{font-size:.8rem;color:var(--mute);margin-top:2px}
 details.earlier summary{cursor:pointer;color:var(--muted,#666);margin:8px 0}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:8px 0;border-left-width:6px}
 .card.LOW{border-left-color:var(--low)}.card.WATCH{border-left-color:var(--watch)}.card.HIGH{border-left-color:var(--high)}.card.SEVERE{border-left-color:var(--severe)}
@@ -349,7 +352,8 @@ function card(f){
   <div class="big">${nofc?'—':pct+'%'}</div></div>
   <div class="bar"><i style="width:${nofc?0:Math.max(pct,2)}%"></i></div>
   <div>${nofc?'<span class="tag">No weather forecast this run — check back later</span>':(f.reasons.map(r=>'<span class="tag">'+esc(r)+'</span>').join('')||'<span class="tag">Nothing unusual in the forecast</span>')}</div>
-  <div class="sub" style="margin-top:6px">${esc(f.level)} · ${f.schedule_source==='live'?'airline status: <b>'+(unconfirmed?'not confirmed — time has passed and the airline hasn\'t posted whether it flew'+(f.airport==='YZZ'&&f.dep_local>='12:00'?' (checked again at 6:30 am)':''):esc(STATUS[f.status]||f.status))+'</b>':'status not checked yet · schedule from config'}${f.airport_wx?' · uses '+esc(f.airport_wx)+(f.ceiling_ft!=null?', cloud base '+Number(f.ceiling_ft).toLocaleString()+' ft':', no low ceiling'):''}</div></div>`;
+  <div class="sub" style="margin-top:6px">${esc(f.level)} · ${f.schedule_source==='live'?'airline status: <b>'+(unconfirmed?'not confirmed — time has passed and the airline hasn\'t posted whether it flew'+(f.airport==='YZZ'&&f.dep_local>='12:00'?' (checked again at 6:30 am)':''):esc(STATUS[f.status]||f.status))+'</b>':'status not checked yet · schedule from config'}${f.airport_wx?' · uses '+esc(f.airport_wx)+(f.ceiling_ft!=null?', cloud base '+Number(f.ceiling_ft).toLocaleString()+' ft':', no low ceiling'):''}</div>
+  <details class="trend" data-key="${esc(f.date+'|'+f.airport+'|'+f.flight)}"><summary>How this forecast has changed</summary><div class="tr">Loading…</div></details></div>`;
 }
 // hourly forecast table for one day (Castlegar, Trail, Vancouver)
 function dayForecast(d,day,fl){
@@ -376,6 +380,32 @@ function dayForecast(d,day,fl){
 }
 const addMin=(t,m)=>{let[h,mm]=t.split(':').map(Number);let x=h*60+mm+m;x=(x+1440)%1440;return String(Math.floor(x/60)).padStart(2,'0')+':'+String(x%60).padStart(2,'0')};
 const subMin=(t,m)=>addMin(t,-m);
+
+// ---- "How this forecast has changed": opened on tap, reads predictions.json once ----
+let PREDS=null;
+const loadPreds=()=>PREDS||(PREDS=fetch('predictions.json?'+Date.now()).then(r=>r.ok?r.json():{}).catch(()=>({})));
+const ftime=(date,hm)=>new Date(date+'T'+hm+':00Z').getTime();   // local times as if UTC: only differences matter
+const ptime=s=>new Date(s.slice(0,16)+':00Z').getTime();
+function trendChart(rec,date){
+  if(!rec||!rec.p||!rec.p.length)return '<div class="sub">No forecast history saved for this flight yet.</div>';
+  const t0=ftime(date,rec.sched), W=320,H=90,L=26,R=8,T=8,B=18, days=7;
+  const x=t=>L+(W-L-R)*(1-Math.min(days,Math.max(0,(t0-t)/864e5))/days), y=v=>T+(H-T-B)*(1-v/100);
+  const pts=rec.p.map(q=>[x(ptime(q[0])),y(q[1])]);
+  const grid=[0,60,100].map(v=>`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="currentColor" stroke-opacity="${v===60?.35:.15}" ${v===60?'stroke-dasharray="3 3"':''}/><text x="${L-4}" y="${y(v)+3}" font-size="8" text-anchor="end" fill="currentColor" fill-opacity=".6">${v}%</text>`).join('');
+  const ticks=[7,5,3,1,0].map(dd=>`<text x="${x(t0-dd*864e5)}" y="${H-5}" font-size="8" text-anchor="middle" fill="currentColor" fill-opacity=".6">${dd?dd+'d':'flight'}</text>`).join('');
+  const now=ftime(nowLocal().slice(0,10),nowLocal().slice(11,16));
+  const nowLine=now<t0&&t0-now<days*864e5?`<line x1="${x(now)}" x2="${x(now)}" y1="${T}" y2="${H-B}" stroke="currentColor" stroke-opacity=".3"/><text x="${x(now)}" y="${T-1}" font-size="7" text-anchor="middle" fill="currentColor" fill-opacity=".6">now</text>`:'';
+  const line=pts.length>1?`<polyline fill="none" stroke="var(--accent)" stroke-width="2" points="${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}"/>`:'';
+  const dots=pts.map(p=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.5" fill="var(--accent)"/>`).join('');
+  const first=rec.p[0], last=rec.p[rec.p.length-1];
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Forecast history chart">${grid}${nowLine}${ticks}${line}${dots}</svg>
+   <div class="t">First forecast <b>${first[1]}%</b> · latest <b>${last[1]}%</b> · dashed line = 60% (above it = we think it won't fly)</div>`;
+}
+document.addEventListener('toggle',e=>{
+  const d=e.target;if(!d.matches||!d.matches('details.trend')||!d.open)return;
+  const [date]=d.dataset.key.split('|');
+  loadPreds().then(p=>{d.querySelector('.tr').innerHTML=trendChart(p[d.dataset.key],date)});
+},true);
 
 function renderFlights(){
   const d=current;if(!d)return;
