@@ -48,7 +48,17 @@
    "vis_sm": 15.0,
    "wx": "",
    "raw": "METAR CYCG 162300Z VRB02KT 15SM FEW007 FEW015 FEW049 SCT180 BKN230 08/05 A3000 RMK SF1SF1SC2AC2CS3 SF TR SF TR SLP172"
-  }
+  },
+  "red": [
+   {
+    "name": "Red Mountain, Granite (16:30)",
+    "src": "history/img/2026-11-16_YZZ_1632_granite.jpg"
+   },
+   {
+    "name": "Red Mountain, Greyline (16:30)",
+    "src": "history/img/2026-11-16_YZZ_1632_greyline.jpg"
+   }
+  ]
  },
  {
   "date": "2026-11-16",
