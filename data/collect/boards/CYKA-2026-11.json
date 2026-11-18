@@ -2478,7 +2478,7 @@
   "shown_time": "18:57",
   "status": "On Time",
   "first_seen": "2026-11-15T13:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-15T13:30",
@@ -2497,7 +2497,7 @@
   "shown_time": "22:37",
   "status": "On Time",
   "first_seen": "2026-11-15T13:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-15T13:30",
@@ -2516,7 +2516,7 @@
   "shown_time": "16:57",
   "status": "On Time",
   "first_seen": "2026-11-15T13:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-15T13:30",
@@ -2559,7 +2559,7 @@
   "shown_time": "14:45",
   "status": "On Time",
   "first_seen": "2026-11-15T13:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-15T13:30",
@@ -2670,7 +2670,7 @@
   "shown_time": "19:35",
   "status": "On Time",
   "first_seen": "2026-11-15T13:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-15T13:30",
@@ -2689,7 +2689,7 @@
   "shown_time": "17:25",
   "status": "On Time",
   "first_seen": "2026-11-15T13:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-15T13:30",
@@ -2725,13 +2725,18 @@
   "via": "Calgary",
   "sched": "15:20",
   "shown_time": "15:20",
-  "status": "On Time",
+  "status": "Delayed at 15:29",
   "first_seen": "2026-11-15T13:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-15T13:30",
     "On Time",
+    "15:20"
+   ],
+   [
+    "2026-11-18T13:30",
+    "Delayed at 15:29",
     "15:20"
    ]
   ]
@@ -2770,7 +2775,7 @@
   "shown_time": "09:47",
   "status": "On Time",
   "first_seen": "2026-11-16T13:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-16T13:30",
@@ -2789,7 +2794,7 @@
   "shown_time": "14:57",
   "status": "On Time",
   "first_seen": "2026-11-16T13:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-16T13:30",
@@ -2808,7 +2813,7 @@
   "shown_time": "18:57",
   "status": "On Time",
   "first_seen": "2026-11-16T13:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-16T13:30",
@@ -2827,7 +2832,7 @@
   "shown_time": "22:37",
   "status": "On Time",
   "first_seen": "2026-11-16T13:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-16T13:30",
@@ -2846,7 +2851,7 @@
   "shown_time": "16:57",
   "status": "On Time",
   "first_seen": "2026-11-16T13:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-16T13:30",
@@ -2865,7 +2870,7 @@
   "shown_time": "10:15",
   "status": "On Time",
   "first_seen": "2026-11-16T13:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-16T13:30",
@@ -2884,7 +2889,7 @@
   "shown_time": "14:45",
   "status": "On Time",
   "first_seen": "2026-11-16T13:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-16T13:30",
@@ -2903,7 +2908,7 @@
   "shown_time": "00:15",
   "status": "On Time",
   "first_seen": "2026-11-15T13:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-15T13:30",
@@ -2922,7 +2927,7 @@
   "shown_time": "06:30",
   "status": "On Time",
   "first_seen": "2026-11-16T13:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-16T13:30",
@@ -2941,7 +2946,7 @@
   "shown_time": "10:20",
   "status": "On Time",
   "first_seen": "2026-11-16T13:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-16T13:30",
@@ -2960,7 +2965,7 @@
   "shown_time": "15:35",
   "status": "On Time",
   "first_seen": "2026-11-16T13:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-16T13:30",
@@ -2979,7 +2984,7 @@
   "shown_time": "19:35",
   "status": "On Time",
   "first_seen": "2026-11-16T13:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-16T13:30",
@@ -2998,7 +3003,7 @@
   "shown_time": "17:25",
   "status": "On Time",
   "first_seen": "2026-11-16T13:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-16T13:30",
@@ -3017,7 +3022,7 @@
   "shown_time": "05:10",
   "status": "On Time",
   "first_seen": "2026-11-15T20:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-15T20:30",
@@ -3036,7 +3041,7 @@
   "shown_time": "15:20",
   "status": "On Time",
   "first_seen": "2026-11-16T13:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-16T13:30",
@@ -3055,7 +3060,7 @@
   "shown_time": "10:50",
   "status": "On Time",
   "first_seen": "2026-11-16T13:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-16T13:30",
@@ -3074,7 +3079,7 @@
   "shown_time": "09:47",
   "status": "On Time",
   "first_seen": "2026-11-17T12:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-17T12:30",
@@ -3093,7 +3098,7 @@
   "shown_time": "14:57",
   "status": "On Time",
   "first_seen": "2026-11-17T12:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-17T12:30",
@@ -3112,7 +3117,7 @@
   "shown_time": "18:57",
   "status": "On Time",
   "first_seen": "2026-11-17T12:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-17T12:30",
@@ -3131,7 +3136,7 @@
   "shown_time": "22:37",
   "status": "On Time",
   "first_seen": "2026-11-17T12:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-17T12:30",
@@ -3150,7 +3155,7 @@
   "shown_time": "16:57",
   "status": "On Time",
   "first_seen": "2026-11-17T12:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-17T12:30",
@@ -3169,7 +3174,7 @@
   "shown_time": "10:15",
   "status": "On Time",
   "first_seen": "2026-11-17T14:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-17T14:30",
@@ -3188,7 +3193,7 @@
   "shown_time": "14:45",
   "status": "On Time",
   "first_seen": "2026-11-17T14:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-17T14:30",
@@ -3207,7 +3212,7 @@
   "shown_time": "00:15",
   "status": "On Time",
   "first_seen": "2026-11-16T13:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-16T13:30",
@@ -3226,7 +3231,7 @@
   "shown_time": "06:30",
   "status": "On Time",
   "first_seen": "2026-11-17T12:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-17T12:30",
@@ -3245,7 +3250,7 @@
   "shown_time": "10:20",
   "status": "On Time",
   "first_seen": "2026-11-17T12:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-17T12:30",
@@ -3264,7 +3269,7 @@
   "shown_time": "15:35",
   "status": "On Time",
   "first_seen": "2026-11-17T12:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-17T12:30",
@@ -3283,7 +3288,7 @@
   "shown_time": "19:35",
   "status": "On Time",
   "first_seen": "2026-11-17T12:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-17T12:30",
@@ -3302,7 +3307,7 @@
   "shown_time": "17:25",
   "status": "On Time",
   "first_seen": "2026-11-17T12:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-17T12:30",
@@ -3321,7 +3326,7 @@
   "shown_time": "05:10",
   "status": "On Time",
   "first_seen": "2026-11-17T14:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-17T14:30",
@@ -3340,7 +3345,7 @@
   "shown_time": "15:20",
   "status": "On Time",
   "first_seen": "2026-11-17T14:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-17T14:30",
@@ -3359,12 +3364,88 @@
   "shown_time": "10:50",
   "status": "On Time",
   "first_seen": "2026-11-17T14:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-17T14:30",
     "On Time",
     "10:50"
+   ]
+  ]
+ },
+ "2026-11-21|arr|Air Canada|8058": {
+  "date": "2026-11-21",
+  "direction": "arr",
+  "airline": "Air Canada",
+  "flight": "8058",
+  "via": "Vancouver",
+  "sched": "14:57",
+  "shown_time": "14:57",
+  "status": "On Time",
+  "first_seen": "2026-11-18T13:30",
+  "last_seen": "2026-11-18T13:30",
+  "changes": [
+   [
+    "2026-11-18T13:30",
+    "On Time",
+    "14:57"
+   ]
+  ]
+ },
+ "2026-11-21|arr|Air Canada|8060": {
+  "date": "2026-11-21",
+  "direction": "arr",
+  "airline": "Air Canada",
+  "flight": "8060",
+  "via": "Vancouver",
+  "sched": "18:57",
+  "shown_time": "18:57",
+  "status": "On Time",
+  "first_seen": "2026-11-18T13:30",
+  "last_seen": "2026-11-18T13:30",
+  "changes": [
+   [
+    "2026-11-18T13:30",
+    "On Time",
+    "18:57"
+   ]
+  ]
+ },
+ "2026-11-21|arr|Air Canada|8062": {
+  "date": "2026-11-21",
+  "direction": "arr",
+  "airline": "Air Canada",
+  "flight": "8062",
+  "via": "Vancouver",
+  "sched": "22:37",
+  "shown_time": "22:37",
+  "status": "On Time",
+  "first_seen": "2026-11-18T13:30",
+  "last_seen": "2026-11-18T13:30",
+  "changes": [
+   [
+    "2026-11-18T13:30",
+    "On Time",
+    "22:37"
+   ]
+  ]
+ },
+ "2026-11-21|arr|WestJet|3483": {
+  "date": "2026-11-21",
+  "direction": "arr",
+  "airline": "WestJet",
+  "flight": "3483",
+  "via": "Calgary",
+  "sched": "10:15",
+  "shown_time": "10:15",
+  "status": "On Time",
+  "first_seen": "2026-11-18T13:30",
+  "last_seen": "2026-11-18T13:30",
+  "changes": [
+   [
+    "2026-11-18T13:30",
+    "On Time",
+    "10:15"
    ]
   ]
  },
@@ -3378,12 +3459,69 @@
   "shown_time": "00:15",
   "status": "On Time",
   "first_seen": "2026-11-17T14:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-17T14:30",
     "On Time",
     "00:15"
+   ]
+  ]
+ },
+ "2026-11-21|dep|Air Canada|8053": {
+  "date": "2026-11-21",
+  "direction": "dep",
+  "airline": "Air Canada",
+  "flight": "8053",
+  "via": "Vancouver",
+  "sched": "06:30",
+  "shown_time": "06:30",
+  "status": "On Time",
+  "first_seen": "2026-11-18T13:30",
+  "last_seen": "2026-11-18T13:30",
+  "changes": [
+   [
+    "2026-11-18T13:30",
+    "On Time",
+    "06:30"
+   ]
+  ]
+ },
+ "2026-11-21|dep|Air Canada|8059": {
+  "date": "2026-11-21",
+  "direction": "dep",
+  "airline": "Air Canada",
+  "flight": "8059",
+  "via": "Vancouver",
+  "sched": "15:35",
+  "shown_time": "15:35",
+  "status": "On Time",
+  "first_seen": "2026-11-18T13:30",
+  "last_seen": "2026-11-18T13:30",
+  "changes": [
+   [
+    "2026-11-18T13:30",
+    "On Time",
+    "15:35"
+   ]
+  ]
+ },
+ "2026-11-21|dep|Air Canada|8061": {
+  "date": "2026-11-21",
+  "direction": "dep",
+  "airline": "Air Canada",
+  "flight": "8061",
+  "via": "Vancouver",
+  "sched": "19:35",
+  "shown_time": "19:35",
+  "status": "On Time",
+  "first_seen": "2026-11-18T13:30",
+  "last_seen": "2026-11-18T13:30",
+  "changes": [
+   [
+    "2026-11-18T13:30",
+    "On Time",
+    "19:35"
    ]
   ]
  },
@@ -3397,12 +3535,50 @@
   "shown_time": "05:10",
   "status": "On Time",
   "first_seen": "2026-11-18T12:30",
-  "last_seen": "2026-11-18T12:30",
+  "last_seen": "2026-11-18T13:30",
   "changes": [
    [
     "2026-11-18T12:30",
     "On Time",
     "05:10"
+   ]
+  ]
+ },
+ "2026-11-21|dep|WestJet|3488": {
+  "date": "2026-11-21",
+  "direction": "dep",
+  "airline": "WestJet",
+  "flight": "3488",
+  "via": "Calgary",
+  "sched": "10:50",
+  "shown_time": "10:50",
+  "status": "On Time",
+  "first_seen": "2026-11-18T13:30",
+  "last_seen": "2026-11-18T13:30",
+  "changes": [
+   [
+    "2026-11-18T13:30",
+    "On Time",
+    "10:50"
+   ]
+  ]
+ },
+ "2026-11-22|arr|WestJet|3487": {
+  "date": "2026-11-22",
+  "direction": "arr",
+  "airline": "WestJet",
+  "flight": "3487",
+  "via": "Calgary",
+  "sched": "00:15",
+  "shown_time": "00:15",
+  "status": "On Time",
+  "first_seen": "2026-11-18T13:30",
+  "last_seen": "2026-11-18T13:30",
+  "changes": [
+   [
+    "2026-11-18T13:30",
+    "On Time",
+    "00:15"
    ]
   ]
  }
