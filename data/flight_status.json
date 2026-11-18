@@ -1,11 +1,11 @@
 {
- "date": "2026-11-17",
+ "date": "2026-11-18",
  "airports": {
   "YZZ": {
    "dep": [
     {
      "flight": "8P452",
-     "time": "11:50",
+     "time": "10:50",
      "expected": null,
      "status": "Expected",
      "diverted_to": null,
@@ -23,7 +23,7 @@
    "arr": [
     {
      "flight": "8P451",
-     "time": "11:24",
+     "time": "10:24",
      "expected": null,
      "status": "Expected",
      "diverted_to": null,
@@ -62,19 +62,19 @@
    ]
   }
  },
- "checked": "2026-11-17T16:00",
+ "checked": "2026-11-18T06:30",
  "checked_by": {
-  "YZZ": "2026-11-17T16:00",
-  "YCG": "2026-11-17T11:00"
+  "YZZ": "2026-11-18T06:30",
+  "YCG": "2026-11-18T06:30"
  },
  "seen": {
   "YZZ": {
    "dep": {
-    "8P452": "11:50",
+    "8P452": "10:50",
     "8P458": "17:05"
    },
    "arr": {
-    "8P451": "11:24",
+    "8P451": "10:24",
     "8P457": "16:32"
    }
   },
