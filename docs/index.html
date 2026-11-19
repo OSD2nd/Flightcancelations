@@ -505,12 +505,16 @@ function renderApCams(list){
 
 // ---- Red Mountain webcam time-lapse ----
 let camSel=0,camIdx=0,camTimer=null,camRange='6';
+const camDead=new Set();
 function renderCams(list){
   list=(list||[]).filter(c=>c.frames&&c.frames.length);
   if(!list.length)return;
   camSel=Math.min(camSel,list.length-1);
   const c=list[camSel];
-  const fr=camRange==='live'?[]:camRange==='24'?c.frames.filter((f,i)=>i%4===0||i===c.frames.length-1):c.frames.slice(-25);
+  // Red deletes archive photos after 24 h: drop ones that are about to go, and skip any that fail to load
+  const cutoff=new Date(Date.now()-(7+23)*3600e3).toISOString().slice(0,16);   // local time 23 h ago
+  const fresh=c.frames.filter(f=>f.t>=cutoff&&!camDead.has(f.url));
+  const fr=camRange==='live'?[]:camRange==='24'?fresh.filter((f,i)=>i%4===0||i===fresh.length-1):fresh.slice(-25);
   $('cams').innerHTML=`<div class="seg">${list.map((x,i)=>`<button type="button" data-i="${i}" class="${i===camSel?'on':''}">${esc(x.name)}</button>`).join('')}</div>
    <div class="seg">${[['live','Live'],['6','Last 6 hours'],['24','Last 24 hours']].map(([k,l])=>`<button type="button" data-r="${k}" class="${k===camRange?'on':''}">${l}</button>`).join('')}</div>
    <img id="camimg" alt="${esc(c.name)} webcam">
@@ -519,7 +523,9 @@ function renderCams(list){
   $('cams').querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{camSel=+b.dataset.i;renderCams(list)});
   $('cams').querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{camRange=b.dataset.r;renderCams(list)});
   clearInterval(camTimer);
-  if(!fr.length){$('camimg').src=c.live+'?'+Date.now();$('camtime').textContent='Latest photo';return;}
+  if(!fr.length){$('camimg').src=c.live+'?'+Date.now();$('camtime').textContent=camRange==='live'?'Latest photo':'Latest photo (no time-lapse photos available right now)';return;}
+  // a photo that won't load: forget it and rebuild the time-lapse without it
+  $('camimg').onerror=()=>{const u=fr[camIdx]&&fr[camIdx].url;if(u&&!camDead.has(u)){camDead.add(u);renderCams(list)}};
   fr.slice(0,6).forEach(f=>{new Image().src=f.url});
   const show=i=>{camIdx=i;$('camimg').src=fr[i].url;$('camslide').value=i;new Image().src=fr[(i+1)%fr.length].url;
     $('camtime').textContent=tLocal(fr[i].t,{weekday:'short',...HM});};
