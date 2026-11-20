@@ -61,46 +61,62 @@ def _vals(rows, key):
     return [r[key] for r in rows if r.get(key) is not None]
 
 
+def ramp(x, lo, hi):
+    """0 at lo, 1 at hi, straight line between (works for falling scales too, e.g. visibility).
+    Soft edges instead of yes/no cut-offs: low cloud going 88% -> 91% used to flip a whole
+    flag and swing the risk by tens of points; now it moves it a little."""
+    if x is None:
+        return 0.0
+    t = (x - lo) / (hi - lo)
+    return round(max(0.0, min(1.0, t)), 3)
+
+
+def _typical(rows, key, worst):
+    """The hour at flight time counts double; the hours either side count once. Then a
+    blend of that average and the worst hour, so one odd hour can't decide it alone."""
+    vals = [(r.get(key), 2 if i == len(rows) // 2 else 1) for i, r in enumerate(rows)]
+    vals = [(v, w) for v, w in vals if v is not None]
+    if not vals:
+        return None
+    avg = sum(v * w for v, w in vals) / sum(w for _, w in vals)
+    return (avg + worst(v for v, _ in vals)) / 2
+
+
 def extract(origin_rows, hub_rows, origin_av=None, hub_av=None, ec=None):
     """origin_rows/hub_rows: hourly weather-model dicts around departure / arrival.
-    origin_av/hub_av: official airport conditions from aviation.conditions(), if any."""
+    origin_av/hub_av: official airport conditions from aviation.conditions(), if any.
+    Model-based features are 0..1 (how strongly), report/forecast wording ones are 0 or 1."""
     f = {k: 0 for k in FEATURES}
     if origin_rows:
-        vis = _vals(origin_rows, "visibility")
-        if vis:
-            f["vis_lt_1_6"] = int(min(vis) < 1600)
-            f["vis_lt_4_8"] = int(min(vis) < 4800)
-        low = _vals(origin_rows, "cloud_cover_low")
-        f["lowcloud_90"] = int(bool(low) and max(low) >= 90)
-        gust = _vals(origin_rows, "wind_gusts_10m")
-        if gust:
-            f["gust_35"] = int(max(gust) >= 35)
-            f["gust_50"] = int(max(gust) >= 50)
-        snow = _vals(origin_rows, "snowfall")
-        if snow:
-            f["snow_03"] = int(max(snow) >= 0.3)
-            f["snow_10"] = int(max(snow) >= 1.0)
-        pm = _vals(origin_rows, "pm2_5")
-        if pm:
-            f["smoke"] = int(max(pm) >= 100)
-            f["smoke_heavy"] = int(max(pm) >= 250)
-        pcp = _vals(origin_rows, "precipitation")
-        f["rain"] = int(bool(pcp) and max(pcp) >= 0.2)
+        vis = _typical(origin_rows, "visibility", min)
+        if vis is not None:
+            f["vis_lt_1_6"] = ramp(vis, 3000, 1000)
+            f["vis_lt_4_8"] = ramp(vis, 8000, 3500)
+        f["lowcloud_90"] = ramp(_typical(origin_rows, "cloud_cover_low", max), 70, 100)
+        gust = _typical(origin_rows, "wind_gusts_10m", max)
+        f["gust_35"] = ramp(gust, 30, 45)
+        f["gust_50"] = ramp(gust, 45, 60)
+        snow = _typical(origin_rows, "snowfall", max)
+        f["snow_03"] = ramp(snow, 0.1, 0.5)
+        f["snow_10"] = ramp(snow, 0.7, 1.5)
+        pm = _typical(origin_rows, "pm2_5", max)
+        f["smoke"] = ramp(pm, 60, 140)
+        f["smoke_heavy"] = ramp(pm, 180, 300)
+        f["rain"] = ramp(_typical(origin_rows, "precipitation", max), 0.05, 0.4)
         # cloud at pressure levels: ~925/900 hPa is valley height around Castlegar/Trail,
         # ~850 hPa is roughly the ridge tops the approach threads between
-        vc = _vals(origin_rows, "cloud_cover_925hPa") + _vals(origin_rows, "cloud_cover_900hPa")
-        f["valley_cloud"] = int(bool(vc) and max(vc) >= 80)
-        rc = _vals(origin_rows, "cloud_cover_850hPa")
-        f["ridge_cloud"] = int(bool(rc) and max(rc) >= 80)
-        codes = set(_vals(origin_rows, "weather_code"))
-        f["freezing"] = int(bool(codes & {56, 57, 66, 67}))
-        f["fog"] = int(bool(codes & {45, 48}))
-        f["tstorm"] = int(bool(codes & {95, 96, 99}))
+        vc = [x for x in (_typical(origin_rows, "cloud_cover_925hPa", max),
+                          _typical(origin_rows, "cloud_cover_900hPa", max)) if x is not None]
+        f["valley_cloud"] = ramp(max(vc), 60, 100) if vc else 0
+        f["ridge_cloud"] = ramp(_typical(origin_rows, "cloud_cover_850hPa", max), 60, 100)
+        codes = [r.get("weather_code") for r in origin_rows]
+        share = lambda cs: sum(1 for c in codes if c in cs) / len(codes)
+        f["freezing"] = round(share({56, 57, 66, 67}), 3)
+        f["fog"] = round(share({45, 48}), 3)
+        f["tstorm"] = round(share({95, 96, 99}), 3)
     if hub_rows:
-        v = _vals(hub_rows, "visibility")
-        g = _vals(hub_rows, "wind_gusts_10m")
-        f["hub_vis_lt_1_6"] = int(bool(v) and min(v) < 1600)
-        f["hub_gust_60"] = int(bool(g) and max(g) >= 60)
+        f["hub_vis_lt_1_6"] = ramp(_typical(hub_rows, "visibility", min), 3000, 1000)
+        f["hub_gust_60"] = ramp(_typical(hub_rows, "wind_gusts_10m", max), 50, 70)
     if origin_av:
         _apply_airport(f, origin_av)
     if ec:
@@ -108,11 +124,12 @@ def extract(origin_rows, hub_rows, origin_av=None, hub_av=None, ec=None):
         f["ec_wintry"] = int(ec.get("wintry", False))
         f["ec_warning"] = int(bool(ec.get("warnings")))
         if ec.get("snow"):
-            f["snow_03"] = 1
-    # cancellations so far had cloud bases of 3,000-3,500 ft with rain, so "low" here means under 4,000 ft
-    low_cloud = f["lowcloud_90"] or f["ceil_lt_4000"] or f["valley_cloud"] or f["low_patches"] or f["ec_fog"]
-    wet = f["rain"] or f["snow_03"] or f["freezing"] or f["fog"]
-    f["wet_low_cloud"] = int(bool(low_cloud and wet))
+            f["snow_03"] = max(f["snow_03"], 0.5)
+    # the usual cancellation pattern is low cloud AND rain/snow together: how much of both
+    # (cancellations so far had cloud bases of 3,000-3,500 ft with rain, so "low" means under 4,000 ft)
+    low_cloud = max(f["lowcloud_90"], f["ceil_lt_4000"], f["valley_cloud"], f["low_patches"], f["ec_fog"])
+    wet = max(f["rain"], f["snow_03"], f["freezing"], f["fog"])
+    f["wet_low_cloud"] = round(low_cloud * wet, 3)
     if hub_av:
         if hub_av["vis_sm"] is not None and hub_av["vis_sm"] < 1:
             f["hub_vis_lt_1_6"] = 1
@@ -128,15 +145,15 @@ def _apply_airport(f, av):
     if (lo is not None and lo < 1000) or av.get("low_remark"):
         f["low_patches"] = 1
     if c is not None:
-        f["ceil_lt_1000"] |= int(c < 1000)
-        f["ceil_lt_3000"] |= int(c < 3000)
-        f["ceil_lt_4000"] |= int(c < 4000)
+        f["ceil_lt_1000"] = max(f["ceil_lt_1000"], int(c < 1000))
+        f["ceil_lt_3000"] = max(f["ceil_lt_3000"], int(c < 3000))
+        f["ceil_lt_4000"] = max(f["ceil_lt_4000"], int(c < 4000))
     if v is not None:
-        f["vis_lt_1_6"] |= int(v < 1)      # 1 statute mile = 1.6 km
-        f["vis_lt_4_8"] |= int(v < 3)
+        f["vis_lt_1_6"] = max(f["vis_lt_1_6"], int(v < 1))      # 1 statute mile = 1.6 km
+        f["vis_lt_4_8"] = max(f["vis_lt_4_8"], int(v < 3))
     if g is not None:
-        f["gust_35"] |= int(g * 1.852 >= 35)
-        f["gust_50"] |= int(g * 1.852 >= 50)
+        f["gust_35"] = max(f["gust_35"], int(g * 1.852 >= 35))
+        f["gust_50"] = max(f["gust_50"], int(g * 1.852 >= 50))
     for w in wx:
         if "FU" in w:  # smoke reported at the airport
             f["smoke"] = 1
@@ -159,8 +176,17 @@ def probability(feats, weights=None):
 
 def reasons(feats, weights=None):
     w = weights or PRIOR
-    hits = [(w.get(k, 0), k) for k, v in feats.items() if v and w.get(k, 0) > 0.3]
+    hits = [(w.get(k, 0) * v, k) for k, v in feats.items() if v >= 0.4 and w.get(k, 0) > 0.3]
     return [LABELS[k] for _, k in sorted(hits, reverse=True)]
+
+
+def lead_shrink(p, hours_ahead, weights=None):
+    """Days out, a weather model can't know a flight is 98% doomed: pull far-off forecasts toward
+    the everyday rate. Full strength within 2 days, 90% at 3 days, easing to 60% at 6+ days."""
+    w = weights or PRIOR
+    k = 1.0 if hours_ahead <= 48 else max(0.6, 1.0 - 0.4 * (hours_ahead - 48) / 96)
+    z = math.log(p / (1 - p))
+    return 1 / (1 + math.exp(-(w["bias"] + (z - w["bias"]) * k)))
 
 
 def level(p, watch=0.15, alert=0.30):

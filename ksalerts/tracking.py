@@ -60,7 +60,8 @@ def record(results, now, mets=None, stations=None, to_utc=None):
             last = rec["p"][-1] if rec["p"] else None
             if (last is None or abs(pct - last[1]) >= 5
                     or now - datetime.fromisoformat(last[0]) >= timedelta(hours=3)):
-                rec["p"].append([stamp, pct])
+                # third item: how strongly each weather signal fired (to see later what moved it)
+                rec["p"].append([stamp, pct, {k: round(v, 2) for k, v in (r.get("feat") or {}).items()}])
         if r.get("schedule_source") == "live":
             rec["last_status"], rec["last_status_at"] = r["status"], stamp
             if _final(r.get("status")) and rec.get("outcome_by") != "owner":

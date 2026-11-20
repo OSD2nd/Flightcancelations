@@ -262,18 +262,26 @@ def main():
         ec = eccc.signals(official.get(code), here, to_utc, today)
         o_rows, h_rows = weather.window(wx[code], here, 1, 1), weather.window(wx["HUB"], there, 1, 1)
         feats = F.extract(o_rows, h_rows, o_av, h_av, ec)
-        p = F.probability(feats, weights)
+        ahead = (here - now).total_seconds() / 3600
+        p = F.lead_shrink(F.probability(feats, weights), ahead, weights)
         why = F.reasons(feats, weights)
-        # score again with the second weather model (if we have it) and keep the higher risk
+        # score again with the second weather model (if we have it). Within ~36 h keep the higher
+        # risk (better safe); further out average them - two noisy far-off guesses taking turns
+        # being the "higher" one made the number bounce
         models = None
         alt_o = [r["alt"] for r in o_rows if r.get("alt")]
         if alt_o:
             alt_h = [r["alt"] for r in h_rows if r.get("alt")] or h_rows
             feats_b = F.extract(alt_o, alt_h, o_av, h_av, ec)
-            p_b = F.probability(feats_b, weights)
+            p_b = F.lead_shrink(F.probability(feats_b, weights), ahead, weights)
             models = {"Environment Canada model": round(p, 3), "Other model (Open-Meteo blend)": round(p_b, 3)}
-            if p_b > p:
-                feats, p, why = feats_b, p_b, F.reasons(feats_b, weights)
+            if ahead <= 36:
+                if p_b > p:
+                    feats, p, why = feats_b, p_b, F.reasons(feats_b, weights)
+            else:
+                if p_b > p:
+                    feats, why = feats_b, F.reasons(feats_b, weights)
+                p = (p + p_b) / 2
             if abs(models["Environment Canada model"] - models["Other model (Open-Meteo blend)"]) >= 0.25:
                 lo, hi = sorted(models.items(), key=lambda kv: kv[1])
                 why = why + [f"Models disagree: {hi[0].split(' (')[0]} {round(hi[1]*100)}%, {lo[0].split(' (')[0]} {round(lo[1]*100)}%"]
@@ -303,7 +311,8 @@ def main():
             "ceiling_ft": o_av["ceiling_ft"] if o_av else None,
             "forecast_risk": round(forecast_p, 3), "forecast_reasons": forecast_why, "models": models,
             "no_forecast": no_fc and not history.is_cancelled(f["status"]) and "divert" not in str(f["status"]).lower(),
-            "flags": [k for k, v in feats.items() if v]}
+            "flags": [k for k, v in feats.items() if v >= 0.4],
+            "feat": {k: v for k, v in feats.items() if v}}
 
     def link_aircraft(rs):
         """The plane that flies in from Vancouver is the one that flies back out.

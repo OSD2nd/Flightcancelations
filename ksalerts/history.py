@@ -164,7 +164,7 @@ def condition_stats(cfg):
     X, y = _build_dataset(cfg, rows)
     out = []
     for k in F.FEATURES:
-        idx = [i for i, x in enumerate(X) if x[k]]
+        idx = [i for i, x in enumerate(X) if x[k] >= 0.5]
         if len(idx) >= 3:
             out.append({"condition": F.LABELS[k], "flights": len(idx),
                         "cancelled": sum(y[i] for i in idx),
