@@ -268,7 +268,7 @@ function render(d){
   if(suMode==='unsubscribe'&&!render._jumped){render._jumped=1;setTimeout(()=>$('signup').scrollIntoView(),300)}
   renderCams(d.webcams);
   renderApCams(d.airport_cams);
-  hwList=d.highway_cams||[];renderHw();
+  hwList=d.highway_cams||[];roadEvents=d.road_events||[];renderHw();
   if(d.history_stats&&d.history_stats.length){
     $('hist').innerHTML='<table><tr><th>Condition</th><th>Flights</th><th>Cancelled</th></tr>'+
       d.history_stats.map(s=>`<tr><td>${esc(s.condition)}</td><td>${s.flights}</td><td>${s.cancelled} (${Math.round(s.rate*100)}%)</td></tr>`).join('')+'</table>';
@@ -506,22 +506,71 @@ function renderApCams(list){
   tick();clearInterval(apTimer);apTimer=setInterval(tick,60000);
 }
 
-// ---- BC highway cameras (DriveBC), only the ones that matter for the airport picked above ----
-let hwList=[],hwSel=null,hwTimer=null;
+// ---- BC highway cameras + road conditions map (DriveBC), filtered by the airport picked above ----
+let hwList=[],hwSel=null,hwTimer=null,hwMode='cams',roadEvents=[],hwMap=null;
+const APLL={YZZ:[49.0558,-117.6093,'Trail airport'],YCG:[49.2964,-117.6325,'Castlegar airport']};
 function renderHw(){
   const box=$('hwcams');if(!box)return;
   const list=hwList.filter(c=>selAp==='all'||(c.airports||[]).includes(selAp));
-  if(!list.length){box.innerHTML='<div class="sub">'+(hwList.length?'No highway cameras set up for this airport.':'Highway cameras appear after the next check.')+'</div>';return}
+  if(!hwList.length&&!roadEvents.length){box.innerHTML='<div class="sub">Highway cameras appear after the next check.</div>';return}
+  const modes=`<div class="seg">${[['cams','📷 Cameras'],['map','🗺 Road conditions']].map(([k,l])=>`<button type="button" data-hm="${k}" class="${k===hwMode?'on':''}">${l}</button>`).join('')}</div>`;
+  const credit='<div class="sub">Highway cameras and road reports by <a href="https://www.drivebc.ca/" target="_blank" rel="noopener">DriveBC</a> (BC Ministry of Transportation), Open Government Licence – BC.</div>';
+  clearInterval(hwTimer);if(hwMap){hwMap.remove();hwMap=null}
+  if(hwMode==='map'){
+    box.innerHTML=modes+'<div id="hwmap" style="height:340px;border-radius:12px;border:1px solid var(--line);overflow:hidden"></div><div id="hwev"></div>'+credit;
+    bindHwModes(box);drawRoadMap(list);return;
+  }
+  if(!list.length){box.innerHTML=modes+'<div class="sub">No highway cameras set up for this airport.</div>'+credit;bindHwModes(box);return}
   if(!list.some(c=>c.id===hwSel))hwSel=list[0].id;
   const c=list.find(x=>x.id===hwSel);
-  box.innerHTML=`<div class="seg">${list.map(x=>`<button type="button" data-h="${esc(x.id)}" class="${x.id===hwSel?'on':''}">${esc(x.label)}${x.summit?' ⛰':''}</button>`).join('')}</div>
-   <a href="${esc(c.page)}" target="_blank" rel="noopener"><img id="hwimg" alt="${esc(c.label)} highway camera"></a>
-   <div class="sub">${esc(c.caption||c.name)}${c.summit?' Summit camera: if it\'s in cloud, the cloud is down on the ridges.':''} <span id="hwerr" hidden>— not loading right now (some cameras go offline at night or in storms).</span></div>
-   <div class="sub">BC highway cameras by <a href="https://www.drivebc.ca/" target="_blank" rel="noopener">DriveBC</a> (BC Ministry of Transportation), under the Open Government Licence – BC. They update every 15–30 minutes.</div>`;
+  box.innerHTML=modes+`<div class="seg">${list.map(x=>`<button type="button" data-h="${esc(x.id)}" class="${x.id===hwSel?'on':''}">${esc(x.label)}${x.summit?' ⛰':''}</button>`).join('')}</div>
+   <a href="${esc(c.page)}" target="_blank" rel="noopener"><img id="hwimg" alt=""></a>
+   <div class="sub">${esc(c.caption||c.name)}${c.summit?' Summit camera: if it\'s in cloud, the cloud is down on the ridges.':''} <span id="hwerr" hidden>— not loading right now (some cameras go offline at night or in storms).</span> Updates every 15–30 minutes.</div>`+credit;
+  bindHwModes(box);
   box.querySelectorAll('[data-h]').forEach(b=>b.onclick=()=>{hwSel=b.dataset.h;renderHw()});
-  const im=$('hwimg'), load=()=>{im.src=c.img+(c.img.includes('?')?'&':'?')+'t='+Date.now()};
-  im.onerror=()=>{$('hwerr').hidden=false};im.onload=()=>{$('hwerr').hidden=true};
-  load();clearInterval(hwTimer);hwTimer=setInterval(load,5*60e3);
+  const im=$('hwimg'), urls=[c.img,c.img_alt].filter(Boolean);let k=0;
+  const load=()=>{im.src=urls[k]+(urls[k].includes('?')?'&':'?')+'t='+Date.now()};
+  im.onerror=()=>{if(k<urls.length-1){k++;load()}else{im.style.visibility='hidden';$('hwerr').hidden=false}};
+  im.onload=()=>{im.style.visibility='';$('hwerr').hidden=true};
+  load();hwTimer=setInterval(load,5*60e3);
+}
+function bindHwModes(box){box.querySelectorAll('[data-hm]').forEach(b=>b.onclick=()=>{hwMode=b.dataset.hm;renderHw()})}
+let leafletP=null;
+function leaflet(){
+  if(window.L)return Promise.resolve(window.L);
+  if(leafletP)return leafletP;
+  return leafletP=new Promise((ok,bad)=>{
+    const css=document.createElement('link');css.rel='stylesheet';css.href='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';document.head.appendChild(css);
+    const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
+    sc.onload=()=>ok(window.L);sc.onerror=()=>{leafletP=null;bad(new Error('map library'))};document.head.appendChild(sc);});
+}
+const SEV={MAJOR:'#c0392b',MODERATE:'#e67e22',MINOR:'#d4ac0d',UNKNOWN:'#7f8c8d'};
+function drawRoadMap(cams){
+  const aps=selAp==='all'?['YZZ','YCG']:[selAp];
+  const evs=roadEvents.filter(e=>e.points&&e.points.length);
+  leaflet().then(L=>{
+    if(!$('hwmap'))return;
+    hwMap=L.map('hwmap',{scrollWheelZoom:false});
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:17,attribution:'© OpenStreetMap contributors'}).addTo(hwMap);
+    const pts=[];
+    aps.forEach(a=>{const [la,lo,n]=APLL[a];pts.push([la,lo]);
+      L.marker([la,lo],{title:n,icon:L.divIcon({className:'',iconSize:null,
+        html:`<div style="background:#1f5f8b;color:#fff;font:700 12px system-ui;padding:3px 7px;border-radius:999px;white-space:nowrap;transform:translate(-50%,-50%)">✈ ${esc(n.split(' ')[0])}</div>`})}).addTo(hwMap).bindPopup('<b>'+esc(n)+'</b>')});
+    evs.forEach(e=>{
+      const col=SEV[e.severity]||SEV.UNKNOWN, pop=`<b>${esc(e.headline||e.type||'Road report')}</b>${e.road?'<br>'+esc(e.road):''}<br>${esc(e.description||'')}`;
+      if(e.points.length>1)L.polyline(e.points,{color:col,weight:5,opacity:.85}).addTo(hwMap).bindPopup(pop);
+      L.circleMarker(e.points[0],{radius:7,color:'#fff',weight:2,fillColor:col,fillOpacity:1}).addTo(hwMap).bindPopup(pop);
+    });
+    cams.filter(c=>c.lat!=null).forEach(c=>{pts.push([c.lat,c.lon]);
+      L.circleMarker([c.lat,c.lon],{radius:6,color:'#1f5f8b',weight:2,fillColor:'#fff',fillOpacity:1}).addTo(hwMap)
+        .bindTooltip('📷 '+c.label).on('click',()=>{hwSel=c.id;hwMode='cams';renderHw()})});
+    hwMap.fitBounds(L.latLngBounds(pts).pad(0.15));
+  }).catch(()=>{$('hwmap').innerHTML='<div class="sub" style="padding:12px">The map didn\'t load. <a href="https://www.drivebc.ca/" target="_blank" rel="noopener">Open DriveBC</a>.</div>'});
+  // the reports as a list too (easier to read on a phone)
+  const near=evs.filter(e=>aps.some(a=>e.points.some(p=>Math.hypot(p[0]-APLL[a][0],(p[1]-APLL[a][1])*.65)<0.45)));
+  $('hwev').innerHTML=(near.length?`<div class="sub" style="margin-top:8px"><b>${near.length} road report${near.length===1?'':'s'} near ${aps.map(a=>APLL[a][2].split(' ')[0]).join(' / ')}</b> · tap a camera dot on the map to see it</div>`+
+    near.sort((x,y)=>(x.severity==='MAJOR'?0:1)-(y.severity==='MAJOR'?0:1)).map(e=>`<div class="sub" style="margin-top:4px;border-left:4px solid ${SEV[e.severity]||SEV.UNKNOWN};padding-left:8px"><b>${esc(e.road||'')}</b> ${esc(e.headline||e.type||'')}${e.description?' — '+esc(e.description.slice(0,220)):''}</div>`).join(''):
+    '<div class="sub" style="margin-top:8px">No road reports near the airport right now. Tap a camera dot on the map to see it.</div>');
 }
 
 // ---- Red Mountain webcam time-lapse ----

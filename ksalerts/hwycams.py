@@ -38,8 +38,15 @@ def _norm(c):
     return {"id": cid, "name": c.get("camName") or c.get("name") or "",
             "caption": c.get("caption") or "", "lat": float(lat) if lat is not None else None,
             "lon": float(lon) if lon is not None else None,
-            "img": links.get("imageDisplay") or IMG.format(id=cid),
+            "img": _abs(links.get("imageDisplay")) or IMG.format(id=cid),
             "on": c.get("isOn", c.get("is_on", True)) is not False}
+
+
+def _abs(u):
+    """The newer DriveBC list gives image paths like '/images/334.jpg' (no site address)."""
+    if not u:
+        return None
+    return u if u.startswith("http") else "https://www.drivebc.ca" + ("" if u.startswith("/") else "/") + u
 
 
 def fetch_all():
@@ -81,7 +88,8 @@ def pick(cams, wanted):
                 suffix = (c["name"].split("-")[-1] if "-" in c["name"]
                           else c["name"].lower().split(m, 1)[-1]).strip().replace("southound", "southbound")
             out.append({"id": c["id"], "label": w["label"] + (f" {suffix}" if suffix else ""),
-                        "name": c["name"], "caption": c["caption"], "img": c["img"],
+                        "name": c["name"], "caption": c["caption"], "img": _abs(c["img"]),
+                        "img_alt": IMG.format(id=c["id"]), "lat": c["lat"], "lon": c["lon"],
                         "page": PAGE.format(id=c["id"]), "airports": w.get("airports", []),
                         "summit": bool(w.get("summit"))})
     return out

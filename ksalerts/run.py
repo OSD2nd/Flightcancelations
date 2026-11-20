@@ -380,6 +380,17 @@ def main():
             print(f"highway cams: {', '.join(c['label'] for c in hw_cams) or 'none matched'}")
         except Exception as e:
             print(f"[warn] highway cameras: {e}")
+    # road reports (closures, incidents, winter conditions) on the highways around the airports
+    road_events = []
+    if cfg.get("highway_cams") and not a.demo:
+        try:
+            from . import roads
+            ev, _ = weather.cached("open511", lambda: {datetime(2000, 1, 1): roads.fetch()},
+                                   fresh_hours=0.4, keep_hours=6)
+            road_events = next(iter(ev.values()))
+            print(f"road reports: {len(road_events)}")
+        except Exception as e:
+            print(f"[warn] road reports: {e}")
     cams = []
     if cfg.get("webcams") and not a.demo:
         try:
@@ -411,7 +422,7 @@ def main():
                                                           timezone.utc).isoformat(timespec="minutes")
                                    if any(k.startswith("models2_") for k in weather.FETCHED) else None),
                "notes": notes, "webcams": cams, "airport_cams": cfg.get("airport_cams", []),
-               "highway_cams": hw_cams,
+               "highway_cams": hw_cams, "road_events": road_events,
                "flights": results, "history_stats": [] if a.demo else _safe_stats(cfg)}
     with open(OUT, "w") as f:
         json.dump(payload, f, indent=1)
