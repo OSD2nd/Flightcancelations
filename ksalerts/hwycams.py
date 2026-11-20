@@ -75,7 +75,11 @@ def pick(cams, wanted):
         for c in sorted(hits, key=lambda c: c["name"]):
             used.add(c["id"])
             # "Trail - E" -> label "Trail (Hwy 3B) E" when a place has several cameras
-            suffix = c["name"].split("-")[-1].strip() if len(hits) > 1 and "-" in c["name"] else ""
+            # or "Rossland eastbound" -> "Rossland eastbound" (whatever follows the place name)
+            suffix = ""
+            if len(hits) > 1:
+                suffix = (c["name"].split("-")[-1] if "-" in c["name"]
+                          else c["name"].lower().split(m, 1)[-1]).strip().replace("southound", "southbound")
             out.append({"id": c["id"], "label": w["label"] + (f" {suffix}" if suffix else ""),
                         "name": c["name"], "caption": c["caption"], "img": c["img"],
                         "page": PAGE.format(id=c["id"]), "airports": w.get("airports", []),
