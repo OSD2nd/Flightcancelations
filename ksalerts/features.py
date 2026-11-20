@@ -120,7 +120,7 @@ def extract(origin_rows, hub_rows, origin_av=None, hub_av=None, ec=None):
     if origin_av:
         _apply_airport(f, origin_av)
     if ec:
-        f["ec_fog"] = level(ec.get("fog_level", 5 if ec.get("fog") else 0))
+        f["ec_fog"] = strength(ec.get("fog_level", 5 if ec.get("fog") else 0))
         f["ec_wintry"] = int(ec.get("wintry", False))
         f["ec_warning"] = int(bool(ec.get("warnings")))
         if ec.get("snow"):
@@ -138,7 +138,7 @@ def extract(origin_rows, hub_rows, origin_av=None, hub_av=None, ec=None):
     return f
 
 
-def level(n):
+def strength(n):
     """1-5 strength -> the 0-1 value the model uses (1 = 0.2 ... 5 = 1.0)."""
     return round(max(0, min(5, n)) / 5, 2)
 
@@ -161,7 +161,7 @@ def _apply_airport(f, av):
     """Official report/forecast can only add warnings, never clear model ones."""
     c, v, g, wx = av["ceiling_ft"], av["vis_sm"], av["gust_kt"], av["wx"]
     misty = any(("BR" in w or "FG" in w) for w in wx)
-    f["low_patches"] = max(f["low_patches"], level(patch_level(av.get("lowest_ft"), av.get("low_remark"), misty)))
+    f["low_patches"] = max(f["low_patches"], strength(patch_level(av.get("lowest_ft"), av.get("low_remark"), misty)))
     if c is not None:
         # graded: a 3,900 ft cloud base barely counts toward "under 4,000", 3,000 ft fully
         f["ceil_lt_1000"] = max(f["ceil_lt_1000"], ramp(c, 1500, 800))
