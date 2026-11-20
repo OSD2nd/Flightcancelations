@@ -544,6 +544,8 @@ function leaflet(){
     const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
     sc.onload=()=>ok(window.L);sc.onerror=()=>{leafletP=null;bad(new Error('map library'))};document.head.appendChild(sc);});
 }
+const EVT={ROAD_CONDITION:'Road conditions',CONSTRUCTION:'Construction',INCIDENT:'Incident',SPECIAL_EVENT:'Event',WEATHER_CONDITION:'Weather'};
+const evTitle=e=>EVT[e.headline]||EVT[e.type]||e.headline||'Road report';
 const SEV={MAJOR:'#c0392b',MODERATE:'#e67e22',MINOR:'#d4ac0d',UNKNOWN:'#7f8c8d'};
 function drawRoadMap(cams){
   const aps=selAp==='all'?['YZZ','YCG']:[selAp];
@@ -557,7 +559,7 @@ function drawRoadMap(cams){
       L.marker([la,lo],{title:n,icon:L.divIcon({className:'',iconSize:null,
         html:`<div style="background:#1f5f8b;color:#fff;font:700 12px system-ui;padding:3px 7px;border-radius:999px;white-space:nowrap;transform:translate(-50%,-50%)">✈ ${esc(n.split(' ')[0])}</div>`})}).addTo(hwMap).bindPopup('<b>'+esc(n)+'</b>')});
     evs.forEach(e=>{
-      const col=SEV[e.severity]||SEV.UNKNOWN, pop=`<b>${esc(e.headline||e.type||'Road report')}</b>${e.road?'<br>'+esc(e.road):''}<br>${esc(e.description||'')}`;
+      const col=SEV[e.severity]||SEV.UNKNOWN, pop=`<b>${esc(evTitle(e))}</b>${e.road?'<br>'+esc(e.road):''}<br>${esc(e.description||'')}`;
       if(e.points.length>1)L.polyline(e.points,{color:col,weight:5,opacity:.85}).addTo(hwMap).bindPopup(pop);
       L.circleMarker(e.points[0],{radius:7,color:'#fff',weight:2,fillColor:col,fillOpacity:1}).addTo(hwMap).bindPopup(pop);
     });
@@ -569,7 +571,7 @@ function drawRoadMap(cams){
   // the reports as a list too (easier to read on a phone)
   const near=evs.filter(e=>aps.some(a=>e.points.some(p=>Math.hypot(p[0]-APLL[a][0],(p[1]-APLL[a][1])*.65)<0.45)));
   $('hwev').innerHTML=(near.length?`<div class="sub" style="margin-top:8px"><b>${near.length} road report${near.length===1?'':'s'} near ${aps.map(a=>APLL[a][2].split(' ')[0]).join(' / ')}</b> · tap a camera dot on the map to see it</div>`+
-    near.sort((x,y)=>(x.severity==='MAJOR'?0:1)-(y.severity==='MAJOR'?0:1)).map(e=>`<div class="sub" style="margin-top:4px;border-left:4px solid ${SEV[e.severity]||SEV.UNKNOWN};padding-left:8px"><b>${esc(e.road||'')}</b> ${esc(e.headline||e.type||'')}${e.description?' — '+esc(e.description.slice(0,220)):''}</div>`).join(''):
+    near.sort((x,y)=>(x.severity==='MAJOR'?0:1)-(y.severity==='MAJOR'?0:1)).map(e=>`<div class="sub" style="margin-top:4px;border-left:4px solid ${SEV[e.severity]||SEV.UNKNOWN};padding-left:8px"><b>${esc(e.road||'')}</b> ${esc(evTitle(e))}${e.description?' — '+esc(e.description.slice(0,220)):''}</div>`).join(''):
     '<div class="sub" style="margin-top:8px">No road reports near the airport right now. Tap a camera dot on the map to see it.</div>');
 }
 
