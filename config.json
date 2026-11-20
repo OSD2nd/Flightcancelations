@@ -193,6 +193,62 @@
       "credit": "https://trail.ca/services/trail-regional-airport/live-web-cam/"
     }
   ],
+  "highway_cams": [
+    {
+      "match": "Bombi",
+      "label": "Bombi Summit (1,215 m)",
+      "airports": [
+        "YZZ",
+        "YCG"
+      ],
+      "summit": true
+    },
+    {
+      "match": "Strawberry",
+      "label": "Strawberry Pass",
+      "airports": [
+        "YZZ"
+      ],
+      "summit": true
+    },
+    {
+      "match": "Paulson",
+      "label": "Paulson Summit",
+      "airports": [
+        "YCG"
+      ],
+      "summit": true
+    },
+    {
+      "match": "Rossland",
+      "label": "Rossland",
+      "airports": [
+        "YZZ"
+      ]
+    },
+    {
+      "match": "Trail",
+      "label": "Trail (Hwy 3B)",
+      "airports": [
+        "YZZ"
+      ]
+    },
+    {
+      "match": "Castlegar",
+      "label": "Castlegar (Hwy 3)",
+      "airports": [
+        "YCG"
+      ]
+    },
+    {
+      "match": "Nelson",
+      "label": "Nelson",
+      "airports": [
+        "YCG"
+      ]
+    }
+  ],
+  "highway_cams_note": "DriveBC highway cameras, looked up by name near Trail/Castlegar (Open Government Licence - BC). 'airports' = which airport's pills show it. Summit cams in cloud = cloud down on the ridges.",
   "history_snapshots": [
     {
       "name": "Castlegar runway",

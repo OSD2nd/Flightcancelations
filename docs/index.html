@@ -183,6 +183,8 @@ details summary{cursor:pointer;font-size:.85rem;color:var(--accent)}
 <div id="apcams"><div class="sub">Webcams appear after the next check.</div></div>
 <h2>Red Mountain webcams (over the valley)</h2>
 <div id="cams" class="cam"><div class="sub">Webcams appear after the next check.</div></div>
+<h2>Highway cams</h2>
+<div id="hwcams" class="cam"><div class="sub">Highway cameras appear after the next check.</div></div>
 <section id="signup" hidden>
   <h2 id="signuphead">Get cancellation alerts by email</h2>
   <form id="signupform" class="wx" style="margin:8px 0">
@@ -266,6 +268,7 @@ function render(d){
   if(suMode==='unsubscribe'&&!render._jumped){render._jumped=1;setTimeout(()=>$('signup').scrollIntoView(),300)}
   renderCams(d.webcams);
   renderApCams(d.airport_cams);
+  hwList=d.highway_cams||[];renderHw();
   if(d.history_stats&&d.history_stats.length){
     $('hist').innerHTML='<table><tr><th>Condition</th><th>Flights</th><th>Cancelled</th></tr>'+
       d.history_stats.map(s=>`<tr><td>${esc(s.condition)}</td><td>${s.flights}</td><td>${s.cancelled} (${Math.round(s.rate*100)}%)</td></tr>`).join('')+'</table>';
@@ -447,7 +450,7 @@ function renderFlights(){
   });
 }
 document.querySelectorAll('#apfilter button').forEach(b=>b.onclick=()=>{
-  selAp=b.dataset.ap;try{localStorage.setItem('kfa.ap',selAp)}catch(e){}wkPlace=null;renderFlights();renderWeek7();});
+  selAp=b.dataset.ap;try{localStorage.setItem('kfa.ap',selAp)}catch(e){}wkPlace=null;renderFlights();renderWeek7();renderHw();});
 
 // ---- when each part was last updated ----
 function renderWhen(d){
@@ -501,6 +504,24 @@ function renderApCams(list){
   const tick=()=>$('apcams').querySelectorAll('img').forEach(im=>{
     const u=im.dataset.src;im.src=u+(u.includes('?')?'&':'?')+'t='+Math.floor(Date.now()/60000);});
   tick();clearInterval(apTimer);apTimer=setInterval(tick,60000);
+}
+
+// ---- BC highway cameras (DriveBC), only the ones that matter for the airport picked above ----
+let hwList=[],hwSel=null,hwTimer=null;
+function renderHw(){
+  const box=$('hwcams');if(!box)return;
+  const list=hwList.filter(c=>selAp==='all'||(c.airports||[]).includes(selAp));
+  if(!list.length){box.innerHTML='<div class="sub">'+(hwList.length?'No highway cameras set up for this airport.':'Highway cameras appear after the next check.')+'</div>';return}
+  if(!list.some(c=>c.id===hwSel))hwSel=list[0].id;
+  const c=list.find(x=>x.id===hwSel);
+  box.innerHTML=`<div class="seg">${list.map(x=>`<button type="button" data-h="${esc(x.id)}" class="${x.id===hwSel?'on':''}">${esc(x.label)}${x.summit?' ⛰':''}</button>`).join('')}</div>
+   <a href="${esc(c.page)}" target="_blank" rel="noopener"><img id="hwimg" alt="${esc(c.label)} highway camera"></a>
+   <div class="sub">${esc(c.caption||c.name)}${c.summit?' Summit camera: if it\'s in cloud, the cloud is down on the ridges.':''} <span id="hwerr" hidden>— not loading right now (some cameras go offline at night or in storms).</span></div>
+   <div class="sub">BC highway cameras by <a href="https://www.drivebc.ca/" target="_blank" rel="noopener">DriveBC</a> (BC Ministry of Transportation), under the Open Government Licence – BC. They update every 15–30 minutes.</div>`;
+  box.querySelectorAll('[data-h]').forEach(b=>b.onclick=()=>{hwSel=b.dataset.h;renderHw()});
+  const im=$('hwimg'), load=()=>{im.src=c.img+(c.img.includes('?')?'&':'?')+'t='+Date.now()};
+  im.onerror=()=>{$('hwerr').hidden=false};im.onload=()=>{$('hwerr').hidden=true};
+  load();clearInterval(hwTimer);hwTimer=setInterval(load,5*60e3);
 }
 
 // ---- Red Mountain webcam time-lapse ----

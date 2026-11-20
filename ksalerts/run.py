@@ -369,6 +369,17 @@ def main():
         except Exception as e:
             print(f"[warn] yesterday's outcomes failed: {e}")
     tracking.publish(today, now=now)
+    # BC highway cameras (DriveBC open data): the list is looked up once a day
+    hw_cams = []
+    if cfg.get("highway_cams") and not a.demo:
+        try:
+            from . import hwycams
+            allc, _ = weather.cached("drivebc", lambda: {datetime(2000, 1, 1): hwycams.fetch_all()},
+                                     fresh_hours=24, keep_hours=24 * 14)
+            hw_cams = hwycams.pick(next(iter(allc.values())), cfg["highway_cams"])
+            print(f"highway cams: {', '.join(c['label'] for c in hw_cams) or 'none matched'}")
+        except Exception as e:
+            print(f"[warn] highway cameras: {e}")
     cams = []
     if cfg.get("webcams") and not a.demo:
         try:
@@ -400,6 +411,7 @@ def main():
                                                           timezone.utc).isoformat(timespec="minutes")
                                    if any(k.startswith("models2_") for k in weather.FETCHED) else None),
                "notes": notes, "webcams": cams, "airport_cams": cfg.get("airport_cams", []),
+               "highway_cams": hw_cams,
                "flights": results, "history_stats": [] if a.demo else _safe_stats(cfg)}
     with open(OUT, "w") as f:
         json.dump(payload, f, indent=1)
