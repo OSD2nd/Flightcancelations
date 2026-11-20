@@ -29,3 +29,14 @@ because automated stations don't report smoke at all.
 
 The model is coarse (~40 km) and under-reads narrow valleys, so use it to
 compare airports, not as exact counts. Rerun: `python3 rank_smoke_pm25.py [cache folder]`.
+
+## Guessing cancellations from OpenSky (`opensky_cancellations.py`)
+
+`python research/opensky_cancellations.py research/metar CYXT CYQQ` -> `opensky_cancellations.csv`.
+A regular flight OpenSky didn't see only counts as "likely cancelled" when other flights were seen
+within 3 h either side (the airport was being watched) and its paired leg is missing too.
+`research/metar/` holds the winter airport reports (Iowa State archive) used to check the guesses.
+
+First run (Jan 16 - Mar 31, 2026): about 3% of regular flights come out "likely cancelled".
+Comox: 36% of those were in low cloud/fog/poor visibility vs 13% of flights that flew (real signal).
+Terrace: 35% vs 26% (weak). Both airports fly in low cloud far more than Trail/Castlegar can.
