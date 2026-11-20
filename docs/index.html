@@ -536,7 +536,7 @@ function renderHw(){
 }
 function bindHwModes(box){box.querySelectorAll('[data-hm]').forEach(b=>b.onclick=()=>{hwMode=b.dataset.hm;renderHw()})}
 let leafletP=null;
-function leaflet(){
+function loadLeaflet(){
   if(window.L)return Promise.resolve(window.L);
   if(leafletP)return leafletP;
   return leafletP=new Promise((ok,bad)=>{
@@ -550,7 +550,7 @@ const SEV={MAJOR:'#c0392b',MODERATE:'#e67e22',MINOR:'#d4ac0d',UNKNOWN:'#7f8c8d'}
 function drawRoadMap(cams){
   const aps=selAp==='all'?['YZZ','YCG']:[selAp];
   const evs=roadEvents.filter(e=>e.points&&e.points.length);
-  leaflet().then(L=>{
+  loadLeaflet().then(L=>{
     if(!$('hwmap'))return;
     hwMap=L.map('hwmap',{scrollWheelZoom:false});
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:17,attribution:'© OpenStreetMap contributors'}).addTo(hwMap);
