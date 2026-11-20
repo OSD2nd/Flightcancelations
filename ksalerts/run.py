@@ -312,7 +312,8 @@ def main():
             "forecast_risk": round(forecast_p, 3), "forecast_reasons": forecast_why, "models": models,
             "no_forecast": no_fc and not history.is_cancelled(f["status"]) and "divert" not in str(f["status"]).lower(),
             "flags": [k for k, v in feats.items() if v >= 0.4],
-            "feat": {k: v for k, v in feats.items() if v}}
+            "feat": {k: v for k, v in feats.items() if v},
+            "signals": F.signals(feats, weights)}
 
     def link_aircraft(rs):
         """The plane that flies in from Vancouver is the one that flies back out.

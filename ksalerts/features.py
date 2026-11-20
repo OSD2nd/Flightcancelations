@@ -120,7 +120,7 @@ def extract(origin_rows, hub_rows, origin_av=None, hub_av=None, ec=None):
     if origin_av:
         _apply_airport(f, origin_av)
     if ec:
-        f["ec_fog"] = int(ec.get("fog", False))
+        f["ec_fog"] = level(ec.get("fog_level", 5 if ec.get("fog") else 0))
         f["ec_wintry"] = int(ec.get("wintry", False))
         f["ec_warning"] = int(bool(ec.get("warnings")))
         if ec.get("snow"):
@@ -138,19 +138,38 @@ def extract(origin_rows, hub_rows, origin_av=None, hub_av=None, ec=None):
     return f
 
 
+def level(n):
+    """1-5 strength -> the 0-1 value the model uses (1 = 0.2 ... 5 = 1.0)."""
+    return round(max(0, min(5, n)) / 5, 2)
+
+
+def patch_level(lowest_ft, low_remark, misty):
+    """Low cloud/fog patches in the airport report, 1-5. From the cancellations so far:
+    Nov 14 (FEW004) and Nov 15 (FEW002, FEW003 with mist) cancelled; patches near 1,000 ft rarely do.
+      under 300 ft = 5, under 500 = 4, under 700 = 3, under 1,000 = 2;
+      only the 'low cloud around' remark (LO CLD) = 2; mist or fog with it = one step up."""
+    if lowest_ft is not None and lowest_ft < 1000:
+        n = 5 if lowest_ft < 300 else 4 if lowest_ft < 500 else 3 if lowest_ft < 700 else 2
+    elif low_remark:
+        n = 2
+    else:
+        return 0
+    return min(5, n + (1 if misty else 0))
+
+
 def _apply_airport(f, av):
     """Official report/forecast can only add warnings, never clear model ones."""
     c, v, g, wx = av["ceiling_ft"], av["vis_sm"], av["gust_kt"], av["wx"]
-    lo = av.get("lowest_ft")
-    if (lo is not None and lo < 1000) or av.get("low_remark"):
-        f["low_patches"] = 1
+    misty = any(("BR" in w or "FG" in w) for w in wx)
+    f["low_patches"] = max(f["low_patches"], level(patch_level(av.get("lowest_ft"), av.get("low_remark"), misty)))
     if c is not None:
-        f["ceil_lt_1000"] = max(f["ceil_lt_1000"], int(c < 1000))
-        f["ceil_lt_3000"] = max(f["ceil_lt_3000"], int(c < 3000))
-        f["ceil_lt_4000"] = max(f["ceil_lt_4000"], int(c < 4000))
+        # graded: a 3,900 ft cloud base barely counts toward "under 4,000", 3,000 ft fully
+        f["ceil_lt_1000"] = max(f["ceil_lt_1000"], ramp(c, 1500, 800))
+        f["ceil_lt_3000"] = max(f["ceil_lt_3000"], ramp(c, 3200, 2200))
+        f["ceil_lt_4000"] = max(f["ceil_lt_4000"], ramp(c, 4200, 3000))
     if v is not None:
-        f["vis_lt_1_6"] = max(f["vis_lt_1_6"], int(v < 1))      # 1 statute mile = 1.6 km
-        f["vis_lt_4_8"] = max(f["vis_lt_4_8"], int(v < 3))
+        f["vis_lt_1_6"] = max(f["vis_lt_1_6"], ramp(v, 1.5, 0.5))      # statute miles (1 mi = 1.6 km)
+        f["vis_lt_4_8"] = max(f["vis_lt_4_8"], ramp(v, 5, 2))
     if g is not None:
         f["gust_35"] = max(f["gust_35"], int(g * 1.852 >= 35))
         f["gust_50"] = max(f["gust_50"], int(g * 1.852 >= 50))
@@ -178,6 +197,13 @@ def reasons(feats, weights=None):
     w = weights or PRIOR
     hits = [(w.get(k, 0) * v, k) for k, v in feats.items() if v >= 0.4 and w.get(k, 0) > 0.3]
     return [LABELS[k] for _, k in sorted(hits, reverse=True)]
+
+
+def signals(feats, weights=None):
+    """What's pushing the risk up, strongest first, each with a 1-5 strength for the cards."""
+    w = weights or PRIOR
+    hits = [(w.get(k, 0) * v, k, v) for k, v in feats.items() if v >= 0.2 and w.get(k, 0) > 0.3]
+    return [{"label": LABELS[k], "level": max(1, min(5, round(v * 5)))} for _, k, v in sorted(hits, reverse=True)]
 
 
 def lead_shrink(p, hours_ahead, weights=None):

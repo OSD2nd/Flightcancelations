@@ -79,8 +79,21 @@ UNTIL = [(r"dissipating (early )?in the morning|clearing in the morning", 11), (
 LATER = r"developing (this |in the )?(evening|overnight|after midnight|late)"
 
 
-def fog_at(text, hour):
-    """Does the forecast wording put fog/low cloud at this hour of the day?"""
+def _strength(sentence):
+    """How strong the wording is, 1-5: 'fog' 5, 'fog patches/banks' 4, 'mist' or 'low cloud' 3, 'drizzle' 2."""
+    s = sentence.lower()
+    if re.search(r"\bfog\b(?!\s+(patches|banks))", s) and "fog patches" not in s and "fog banks" not in s:
+        return 5
+    if re.search(r"fog (patches|banks)", s):
+        return 4
+    if re.search(r"\bmist|low cloud", s):
+        return 3
+    return 2 if "drizzle" in s else 0
+
+
+def fog_level(text, hour):
+    """Strongest fog/low-cloud wording that applies at this hour of the day (0 = none, 1-5)."""
+    best = 0
     for sentence in re.split(r"(?<=\.)\s+", text or ""):
         if not FOG.search(sentence):
             continue
@@ -88,8 +101,13 @@ def fog_at(text, hour):
             continue                      # fog arriving tonight, not during a daytime flight
         until = next((h for pat, h in UNTIL if re.search(pat, sentence, re.I)), None)
         if until is None or hour < until:
-            return True
-    return False
+            best = max(best, _strength(sentence))
+    return best
+
+
+def fog_at(text, hour):
+    """Does the forecast wording put fog/low cloud at this hour of the day?"""
+    return fog_level(text, hour) > 0
 
 
 def signals(fc, when_local, to_utc, today):
@@ -114,5 +132,5 @@ def signals(fc, when_local, to_utc, today):
     text = " ".join(x for x in (hourly + "." if hourly else "", period) if x)
     if eve and when_local.hour < 11 and re.search(r"fog", eve[0]["summary"] or "", re.I) and FOG.search(period or ""):
         text += " Fog patches."
-    return {"fog": fog_at(text, when_local.hour), "wintry": bool(WINTRY.search(text)),
+    return {"fog": fog_at(text, when_local.hour), "fog_level": fog_level(text, when_local.hour), "wintry": bool(WINTRY.search(text)),
             "snow": bool(SNOW.search(text)), "text": text, "warnings": fc.get("warnings") or []}
