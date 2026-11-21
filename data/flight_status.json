@@ -1,19 +1,11 @@
 {
- "date": "2026-11-20",
+ "date": "2026-11-21",
  "airports": {
   "YZZ": {
    "dep": [
     {
      "flight": "8P452",
-     "time": "10:50",
-     "expected": null,
-     "status": "Departed",
-     "diverted_to": null,
-     "airline": "Pacific Coastal"
-    },
-    {
-     "flight": "8P458",
-     "time": "17:05",
+     "time": "11:35",
      "expected": null,
      "status": "Expected",
      "diverted_to": null,
@@ -23,15 +15,7 @@
    "arr": [
     {
      "flight": "8P451",
-     "time": "10:24",
-     "expected": null,
-     "status": "Expected",
-     "diverted_to": null,
-     "airline": "Pacific Coastal"
-    },
-    {
-     "flight": "8P457",
-     "time": "16:32",
+     "time": "11:02",
      "expected": null,
      "status": "Expected",
      "diverted_to": null,
@@ -62,20 +46,18 @@
    ]
   }
  },
- "checked": "2026-11-20T16:00",
+ "checked": "2026-11-21T06:30",
  "checked_by": {
-  "YZZ": "2026-11-20T16:00",
-  "YCG": "2026-11-20T10:50"
+  "YZZ": "2026-11-21T06:30",
+  "YCG": "2026-11-21T06:30"
  },
  "seen": {
   "YZZ": {
    "dep": {
-    "8P452": "10:50",
-    "8P458": "17:05"
+    "8P452": "11:35"
    },
    "arr": {
-    "8P451": "10:24",
-    "8P457": "16:32"
+    "8P451": "11:02"
    }
   },
   "YCG": {
