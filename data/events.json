@@ -51,7 +51,17 @@
    "vis_sm": 12.0,
    "wx": "VCSH",
    "raw": "METAR CYCG 221800Z 01005KT 12SM VCSH FEW028 FEW062 OVC100 02/M04 A3009 RMK SC1SC1AS7 SC TR PCPN NW SLP210"
-  }
+  },
+  "red": [
+   {
+    "name": "Red Mountain, Granite (11:45)",
+    "src": "history/img/2026-11-22_YCG_1143_granite.jpg"
+   },
+   {
+    "name": "Red Mountain, Greyline (11:45)",
+    "src": "history/img/2026-11-22_YCG_1143_greyline.jpg"
+   }
+  ]
  },
  {
   "date": "2026-11-16",
