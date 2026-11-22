@@ -1,6 +1,54 @@
 [
  {
   "date": "2026-11-22",
+  "flight": "8P457",
+  "airline": "Pacific Coastal",
+  "airport": "YZZ",
+  "airport_name": "Trail Regional",
+  "direction": "arr",
+  "from": "YVR",
+  "to": "YZZ",
+  "sched": "16:32",
+  "first_seen": "2026-11-22T16:00",
+  "predicted": 0.897,
+  "predicted_reasons": [
+   "Low cloud with rain (the usual cancellation pattern)",
+   "Cloud base under 3,000 ft",
+   "Heavy low cloud",
+   "Reduced visibility (under 4.8 km)",
+   "Snow falling"
+  ],
+  "wx_when_seen": {
+   "time": "2026-11-22T22:00+00:00",
+   "ceiling_ft": 1700,
+   "vis_sm": 2.5,
+   "wx": "-SN",
+   "raw": "METAR CYCG 222200Z 33005KT 2 1/2SM -SN BKN017 OVC035 00/M01 A3010 RMK SN5SC1SC2 SLP215"
+  },
+  "taf_when_seen": "TAF AMD CYCG 222020Z 2220/2224 36005KT P6SM SCT015 BKN040 OVC100 TEMPO 2220/2224 3SM -SN BKN015 RMK NXT FCST BY 231500Z",
+  "photos": [
+   {
+    "name": "Castlegar runway",
+    "src": "history/img/2026-11-22_YZZ_0.jpg"
+   },
+   {
+    "name": "Castlegar north",
+    "src": "history/img/2026-11-22_YZZ_1.jpg"
+   },
+   {
+    "name": "Trail runway north",
+    "src": "history/img/2026-11-22_YZZ_2.jpg"
+   }
+  ],
+  "source": "live",
+  "kind": "cancelled",
+  "status": "Canceled",
+  "expected": null,
+  "diverted_to": null,
+  "delay_min": null
+ },
+ {
+  "date": "2026-11-22",
   "flight": "AC8376",
   "airline": "Air Canada",
   "airport": "YCG",
