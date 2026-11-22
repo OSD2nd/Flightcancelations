@@ -52,7 +52,17 @@
    "vis_sm": 2.5,
    "wx": "-SN",
    "raw": "METAR CYCG 222300Z 34006KT 2 1/2SM -SN BKN014 OVC035 00/M01 A3010 RMK SN5SC2SC1 SLP215"
-  }
+  },
+  "red": [
+   {
+    "name": "Red Mountain, Granite (16:30)",
+    "src": "history/img/2026-11-22_YZZ_1632_granite.jpg"
+   },
+   {
+    "name": "Red Mountain, Greyline (16:30)",
+    "src": "history/img/2026-11-22_YZZ_1632_greyline.jpg"
+   }
+  ]
  },
  {
   "date": "2026-11-22",
