@@ -55,10 +55,14 @@ def airport_day(code, day, hub_code, key, window=("06:00", "17:59")):
     """Today's flights between `code` and the hub, both directions, in ONE request.
     Returns {"dep": [...], "arr": [...]} with flight, time (at `code`), expected, status, airline."""
     a, b = (f"{day.isoformat()}T{t}" for t in window)
-    path = (f"/flights/airports/iata/{code}/{a}/{b}?direction=Both&withLeg=false&withCancelled=true"
-            "&withCodeshared=false&withCargo=false&withPrivate=false&withLocation=false")
+    # withCodeshared=true: with "false", AeroDataBox guesses which flights are real at airports like
+    # Trail that send no code-share info ("false results are possible") - likely why flights vanished.
+    # We drop the code-share copies ourselves. withLeg=true adds the Vancouver end of each flight.
+    path = (f"/flights/airports/iata/{code}/{a}/{b}?direction=Both&withLeg=true&withCancelled=true"
+            "&withCodeshared=true&withCargo=false&withPrivate=false&withLocation=false")
     data = _adb(path, key)
     out = {"dep": [], "arr": []}
+    seen = set()
     for kind, near, far in (("departures", "departure", "arrival"), ("arrivals", "arrival", "departure")):
         for f in data.get(kind, []) or []:
             if "movement" in f:
@@ -70,16 +74,28 @@ def airport_day(code, day, hub_code, key, window=("06:00", "17:59")):
                 other = ((f.get(far) or {}).get("airport") or {}).get("iata")
             if other != hub_code:
                 continue
+            if str(f.get("codeshareStatus", "")).lower() == "iscodeshared":
+                continue                    # another airline's number for the same plane
             sched = (here.get("scheduledTime") or {}).get("local")
             if not sched:
                 continue
-            best = (here.get("revisedTime") or here.get("runwayTime") or {}).get("local")
+            key_ = (kind, _num(f.get("number")), sched)
+            if key_ in seen:
+                continue
+            seen.add(key_)
+            best = (here.get("revisedTime") or here.get("runwayTime") or here.get("predictedTime") or {}).get("local")
+            # the Vancouver end: for an arrival, when it (is expected to) leave Vancouver
+            far_mv = f.get(far) or {}
+            far_sched = (far_mv.get("scheduledTime") or {}).get("local")
+            far_best = (far_mv.get("runwayTime") or far_mv.get("revisedTime") or far_mv.get("predictedTime") or {}).get("local")
             out["dep" if kind == "departures" else "arr"].append({
                 "flight": _num(f.get("number")), "time": _local(sched).strftime("%H:%M"),
                 "expected": _local(best).strftime("%H:%M") if best else None,
                 "status": f.get("status") or "Unknown",
                 "diverted_to": _diverted_to(f) if "divert" in str(f.get("status", "")).lower() else None,
-                "airline": (f.get("airline") or {}).get("name", "")})
+                "airline": (f.get("airline") or {}).get("name", ""),
+                "hub_sched": _local(far_sched).strftime("%H:%M") if far_sched else None,
+                "hub_expected": _local(far_best).strftime("%H:%M") if far_best else None})
     return out
 
 
@@ -151,6 +167,7 @@ def schedule(code, day, cfg, arrivals=False, live=None):
                                 "expected": (datetime(day.year, day.month, day.day, *map(int, r["expected"].split(":")))
                                              if r.get("expected") else None),
                                 "status": r["status"], "diverted_to": r.get("diverted_to"),
+                                "hub_sched": r.get("hub_sched"), "hub_expected": r.get("hub_expected"),
                                 "airline": r["airline"] or base["airline"]}
         # listed by the feed earlier today, missing now: Pacific Coastal often just drops cancelled flights
         listed = {r["flight"] for r in rows}

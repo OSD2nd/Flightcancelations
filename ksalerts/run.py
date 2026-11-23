@@ -304,6 +304,8 @@ def main():
             "dep_local": here.strftime("%H:%M"),  # time at the Kootenay airport (arrival time for arrivals)
             "expected_local": f["expected"].strftime("%H:%M") if f.get("expected") and f["expected"] != here else None,
             "status": f["status"], "diverted_to": f.get("diverted_to"),
+            # the Vancouver end (from the airline feed): when an arriving plane leaves Vancouver
+            "hub_sched": f.get("hub_sched"), "hub_expected": f.get("hub_expected"),
             "risk": round(p, 3), "own_risk": round(p, 3),
             "level": F.level(p, cfg["watch_threshold"], cfg["alert_threshold"]),
             "reasons": why, "schedule_source": source,
