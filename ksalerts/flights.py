@@ -13,12 +13,20 @@ from datetime import datetime
 STATUS_FILE = "data/flight_status.json"
 
 
+QUOTA = {}   # RapidAPI's "how much of your plan is left" headers from the latest reply
+
+
 def _adb(path, key):
     req = urllib.request.Request(
         "https://aerodatabox.p.rapidapi.com" + path,
         headers={"X-RapidAPI-Key": key, "X-RapidAPI-Host": "aerodatabox.p.rapidapi.com"})
     with urllib.request.urlopen(req, timeout=30) as r:
         body = r.read()
+        for k, v in r.headers.items():
+            if k.lower().startswith("x-ratelimit"):
+                QUOTA[k.lower()] = v
+    if QUOTA:
+        print("AeroDataBox plan: " + ", ".join(f"{k.replace('x-ratelimit-', '')}={v}" for k, v in sorted(QUOTA.items())))
     return json.loads(body) if body.strip() else {}
 
 
@@ -131,6 +139,8 @@ def fetch_status(cfg, day, key, now, airports=None):
                     seen.setdefault(d, {})[r["flight"]] = r["time"]
         except Exception as e:
             print(f"[warn] flight status failed for {code}: {e}")
+    if QUOTA:
+        s["quota"] = dict(QUOTA, at=s["checked"])
     save_status(s)
     return s
 
