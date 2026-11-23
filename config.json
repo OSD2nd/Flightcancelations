@@ -37,13 +37,19 @@
       ]
     },
     {
+      "time": "11:30",
+      "airports": [
+        "YZZ"
+      ]
+    },
+    {
       "time": "15:45",
       "airports": [
         "YZZ"
       ]
     }
   ],
-  "status_checks_note": "Live airline status (AeroDataBox, 2 units per airport per call, free plan 400/month; this is ~372). Each check runs before the flights: 09:30 Trail (10:24 in / 10:50 out), 10:45 Castlegar (11:43 in / 12:15 out), 15:45 Trail (16:32 in / 17:05 out). A cancellation found is emailed right away. 06:30 also asks Trail about yesterday afternoon, to learn whether the 17:05 flew.",
+  "status_checks_note": "Live airline status (AeroDataBox, 2 units per airport per call; free plan assumed 600/month, about 432 used). 06:30 both (+ Trail yesterday afternoon), 09:30 Trail (before 10:24/10:50), 10:45 Castlegar (before 11:43/12:15), 11:30 Trail (catches morning delays/cancellations after 10:50), 15:45 Trail (before 16:32/17:05). A cancellation found is emailed right away. Each run logs the plan's remaining allowance.",
   "status_window": [
     "06:00",
     "17:59"
