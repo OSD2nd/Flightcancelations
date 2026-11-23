@@ -1,6 +1,52 @@
 [
  {
   "date": "2026-11-22",
+  "flight": "8P458",
+  "airline": "Pacific Coastal",
+  "airport": "YZZ",
+  "airport_name": "Trail Regional",
+  "direction": "dep",
+  "from": "YZZ",
+  "to": "YVR",
+  "sched": "17:05",
+  "first_seen": "2026-11-23T06:30",
+  "predicted": 0.9,
+  "predicted_reasons": [],
+  "wx_when_seen": {
+   "time": "2026-11-23T13:00+00:00",
+   "ceiling_ft": 5100,
+   "vis_sm": 10.0,
+   "wx": "",
+   "raw": "METAR CYCG 231300Z 12002KT 10SM FEW006 SCT037 BKN051 M00/M01 A3024 RMK SF2SC2SC3 SLP261"
+  },
+  "taf_when_seen": "TAF AMD CYCG 222020Z 2220/2224 36005KT P6SM SCT015 BKN040 OVC100 TEMPO 2220/2224 3SM -SN BKN015 RMK NXT FCST BY 231500Z",
+  "photos": [],
+  "source": "live",
+  "kind": "cancelled",
+  "status": "Canceled",
+  "expected": null,
+  "diverted_to": null,
+  "delay_min": null,
+  "red": [
+   {
+    "name": "Red Mountain, Granite (17:05)",
+    "src": "history/img/2026-11-22_YZZ_1705_granite.jpg"
+   },
+   {
+    "name": "Red Mountain, Greyline (17:05)",
+    "src": "history/img/2026-11-22_YZZ_1705_greyline.jpg"
+   }
+  ],
+  "wx_at_time": {
+   "time": "2026-11-23T00:00+00:00",
+   "ceiling_ft": 1500,
+   "vis_sm": 2.5,
+   "wx": "-SN",
+   "raw": "METAR CYCG 230000Z 35003KT 2 1/2SM -SN BKN015 OVC024 M00/M01 A3011 RMK SN5SC2SC1 LAST STFD OBS/NXT 231300Z SLP217"
+  }
+ },
+ {
+  "date": "2026-11-22",
   "flight": "8P457",
   "airline": "Pacific Coastal",
   "airport": "YZZ",
