@@ -39,7 +39,14 @@
   "status": "CanceledUncertain",
   "expected": null,
   "diverted_to": null,
-  "delay_min": null
+  "delay_min": null,
+  "wx_at_time": {
+   "time": "2026-11-23T23:00+00:00",
+   "ceiling_ft": 5200,
+   "vis_sm": 15.0,
+   "wx": "",
+   "raw": "METAR CYCG 232300Z 29002KT 15SM BKN052 BKN230 04/M00 A3025 RMK SC5CI2 SLP263"
+  }
  },
  {
   "date": "2026-11-22",
