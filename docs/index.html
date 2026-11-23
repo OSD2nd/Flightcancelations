@@ -363,9 +363,11 @@ function reasonTags(f){
 }
 // for arrivals: when the plane leaves Vancouver, if the feed has it ("late" when 15+ min behind)
 function hubLine(f){
-  if(f.direction!=='arr'||!f.hub_expected||!f.hub_sched)return '';
+  if(!f.hub_expected||!f.hub_sched)return '';
   const m=t=>{const[h,mm]=t.split(':').map(Number);return h*60+mm};const late=m(f.hub_expected)-m(f.hub_sched);
-  return ` · ${late>=15?'<b>leaving Vancouver late: '+esc(f.hub_expected)+'</b> (due '+esc(f.hub_sched)+')':'leaves Vancouver '+esc(f.hub_expected)}`;
+  if(f.direction==='arr')return ` · ${late>=15?'<b>left Vancouver late: '+esc(f.hub_expected)+'</b> (due '+esc(f.hub_sched)+')':'leaves Vancouver '+esc(f.hub_expected)}`;
+  // departures: a late arrival time in Vancouver means it left Trail late
+  return late>=15?` · <b>running late: due in Vancouver ${esc(f.hub_expected)}</b> (scheduled ${esc(f.hub_sched)})`:'';
 }
 function card(f){
   const past=isPast(f), unconfirmed=past&&f.schedule_source==='live'&&!FLEW.test(f.status)&&!/^(cancel|divert)/i.test(f.status);
