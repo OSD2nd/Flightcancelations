@@ -9,7 +9,9 @@
      "expected": null,
      "status": "Expected",
      "diverted_to": null,
-     "airline": "Pacific Coastal"
+     "airline": "Pacific Coastal",
+     "hub_sched": "12:13",
+     "hub_expected": "12:35"
     },
     {
      "flight": "8P458",
@@ -17,7 +19,9 @@
      "expected": null,
      "status": "Expected",
      "diverted_to": null,
-     "airline": "Pacific Coastal"
+     "airline": "Pacific Coastal",
+     "hub_sched": "18:29",
+     "hub_expected": "18:29"
     }
    ],
    "arr": [
@@ -27,7 +31,9 @@
      "expected": null,
      "status": "Expected",
      "diverted_to": null,
-     "airline": "Pacific Coastal"
+     "airline": "Pacific Coastal",
+     "hub_sched": "09:10",
+     "hub_expected": "09:29"
     },
     {
      "flight": "8P457",
@@ -35,7 +41,9 @@
      "expected": null,
      "status": "Expected",
      "diverted_to": null,
-     "airline": "Pacific Coastal"
+     "airline": "Pacific Coastal",
+     "hub_sched": "15:15",
+     "hub_expected": "15:15"
     }
    ]
   },
@@ -62,9 +70,9 @@
    ]
   }
  },
- "checked": "2026-11-23T11:00",
+ "checked": "2026-11-23T12:11",
  "checked_by": {
-  "YZZ": "2026-11-23T09:30",
+  "YZZ": "2026-11-23T12:11",
   "YCG": "2026-11-23T11:00"
  },
  "seen": {
@@ -86,5 +94,17 @@
     "AC8376": "11:43"
    }
   }
+ },
+ "quota": {
+  "x-ratelimit-rapid-free-plans-hard-limit-limit": "500000",
+  "x-ratelimit-rapid-free-plans-hard-limit-remaining": "499955",
+  "x-ratelimit-rapid-free-plans-hard-limit-reset": "1469386",
+  "x-ratelimit-requests-limit": "1600",
+  "x-ratelimit-requests-remaining": "1526",
+  "x-ratelimit-requests-reset": "1469386",
+  "x-ratelimit-api-units-limit": "400",
+  "x-ratelimit-api-units-remaining": "236",
+  "x-ratelimit-api-units-reset": "1469386",
+  "at": "2026-11-23T12:11"
  }
 }
