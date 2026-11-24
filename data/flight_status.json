@@ -1,17 +1,17 @@
 {
- "date": "2026-11-23",
+ "date": "2026-11-24",
  "airports": {
   "YZZ": {
    "dep": [
     {
      "flight": "8P452",
-     "time": "10:50",
+     "time": "11:50",
      "expected": null,
-     "status": "Departed",
+     "status": "Expected",
      "diverted_to": null,
      "airline": "Pacific Coastal",
-     "hub_sched": "12:13",
-     "hub_expected": "12:56"
+     "hub_sched": "13:13",
+     "hub_expected": "13:13"
     },
     {
      "flight": "8P458",
@@ -27,74 +27,53 @@
    "arr": [
     {
      "flight": "8P451",
-     "time": "10:24",
+     "time": "11:24",
      "expected": null,
      "status": "Expected",
      "diverted_to": null,
      "airline": "Pacific Coastal",
-     "hub_sched": "09:10",
-     "hub_expected": "09:29"
-    }
-   ]
-  },
-  "YCG": {
-   "dep": [
+     "hub_sched": "10:10",
+     "hub_expected": "10:10"
+    },
     {
-     "flight": "AC8377",
-     "time": "12:15",
+     "flight": "8P457",
+     "time": "16:32",
      "expected": null,
      "status": "Expected",
      "diverted_to": null,
-     "airline": "Air Canada"
-    }
-   ],
-   "arr": [
-    {
-     "flight": "AC8376",
-     "time": "11:43",
-     "expected": null,
-     "status": "Expected",
-     "diverted_to": null,
-     "airline": "Air Canada"
+     "airline": "Pacific Coastal",
+     "hub_sched": "15:15",
+     "hub_expected": "15:15"
     }
    ]
   }
  },
- "checked": "2026-11-23T16:00",
+ "checked": "2026-11-24T06:30",
  "checked_by": {
-  "YZZ": "2026-11-23T16:00",
-  "YCG": "2026-11-23T11:00"
+  "YZZ": "2026-11-24T06:30"
  },
  "seen": {
   "YZZ": {
    "dep": {
-    "8P452": "10:50",
+    "8P452": "11:50",
     "8P458": "17:05"
    },
    "arr": {
-    "8P451": "10:24",
+    "8P451": "11:24",
     "8P457": "16:32"
-   }
-  },
-  "YCG": {
-   "dep": {
-    "AC8377": "12:15"
-   },
-   "arr": {
-    "AC8376": "11:43"
    }
   }
  },
  "quota": {
-  "x-ratelimit-requests-limit": "1600",
-  "x-ratelimit-requests-remaining": "1525",
-  "x-ratelimit-requests-reset": "1455641",
-  "x-ratelimit-rapid-free-plans-hard-limit-limit": "500000",
-  "x-ratelimit-rapid-free-plans-hard-limit-remaining": "499954",
-  "x-ratelimit-rapid-free-plans-hard-limit-reset": "1455641",
   "x-ratelimit-api-units-limit": "400",
-  "x-ratelimit-api-units-remaining": "234",
-  "x-ratelimit-api-units-reset": "1455641",
-  "at": "2026-11-23T16:00"
+  "x-ratelimit-api-units-remaining": "232",
+  "x-ratelimit-api-units-reset": "1403452",
+  "x-ratelimit-rapid-free-plans-hard-limit-limit": "500000",
+  "x-ratelimit-rapid-free-plans-hard-limit-remaining": "499953",
+  "x-ratelimit-rapid-free-plans-hard-limit-reset": "1403452",
+  "x-ratelimit-requests-limit": "1600",
+  "x-ratelimit-requests-remaining": "1518",
+  "x-ratelimit-requests-reset": "1403452",
+  "at": "2026-11-24T06:30"
  }
 }
