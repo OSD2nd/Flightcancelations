@@ -269,5 +269,5 @@
     }
   ],
   "weather_model": "gem_seamless,best_match",
-  "weather_model_note": "Two models in one Open-Meteo request: gem_seamless = Environment Canada's GEM models (HRDPS 2.5 km near-term, then RDPS/GDPS) and best_match = Open-Meteo's default blend. Each flight is scored with both and the higher risk is shown. GEM has no visibility, so that comes from the blend."
+  "weather_model_note": "Two models in one Open-Meteo request: gem_seamless = Environment Canada's GEM models (HRDPS 2.5 km near-term, then RDPS/GDPS) and best_match = Open-Meteo's default blend. Each flight is scored with both: within 36 h the higher risk is shown, further out the average. GEM has no visibility, so that comes from the blend."
 }
