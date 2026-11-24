@@ -47,7 +47,14 @@
   "status": "Canceled",
   "expected": null,
   "diverted_to": null,
-  "delay_min": null
+  "delay_min": null,
+  "wx_at_time": {
+   "time": "2026-11-24T18:00+00:00",
+   "ceiling_ft": 3800,
+   "vis_sm": 3.0,
+   "wx": "-SN",
+   "raw": "METAR CYCG 241800Z 13002KT 3SM -SN FEW005 SCT017 OVC038 01/00 A3026 RMK ST2SC1SC5 LO CLD S - NE SLP270"
+  }
  },
  {
   "date": "2026-11-24",
@@ -97,7 +104,24 @@
   "status": "Canceled",
   "expected": null,
   "diverted_to": null,
-  "delay_min": null
+  "delay_min": null,
+  "red": [
+   {
+    "name": "Red Mountain, Granite (11:25)",
+    "src": "history/img/2026-11-24_YZZ_1124_granite.jpg"
+   },
+   {
+    "name": "Red Mountain, Greyline (11:25)",
+    "src": "history/img/2026-11-24_YZZ_1124_greyline.jpg"
+   }
+  ],
+  "wx_at_time": {
+   "time": "2026-11-24T18:00+00:00",
+   "ceiling_ft": 3800,
+   "vis_sm": 3.0,
+   "wx": "-SN",
+   "raw": "METAR CYCG 241800Z 13002KT 3SM -SN FEW005 SCT017 OVC038 01/00 A3026 RMK ST2SC1SC5 LO CLD S - NE SLP270"
+  }
  },
  {
   "date": "2026-11-22",
