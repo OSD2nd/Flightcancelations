@@ -47,7 +47,9 @@ def _parse_metar(raw):
     if "P6SM" in raw:
         vis = 6
     w = re.search(r"\b(\d{3}|VRB)(\d{2,3})(?:G(\d{2,3}))?KT\b", raw)
-    wx = [t for t in raw.split() if re.fullmatch(r"[-+]?(VC)?(MI|BC|SH|FZ|BL|TS)?(RA|SN|DZ|BR|FG|HZ|FU|GR|GS|PL|SG|UP)+", t)]
+    # weather words: "-RA", "+SHSN", "BR", and descriptor-only ones like "VCSH" (showers nearby) or "TS"
+    ph = "(?:RA|SN|DZ|BR|FG|HZ|FU|GR|GS|PL|SG|UP)"
+    wx = [t for t in raw.split() if re.fullmatch(rf"[-+]?(?:VC)?(?:(?:MI|BC|SH|FZ|BL|TS){ph}*|{ph}+)", t)]
     cat = None
     ceil = min([c["base"] for c in clouds if c["cover"] in ("BKN", "OVC")] + ([vv] if vv else []), default=None)
     if vis is not None or ceil is not None:
@@ -125,12 +127,16 @@ def _merge(groups, source):
     wx = " ".join(g.get("wxString") or "" for g in groups).split()
     # lowest cloud of ANY amount (FEW/SCT patches too) - low patches in the valley stop
     # visual approaches even when there's no solid ceiling (Trail, 11 Nov 2026)
-    lows = [c.get("base") for g in groups for c in (g.get("clouds") or []) if c.get("base") is not None]
-    lows += [g.get("vertVis") for g in groups if g.get("vertVis")]
+    layers = [(c.get("base"), c.get("cover")) for g in groups for c in (g.get("clouds") or []) if c.get("base") is not None]
+    layers += [(g.get("vertVis"), "VV") for g in groups if g.get("vertVis")]
     low_remark = any("LO CLD" in (g.get("rawOb") or "") for g in groups)
+    lowest = min((b for b, _ in layers), default=None)
+    # how much of the sky the lowest layer covers: FEW = a few patches, SCT/BKN/OVC/VV = more
+    rank = {"FEW": 1, "SCT": 2, "BKN": 3, "OVC": 4, "OVX": 4, "VV": 4}
+    cover = max((c for b, c in layers if b == lowest), key=lambda c: rank.get(c, 0), default=None)
     return {"ceiling_ft": min(ceils) if ceils else None, "vis_sm": min(viss) if viss else None,
             "gust_kt": max(gusts) if gusts else None, "wx": wx, "source": source,
-            "lowest_ft": min(lows) if lows else None, "low_remark": low_remark}
+            "lowest_ft": lowest, "lowest_cover": cover, "low_remark": low_remark}
 
 
 def taf_at(taf, when_utc):
@@ -149,8 +155,12 @@ def taf_at(taf, when_utc):
             temp.append(g)
         else:
             main = g  # later FM/BECMG groups replace earlier ones
-    groups = ([main] if main else []) + temp
-    return _merge(groups, "airport forecast") if groups else None
+    if not main and not temp:
+        return None
+    # TEMPO/PROB = "could briefly be worse": kept apart so it counts for less than the main forecast
+    out = _merge([main] if main else temp, "airport forecast")
+    out["tempo"] = _merge(temp, "airport forecast (temporary)") if (main and temp) else None
+    return out
 
 
 def metar_now(reports, when_utc, max_age_min=90):
@@ -165,20 +175,47 @@ def metar_now(reports, when_utc, max_age_min=90):
     return _merge([m], "airport report")
 
 
+WET = ("RA", "SN", "DZ", "SH", "PL", "GS", "GR", "SG", "UP")
+FOGGY = ("BR", "FG")
+
+
+def is_clear(obs):
+    """A plainly good report: 6+ miles, no cloud deck under 5,000 ft, nothing under 3,000 ft except a few
+    patches above 1,500 ft, no rain, snow, mist or fog."""
+    if not obs:
+        return False
+    v, c, lo, cov = obs.get("vis_sm"), obs.get("ceiling_ft"), obs.get("lowest_ft"), obs.get("lowest_cover")
+    wet = any(any(p in w for p in WET + FOGGY) for w in obs.get("wx") or [])
+    low_ok = lo is None or lo >= 3000 or (cov == "FEW" and lo >= 1500)
+    return (v is None or v >= 6) and (c is None or c >= 5000) and low_ok and not wet and not obs.get("low_remark")
+
+
 def conditions(reports, taf, when_utc):
-    """Best available official conditions for a departure/arrival time (worst of report + forecast)."""
-    parts = [p for p in (metar_now(reports, when_utc), taf_at(taf, when_utc)) if p]
+    """Best available official conditions for a departure/arrival time: worst of the latest report (only
+    when the flight is within ~2 h) and the main airport forecast. The forecast's TEMPO/PROB groups ride
+    along separately as "tempo" (they count for less), and "obs_clear" says the latest report is plainly
+    good - then, close to the flight, the actual weather outweighs what was forecast."""
+    obs, fc = metar_now(reports, when_utc), taf_at(taf, when_utc)
+    parts = [p for p in (obs, fc) if p]
     if not parts:
         return None
+    tempo = (fc or {}).get("tempo")
     if len(parts) == 1:
-        return parts[0]
-    a, b = parts
-    pick = lambda x, y: min(v for v in (x, y) if v is not None) if (x is not None or y is not None) else None
-    return {"ceiling_ft": pick(a["ceiling_ft"], b["ceiling_ft"]), "vis_sm": pick(a["vis_sm"], b["vis_sm"]),
-            "lowest_ft": pick(a.get("lowest_ft"), b.get("lowest_ft")),
-            "low_remark": a.get("low_remark") or b.get("low_remark"),
-            "gust_kt": max([v for v in (a["gust_kt"], b["gust_kt"]) if v is not None], default=None),
-            "wx": a["wx"] + b["wx"], "source": "airport report + forecast"}
+        out = dict(parts[0])
+    else:
+        a, b = parts
+        pick = lambda x, y: min(v for v in (x, y) if v is not None) if (x is not None or y is not None) else None
+        lo = pick(a.get("lowest_ft"), b.get("lowest_ft"))
+        out = {"ceiling_ft": pick(a["ceiling_ft"], b["ceiling_ft"]), "vis_sm": pick(a["vis_sm"], b["vis_sm"]),
+               "lowest_ft": lo,
+               "lowest_cover": next((p.get("lowest_cover") for p in parts if p.get("lowest_ft") == lo), None),
+               "low_remark": a.get("low_remark") or b.get("low_remark"),
+               "gust_kt": max([v for v in (a["gust_kt"], b["gust_kt"]) if v is not None], default=None),
+               "wx": a["wx"] + b["wx"], "source": "airport report + forecast"}
+    out["tempo"] = tempo
+    out["obs"] = obs
+    out["obs_clear"] = is_clear(obs)
+    return out
 
 
 def summary(reports, taf):

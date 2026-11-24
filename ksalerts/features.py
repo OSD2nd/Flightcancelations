@@ -117,14 +117,27 @@ def extract(origin_rows, hub_rows, origin_av=None, hub_av=None, ec=None):
     if hub_rows:
         f["hub_vis_lt_1_6"] = ramp(_typical(hub_rows, "visibility", min), 3000, 1000)
         f["hub_gust_60"] = ramp(_typical(hub_rows, "wind_gusts_10m", max), 50, 70)
-    if origin_av:
-        _apply_airport(f, origin_av)
     if ec:
         f["ec_fog"] = strength(ec.get("fog_level", 5 if ec.get("fog") else 0))
         f["ec_wintry"] = int(ec.get("wintry", False))
         f["ec_warning"] = int(bool(ec.get("warnings")))
         if ec.get("snow"):
             f["snow_03"] = max(f["snow_03"], 0.5)
+    if origin_av:
+        if origin_av.get("obs_clear"):
+            # within ~2 h of the flight the airport reports plainly good weather: what is actually
+            # happening outweighs forecasts made hours ago (Nov 20-23: 55-94% on 15-mile mornings that flew)
+            for k in OBS_DAMPED:
+                f[k] = round(f[k] * 0.5, 3)
+            _apply_airport(f, origin_av.get("obs") or origin_av)
+        else:
+            _apply_airport(f, origin_av)
+            if origin_av.get("tempo"):
+                # TEMPO/PROB groups = "could briefly be worse": half weight
+                t = {k: 0 for k in FEATURES}
+                _apply_airport(t, origin_av["tempo"])
+                for k, v in t.items():
+                    f[k] = max(f[k], round(v * 0.5, 3))
     # the usual cancellation pattern is low cloud AND rain/snow together: how much of both
     # (cancellations so far had cloud bases of 3,000-3,500 ft with rain, so "low" means under 4,000 ft)
     low_cloud = max(f["lowcloud_90"], f["ceil_lt_4000"], f["valley_cloud"], f["low_patches"], f["ec_fog"])
@@ -138,22 +151,31 @@ def extract(origin_rows, hub_rows, origin_av=None, hub_av=None, ec=None):
     return f
 
 
+# forecast-based signals that a clear airport report close to the flight cuts in half
+OBS_DAMPED = ("lowcloud_90", "valley_cloud", "ridge_cloud", "rain", "snow_03", "snow_10", "vis_lt_1_6",
+              "vis_lt_4_8", "fog", "ec_fog")
+
+
 def strength(n):
     """1-5 strength -> the 0-1 value the model uses (1 = 0.2 ... 5 = 1.0)."""
     return round(max(0, min(5, n)) / 5, 2)
 
 
-def patch_level(lowest_ft, low_remark, misty):
-    """Low cloud/fog patches in the airport report, 1-5. From the cancellations so far:
-    Nov 14 (FEW004) and Nov 15 (FEW002, FEW003 with mist) cancelled; patches near 1,000 ft rarely do.
+def patch_level(lowest_ft, low_remark, misty, cover=None, wet=False):
+    """Low cloud/fog patches in the airport report, 1-5. From the record so far:
+    Nov 14 (FEW004 with rain) and Nov 15 (FEW002/FEW003 with mist) cancelled, but Nov 21 (FEW003) and
+    Nov 23 (FEW007) flew on dry 15-mile mornings. So a FEW layer counts fully only with mist, rain or snow.
       under 300 ft = 5, under 500 = 4, under 700 = 3, under 1,000 = 2;
-      only the 'low cloud around' remark (LO CLD) = 2; mist or fog with it = one step up."""
+      only the 'low cloud around' remark (LO CLD) = 2; mist or fog with it = one step up;
+      just a few dry patches (FEW, no mist/rain/snow, no LO CLD remark) = two steps down (at least 1)."""
     if lowest_ft is not None and lowest_ft < 1000:
         n = 5 if lowest_ft < 300 else 4 if lowest_ft < 500 else 3 if lowest_ft < 700 else 2
     elif low_remark:
         n = 2
     else:
         return 0
+    if cover == "FEW" and not (misty or wet or low_remark):
+        return max(1, n - 2)
     return min(5, n + (1 if misty else 0))
 
 
@@ -161,7 +183,9 @@ def _apply_airport(f, av):
     """Official report/forecast can only add warnings, never clear model ones."""
     c, v, g, wx = av["ceiling_ft"], av["vis_sm"], av["gust_kt"], av["wx"]
     misty = any(("BR" in w or "FG" in w) for w in wx)
-    f["low_patches"] = max(f["low_patches"], strength(patch_level(av.get("lowest_ft"), av.get("low_remark"), misty)))
+    wet = any(any(p in w for p in ("RA", "SN", "DZ", "SH", "PL")) for w in wx)
+    f["low_patches"] = max(f["low_patches"], strength(patch_level(av.get("lowest_ft"), av.get("low_remark"), misty,
+                                                                   av.get("lowest_cover"), wet)))
     if c is not None:
         # graded: a 3,900 ft cloud base barely counts toward "under 4,000", 3,000 ft fully
         f["ceil_lt_1000"] = max(f["ceil_lt_1000"], ramp(c, 1500, 800))
