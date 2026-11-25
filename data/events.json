@@ -41,7 +41,24 @@
   "status": "Canceled",
   "expected": null,
   "diverted_to": null,
-  "delay_min": null
+  "delay_min": null,
+  "red": [
+   {
+    "name": "Red Mountain, Granite (17:05)",
+    "src": "history/img/2026-11-24_YZZ_1705_granite.jpg"
+   },
+   {
+    "name": "Red Mountain, Greyline (17:05)",
+    "src": "history/img/2026-11-24_YZZ_1705_greyline.jpg"
+   }
+  ],
+  "wx_at_time": {
+   "time": "2026-11-25T00:00+00:00",
+   "ceiling_ft": 4000,
+   "vis_sm": 8.0,
+   "wx": "",
+   "raw": "METAR CYCG 250000Z 14002KT 8SM FEW004 OVC040 02/01 A3018 RMK SF1SC8 SF TR LAST STFD OBS/NEXT 251300Z SLP240"
+  }
  },
  {
   "date": "2026-11-24",
