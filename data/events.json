@@ -45,7 +45,14 @@
   "status": "Canceled",
   "expected": null,
   "diverted_to": null,
-  "delay_min": null
+  "delay_min": null,
+  "wx_at_time": {
+   "time": "2026-11-26T18:23+00:00",
+   "ceiling_ft": 3100,
+   "vis_sm": 10.0,
+   "wx": "-RA",
+   "raw": "SPECI CYCG 261823Z VRB02KT 10SM -RA FEW006 SCT018 SCT027 OVC031 05/04 A3001 RMK SF1SC2SC1SC4 SLP179"
+  }
  },
  {
   "date": "2026-11-26",
@@ -94,7 +101,24 @@
   "status": "Canceled",
   "expected": null,
   "diverted_to": null,
-  "delay_min": null
+  "delay_min": null,
+  "red": [
+   {
+    "name": "Red Mountain, Granite (11:25)",
+    "src": "history/img/2026-11-26_YZZ_1124_granite.jpg"
+   },
+   {
+    "name": "Red Mountain, Greyline (11:25)",
+    "src": "history/img/2026-11-26_YZZ_1124_greyline.jpg"
+   }
+  ],
+  "wx_at_time": {
+   "time": "2026-11-26T18:23+00:00",
+   "ceiling_ft": 3100,
+   "vis_sm": 10.0,
+   "wx": "-RA",
+   "raw": "SPECI CYCG 261823Z VRB02KT 10SM -RA FEW006 SCT018 SCT027 OVC031 05/04 A3001 RMK SF1SC2SC1SC4 SLP179"
+  }
  },
  {
   "date": "2026-11-24",
