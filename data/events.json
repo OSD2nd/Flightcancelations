@@ -1,6 +1,54 @@
 [
  {
   "date": "2026-11-26",
+  "flight": "AC8376",
+  "airline": "Air Canada",
+  "airport": "YCG",
+  "airport_name": "Castlegar (West Kootenay Regional)",
+  "direction": "arr",
+  "from": "YVR",
+  "to": "YCG",
+  "sched": "11:43",
+  "first_seen": "2026-11-26T11:00",
+  "predicted": 0.714,
+  "predicted_reasons": [
+   "Low cloud with rain (the usual cancellation pattern)",
+   "Heavy low cloud",
+   "Cloud base under 3,000 ft",
+   "Cloud on the ridges",
+   "Rain or drizzle"
+  ],
+  "wx_when_seen": {
+   "time": "2026-11-26T17:36+00:00",
+   "ceiling_ft": 3000,
+   "vis_sm": 10.0,
+   "wx": "",
+   "raw": "SPECI CYCG 261736Z VRB02KT 10SM FEW007 FEW017 BKN030 OVC042 05/04 A3001 RMK SF1SF1SC6SC1 SF TR SLP179"
+  },
+  "taf_when_seen": "TAF AMD CYCG 261628Z 2616/2624 VRB03KT P6SM SCT015 BKN040 TEMPO 2616/2624 3SM -SHRA BR BKN015 RMK NXT FCST BY 262000Z",
+  "photos": [
+   {
+    "name": "Castlegar runway",
+    "src": "history/img/2026-11-26_YCG_0.jpg"
+   },
+   {
+    "name": "Castlegar north",
+    "src": "history/img/2026-11-26_YCG_1.jpg"
+   },
+   {
+    "name": "Trail runway north",
+    "src": "history/img/2026-11-26_YCG_2.jpg"
+   }
+  ],
+  "source": "live",
+  "kind": "cancelled",
+  "status": "Canceled",
+  "expected": null,
+  "diverted_to": null,
+  "delay_min": null
+ },
+ {
+  "date": "2026-11-26",
   "flight": "8P451",
   "airline": "Pacific Coastal",
   "airport": "YZZ",
