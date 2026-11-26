@@ -1,5 +1,54 @@
 [
  {
+  "date": "2026-11-26",
+  "flight": "8P451",
+  "airline": "Pacific Coastal",
+  "airport": "YZZ",
+  "airport_name": "Trail Regional",
+  "direction": "arr",
+  "from": "YVR",
+  "to": "YZZ",
+  "sched": "11:24",
+  "first_seen": "2026-11-26T09:30",
+  "predicted": 0.821,
+  "predicted_reasons": [
+   "Low cloud with rain (the usual cancellation pattern)",
+   "Heavy low cloud",
+   "Low cloud or fog patches under 1,000 ft",
+   "Cloud base under 3,000 ft",
+   "Cloud on the ridges",
+   "Rain or drizzle"
+  ],
+  "wx_when_seen": {
+   "time": "2026-11-26T16:24+00:00",
+   "ceiling_ft": 3700,
+   "vis_sm": 10.0,
+   "wx": "",
+   "raw": "SPECI CYCG 261624Z 34005KT 230V030 10SM FEW004 FEW020 SCT026 BKN037 OVC048 04/04 A2998 RMK ST1SC1SC1SC2SC3 SLP167"
+  },
+  "taf_when_seen": "TAF AMD CYCG 261628Z 2616/2624 VRB03KT P6SM SCT015 BKN040 TEMPO 2616/2624 3SM -SHRA BR BKN015 RMK NXT FCST BY 262000Z",
+  "photos": [
+   {
+    "name": "Castlegar runway",
+    "src": "history/img/2026-11-26_YZZ_0.jpg"
+   },
+   {
+    "name": "Castlegar north",
+    "src": "history/img/2026-11-26_YZZ_1.jpg"
+   },
+   {
+    "name": "Trail runway north",
+    "src": "history/img/2026-11-26_YZZ_2.jpg"
+   }
+  ],
+  "source": "live",
+  "kind": "cancelled",
+  "status": "Canceled",
+  "expected": null,
+  "diverted_to": null,
+  "delay_min": null
+ },
+ {
   "date": "2026-11-24",
   "flight": "8P458",
   "airline": "Pacific Coastal",
