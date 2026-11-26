@@ -1,6 +1,162 @@
 [
  {
   "date": "2026-11-26",
+  "flight": "8P458",
+  "airline": "Pacific Coastal",
+  "airport": "YZZ",
+  "airport_name": "Trail Regional",
+  "direction": "dep",
+  "from": "YZZ",
+  "to": "YVR",
+  "sched": "17:05",
+  "first_seen": "2026-11-26T16:00",
+  "predicted": 0.711,
+  "predicted_reasons": [
+   "Heavy low cloud",
+   "Cloud on the ridges"
+  ],
+  "wx_when_seen": {
+   "time": "2026-11-26T22:00+00:00",
+   "ceiling_ft": 4900,
+   "vis_sm": 15.0,
+   "wx": "",
+   "raw": "METAR CYCG 262200Z 00000KT 15SM FEW005 FEW029 SCT035 BKN049 BKN058 06/05 A2999 RMK SF1SC1SC3SC2SC1 SF TR SLP169"
+  },
+  "taf_when_seen": "TAF CYCG 261940Z 2620/2624 VRB03KT P6SM SCT015 BKN040 TEMPO 2620/2624 3SM -SHRA BR FEW004 BKN020 RMK NXT FCST BY 271500Z",
+  "photos": [
+   {
+    "name": "Castlegar runway",
+    "src": "history/img/2026-11-26_YZZ_0.jpg"
+   },
+   {
+    "name": "Castlegar north",
+    "src": "history/img/2026-11-26_YZZ_1.jpg"
+   },
+   {
+    "name": "Trail runway north",
+    "src": "history/img/2026-11-26_YZZ_2.jpg"
+   }
+  ],
+  "source": "live",
+  "kind": "cancelled",
+  "status": "Canceled",
+  "expected": null,
+  "diverted_to": null,
+  "delay_min": null
+ },
+ {
+  "date": "2026-11-26",
+  "flight": "8P457",
+  "airline": "Pacific Coastal",
+  "airport": "YZZ",
+  "airport_name": "Trail Regional",
+  "direction": "arr",
+  "from": "YVR",
+  "to": "YZZ",
+  "sched": "16:32",
+  "first_seen": "2026-11-26T16:00",
+  "predicted": 0.711,
+  "predicted_reasons": [
+   "Low cloud with rain (the usual cancellation pattern)",
+   "Low cloud or fog patches under 1,000 ft",
+   "Heavy low cloud",
+   "Cloud base under 3,000 ft",
+   "Rain or drizzle"
+  ],
+  "wx_when_seen": {
+   "time": "2026-11-26T22:00+00:00",
+   "ceiling_ft": 4900,
+   "vis_sm": 15.0,
+   "wx": "",
+   "raw": "METAR CYCG 262200Z 00000KT 15SM FEW005 FEW029 SCT035 BKN049 BKN058 06/05 A2999 RMK SF1SC1SC3SC2SC1 SF TR SLP169"
+  },
+  "taf_when_seen": "TAF CYCG 261940Z 2620/2624 VRB03KT P6SM SCT015 BKN040 TEMPO 2620/2624 3SM -SHRA BR FEW004 BKN020 RMK NXT FCST BY 271500Z",
+  "photos": [
+   {
+    "name": "Castlegar runway",
+    "src": "history/img/2026-11-26_YZZ_0.jpg"
+   },
+   {
+    "name": "Castlegar north",
+    "src": "history/img/2026-11-26_YZZ_1.jpg"
+   },
+   {
+    "name": "Trail runway north",
+    "src": "history/img/2026-11-26_YZZ_2.jpg"
+   }
+  ],
+  "source": "live",
+  "kind": "cancelled",
+  "status": "Canceled",
+  "expected": null,
+  "diverted_to": null,
+  "delay_min": null
+ },
+ {
+  "date": "2026-11-26",
+  "flight": "8P452",
+  "airline": "Pacific Coastal",
+  "airport": "YZZ",
+  "airport_name": "Trail Regional",
+  "direction": "dep",
+  "from": "YZZ",
+  "to": "YVR",
+  "sched": "11:50",
+  "first_seen": "2026-11-26T16:00",
+  "predicted": 0.566,
+  "predicted_reasons": [
+   "Low cloud with rain (the usual cancellation pattern)",
+   "Heavy low cloud",
+   "Rain or drizzle"
+  ],
+  "wx_when_seen": {
+   "time": "2026-11-26T22:00+00:00",
+   "ceiling_ft": 4900,
+   "vis_sm": 15.0,
+   "wx": "",
+   "raw": "METAR CYCG 262200Z 00000KT 15SM FEW005 FEW029 SCT035 BKN049 BKN058 06/05 A2999 RMK SF1SC1SC3SC2SC1 SF TR SLP169"
+  },
+  "taf_when_seen": "TAF CYCG 261940Z 2620/2624 VRB03KT P6SM SCT015 BKN040 TEMPO 2620/2624 3SM -SHRA BR FEW004 BKN020 RMK NXT FCST BY 271500Z",
+  "photos": [
+   {
+    "name": "Castlegar runway",
+    "src": "history/img/2026-11-26_YZZ_0.jpg"
+   },
+   {
+    "name": "Castlegar north",
+    "src": "history/img/2026-11-26_YZZ_1.jpg"
+   },
+   {
+    "name": "Trail runway north",
+    "src": "history/img/2026-11-26_YZZ_2.jpg"
+   }
+  ],
+  "source": "live",
+  "kind": "cancelled",
+  "status": "Canceled",
+  "expected": null,
+  "diverted_to": null,
+  "delay_min": null,
+  "red": [
+   {
+    "name": "Red Mountain, Granite (11:50)",
+    "src": "history/img/2026-11-26_YZZ_1150_granite.jpg"
+   },
+   {
+    "name": "Red Mountain, Greyline (11:50)",
+    "src": "history/img/2026-11-26_YZZ_1150_greyline.jpg"
+   }
+  ],
+  "wx_at_time": {
+   "time": "2026-11-26T18:47+00:00",
+   "ceiling_ft": 2700,
+   "vis_sm": 15.0,
+   "wx": "",
+   "raw": "SPECI CYCG 261847Z 00000KT 15SM FEW004 FEW014 OVC027 05/04 A3000 RMK SF1SC1SC6 SLP173"
+  }
+ },
+ {
+  "date": "2026-11-26",
   "flight": "AC8376",
   "airline": "Air Canada",
   "airport": "YCG",
