@@ -7,7 +7,7 @@
      "flight": "8P452",
      "time": "10:50",
      "expected": null,
-     "status": "Expected",
+     "status": "Canceled",
      "diverted_to": null,
      "airline": "Pacific Coastal",
      "hub_sched": "12:13",
@@ -17,7 +17,7 @@
      "flight": "8P458",
      "time": "17:05",
      "expected": null,
-     "status": "Expected",
+     "status": "Canceled",
      "diverted_to": null,
      "airline": "Pacific Coastal",
      "hub_sched": "18:29",
@@ -29,7 +29,7 @@
      "flight": "8P451",
      "time": "10:24",
      "expected": null,
-     "status": "Expected",
+     "status": "Canceled",
      "diverted_to": null,
      "airline": "Pacific Coastal",
      "hub_sched": "09:10",
@@ -39,7 +39,7 @@
      "flight": "8P457",
      "time": "16:32",
      "expected": null,
-     "status": "Expected",
+     "status": "Canceled",
      "diverted_to": null,
      "airline": "Pacific Coastal",
      "hub_sched": "15:15",
@@ -74,9 +74,9 @@
    ]
   }
  },
- "checked": "2026-11-27T11:00",
+ "checked": "2026-11-27T11:30",
  "checked_by": {
-  "YZZ": "2026-11-27T09:30",
+  "YZZ": "2026-11-27T11:30",
   "YCG": "2026-11-27T11:00"
  },
  "seen": {
@@ -101,14 +101,14 @@
  },
  "quota": {
   "x-ratelimit-rapid-free-plans-hard-limit-limit": "500000",
-  "x-ratelimit-rapid-free-plans-hard-limit-remaining": "499939",
-  "x-ratelimit-rapid-free-plans-hard-limit-reset": "1128045",
-  "x-ratelimit-requests-limit": "1600",
-  "x-ratelimit-requests-remaining": "1497",
-  "x-ratelimit-requests-reset": "1128045",
+  "x-ratelimit-rapid-free-plans-hard-limit-remaining": "499938",
+  "x-ratelimit-rapid-free-plans-hard-limit-reset": "1126249",
   "x-ratelimit-api-units-limit": "400",
-  "x-ratelimit-api-units-remaining": "190",
-  "x-ratelimit-api-units-reset": "1128045",
-  "at": "2026-11-27T11:00"
+  "x-ratelimit-api-units-remaining": "188",
+  "x-ratelimit-api-units-reset": "1126249",
+  "x-ratelimit-requests-limit": "1600",
+  "x-ratelimit-requests-remaining": "1496",
+  "x-ratelimit-requests-reset": "1126249",
+  "at": "2026-11-27T11:30"
  }
 }

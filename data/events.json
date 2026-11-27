@@ -1,6 +1,78 @@
 [
  {
   "date": "2026-11-27",
+  "flight": "8P458",
+  "airline": "Pacific Coastal",
+  "airport": "YZZ",
+  "airport_name": "Trail Regional",
+  "direction": "dep",
+  "from": "YZZ",
+  "to": "YVR",
+  "sched": "17:05",
+  "first_seen": "2026-11-27T11:30",
+  "predicted": 0.083,
+  "predicted_reasons": [
+   "Heavy low cloud"
+  ],
+  "wx_when_seen": {
+   "time": "2026-11-27T18:00+00:00",
+   "ceiling_ft": 7500,
+   "vis_sm": 8.0,
+   "wx": "",
+   "raw": "METAR CYCG 271800Z 17006KT 8SM FEW005 FEW015 SCT027 BKN075 BKN220 05/05 A3012 RMK SF2SC1SC1AC3CS1 SC TR LO CLD ALQDS SLP215"
+  },
+  "taf_when_seen": "TAF AMD CYCG 271825Z 2718/2724 17005KT P6SM SCT025 BKN070 TEMPO 2718/2720 5SM BR BKN015 RMK NXT FCST BY 272000Z",
+  "photos": [
+   {
+    "name": "Trail runway north",
+    "src": "history/img/2026-11-27_YZZ_2.jpg"
+   }
+  ],
+  "source": "live",
+  "kind": "cancelled",
+  "status": "Canceled",
+  "expected": null,
+  "diverted_to": null,
+  "delay_min": null
+ },
+ {
+  "date": "2026-11-27",
+  "flight": "8P457",
+  "airline": "Pacific Coastal",
+  "airport": "YZZ",
+  "airport_name": "Trail Regional",
+  "direction": "arr",
+  "from": "YVR",
+  "to": "YZZ",
+  "sched": "16:32",
+  "first_seen": "2026-11-27T11:30",
+  "predicted": 0.067,
+  "predicted_reasons": [
+   "Heavy low cloud"
+  ],
+  "wx_when_seen": {
+   "time": "2026-11-27T18:00+00:00",
+   "ceiling_ft": 7500,
+   "vis_sm": 8.0,
+   "wx": "",
+   "raw": "METAR CYCG 271800Z 17006KT 8SM FEW005 FEW015 SCT027 BKN075 BKN220 05/05 A3012 RMK SF2SC1SC1AC3CS1 SC TR LO CLD ALQDS SLP215"
+  },
+  "taf_when_seen": "TAF AMD CYCG 271825Z 2718/2724 17005KT P6SM SCT025 BKN070 TEMPO 2718/2720 5SM BR BKN015 RMK NXT FCST BY 272000Z",
+  "photos": [
+   {
+    "name": "Trail runway north",
+    "src": "history/img/2026-11-27_YZZ_2.jpg"
+   }
+  ],
+  "source": "live",
+  "kind": "cancelled",
+  "status": "Canceled",
+  "expected": null,
+  "diverted_to": null,
+  "delay_min": null
+ },
+ {
+  "date": "2026-11-27",
   "flight": "AC8376",
   "airline": "Air Canada",
   "airport": "YCG",
@@ -49,7 +121,120 @@
   "status": "Canceled",
   "expected": null,
   "diverted_to": null,
-  "delay_min": null
+  "delay_min": null,
+  "wx_at_time": {
+   "time": "2026-11-27T18:00+00:00",
+   "ceiling_ft": 7500,
+   "vis_sm": 8.0,
+   "wx": "",
+   "raw": "METAR CYCG 271800Z 17006KT 8SM FEW005 FEW015 SCT027 BKN075 BKN220 05/05 A3012 RMK SF2SC1SC1AC3CS1 SC TR LO CLD ALQDS SLP215"
+  }
+ },
+ {
+  "date": "2026-11-27",
+  "flight": "8P452",
+  "airline": "Pacific Coastal",
+  "airport": "YZZ",
+  "airport_name": "Trail Regional",
+  "direction": "dep",
+  "from": "YZZ",
+  "to": "YVR",
+  "sched": "10:50",
+  "first_seen": "2026-11-27T11:30",
+  "predicted": 0.109,
+  "predicted_reasons": [
+   "Low cloud or fog patches under 1,000 ft"
+  ],
+  "wx_when_seen": {
+   "time": "2026-11-27T18:00+00:00",
+   "ceiling_ft": 7500,
+   "vis_sm": 8.0,
+   "wx": "",
+   "raw": "METAR CYCG 271800Z 17006KT 8SM FEW005 FEW015 SCT027 BKN075 BKN220 05/05 A3012 RMK SF2SC1SC1AC3CS1 SC TR LO CLD ALQDS SLP215"
+  },
+  "taf_when_seen": "TAF AMD CYCG 271825Z 2718/2724 17005KT P6SM SCT025 BKN070 TEMPO 2718/2720 5SM BR BKN015 RMK NXT FCST BY 272000Z",
+  "photos": [
+   {
+    "name": "Trail runway north",
+    "src": "history/img/2026-11-27_YZZ_2.jpg"
+   }
+  ],
+  "source": "live",
+  "kind": "cancelled",
+  "status": "Canceled",
+  "expected": null,
+  "diverted_to": null,
+  "delay_min": null,
+  "red": [
+   {
+    "name": "Red Mountain, Granite (10:50)",
+    "src": "history/img/2026-11-27_YZZ_1050_granite.jpg"
+   },
+   {
+    "name": "Red Mountain, Greyline (10:50)",
+    "src": "history/img/2026-11-27_YZZ_1050_greyline.jpg"
+   }
+  ],
+  "wx_at_time": {
+   "time": "2026-11-27T18:00+00:00",
+   "ceiling_ft": 7500,
+   "vis_sm": 8.0,
+   "wx": "",
+   "raw": "METAR CYCG 271800Z 17006KT 8SM FEW005 FEW015 SCT027 BKN075 BKN220 05/05 A3012 RMK SF2SC1SC1AC3CS1 SC TR LO CLD ALQDS SLP215"
+  }
+ },
+ {
+  "date": "2026-11-27",
+  "flight": "8P451",
+  "airline": "Pacific Coastal",
+  "airport": "YZZ",
+  "airport_name": "Trail Regional",
+  "direction": "arr",
+  "from": "YVR",
+  "to": "YZZ",
+  "sched": "10:24",
+  "first_seen": "2026-11-27T11:30",
+  "predicted": 0.109,
+  "predicted_reasons": [
+   "Low cloud or fog patches under 1,000 ft"
+  ],
+  "wx_when_seen": {
+   "time": "2026-11-27T18:00+00:00",
+   "ceiling_ft": 7500,
+   "vis_sm": 8.0,
+   "wx": "",
+   "raw": "METAR CYCG 271800Z 17006KT 8SM FEW005 FEW015 SCT027 BKN075 BKN220 05/05 A3012 RMK SF2SC1SC1AC3CS1 SC TR LO CLD ALQDS SLP215"
+  },
+  "taf_when_seen": "TAF AMD CYCG 271825Z 2718/2724 17005KT P6SM SCT025 BKN070 TEMPO 2718/2720 5SM BR BKN015 RMK NXT FCST BY 272000Z",
+  "photos": [
+   {
+    "name": "Trail runway north",
+    "src": "history/img/2026-11-27_YZZ_2.jpg"
+   }
+  ],
+  "source": "live",
+  "kind": "cancelled",
+  "status": "Canceled",
+  "expected": null,
+  "diverted_to": null,
+  "delay_min": null,
+  "red": [
+   {
+    "name": "Red Mountain, Granite (10:25)",
+    "src": "history/img/2026-11-27_YZZ_1024_granite.jpg"
+   },
+   {
+    "name": "Red Mountain, Greyline (10:25)",
+    "src": "history/img/2026-11-27_YZZ_1024_greyline.jpg"
+   }
+  ],
+  "wx_at_time": {
+   "time": "2026-11-27T17:00+00:00",
+   "ceiling_ft": 7600,
+   "vis_sm": 3.0,
+   "wx": "BR",
+   "raw": "METAR CYCG 271700Z 14004KT 3SM BR SCT005 BKN076 BKN220 04/04 A3011 RMK SC4AC1CI2 SLP212"
+  }
  },
  {
   "date": "2026-11-26",
