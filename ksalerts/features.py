@@ -11,7 +11,7 @@ FEATURES = [
     "snow_03", "snow_10", "freezing", "fog", "tstorm",
     "hub_vis_lt_1_6", "hub_gust_60", "ceil_lt_1000", "ceil_lt_3000",
     "rain", "valley_cloud", "ridge_cloud", "wet_low_cloud", "ceil_lt_4000",
-    "smoke", "smoke_heavy", "low_patches", "ec_fog", "ec_wintry", "ec_warning",
+    "smoke", "smoke_heavy", "low_patches", "ec_fog", "ec_wintry", "ec_warning", "below_limit",
 ]
 
 PRIOR = {
@@ -38,6 +38,10 @@ PRIOR = {
     # Environment Canada's official forecast wording around the flight time
     # fog wording raised after 11 Nov (Trail cancelled in fog patches while we said 4%)
     "ec_fog": 1.8, "ec_wintry": 1.2, "ec_warning": 0.6,
+    # cloud base under THIS airport's practical limit (config "ceiling_limit_ft"). Nov 11-27, 2026:
+    # Trail was cancelled every day Castlegar reported a deck at 3,300-4,000 ft and flew with 4,300 ft
+    # and up, rain or not. A deck 700 ft under the limit alone gives ~43%, with rain or snow 85%+.
+    "below_limit": 3.0,
 }
 
 LABELS = {
@@ -54,6 +58,7 @@ LABELS = {
     "low_patches": "Low cloud or fog patches under 1,000 ft",
     "ec_fog": "Environment Canada forecasts fog or low cloud", "ec_wintry": "Environment Canada forecasts freezing rain or heavy snow",
     "ec_warning": "Environment Canada weather warning in effect",
+    "below_limit": "Cloud base below this airport's limit",
 }
 
 
@@ -82,7 +87,7 @@ def _typical(rows, key, worst):
     return (avg + worst(v for v, _ in vals)) / 2
 
 
-def extract(origin_rows, hub_rows, origin_av=None, hub_av=None, ec=None):
+def extract(origin_rows, hub_rows, origin_av=None, hub_av=None, ec=None, limit_ft=None, borrowed=False):
     """origin_rows/hub_rows: hourly weather-model dicts around departure / arrival.
     origin_av/hub_av: official airport conditions from aviation.conditions(), if any.
     Model-based features are 0..1 (how strongly), report/forecast wording ones are 0 or 1."""
@@ -123,24 +128,32 @@ def extract(origin_rows, hub_rows, origin_av=None, hub_av=None, ec=None):
         f["ec_warning"] = int(bool(ec.get("warnings")))
         if ec.get("snow"):
             f["snow_03"] = max(f["snow_03"], 0.5)
+    if origin_rows and limit_ft and not origin_av:
+        # no airport report/forecast reaches this far ahead: the models' own cloud deck stands in -
+        # heavy low cloud AND cloud at ridge height (~850 hPa, about 3,000 ft above Castlegar), at 60%
+        f["below_limit"] = round(0.6 * min(f["lowcloud_90"], f["ridge_cloud"]), 3)
     if origin_av:
-        if origin_av.get("obs_clear"):
-            # within ~2 h of the flight the airport reports plainly good weather: what is actually
-            # happening outweighs forecasts made hours ago (Nov 20-23: 55-94% on 15-mile mornings that flew)
-            for k in OBS_DAMPED:
-                f[k] = round(f[k] * 0.5, 3)
-            _apply_airport(f, origin_av.get("obs") or origin_av)
-        else:
-            _apply_airport(f, origin_av)
-            if origin_av.get("tempo"):
-                # TEMPO/PROB groups = "could briefly be worse": half weight
-                t = {k: 0 for k in FEATURES}
-                _apply_airport(t, origin_av["tempo"])
-                for k, v in t.items():
-                    f[k] = max(f[k], round(v * 0.5, 3))
+        # a plainly clear airport report close to the flight outweighs forecasts made hours ago
+        # (Nov 20-23: 55-94% on 15-mile mornings that flew). Phased in: none 3 h out, full within 1 h.
+        w = origin_av.get("obs_weight", 1.0) if origin_av.get("obs_clear") else 0.0
+        for k in OBS_DAMPED:
+            f[k] = round(f[k] * (1 - 0.5 * w), 3)
+        both = {k: 0 for k in FEATURES}
+        _apply_airport(both, origin_av, limit_ft, borrowed)
+        obs = {k: 0 for k in FEATURES}
+        if w:
+            _apply_airport(obs, origin_av.get("obs") or origin_av, limit_ft, borrowed)
+        tmp = {k: 0 for k in FEATURES}
+        if origin_av.get("tempo"):
+            # TEMPO/PROB groups = "could briefly be worse": half weight (none once the report is clear)
+            _apply_airport(tmp, origin_av["tempo"], limit_ft, borrowed)
+        for k in FEATURES:
+            v = max((1 - w) * both[k] + w * obs[k], 0.5 * (1 - w) * tmp[k])
+            f[k] = max(f[k], round(v, 3))
     # the usual cancellation pattern is low cloud AND rain/snow together: how much of both
     # (cancellations so far had cloud bases of 3,000-3,500 ft with rain, so "low" means under 4,000 ft)
-    low_cloud = max(f["lowcloud_90"], f["ceil_lt_4000"], f["valley_cloud"], f["low_patches"], f["ec_fog"])
+    low_cloud = max(f["lowcloud_90"], f["ceil_lt_4000"], f["valley_cloud"], f["low_patches"], f["ec_fog"],
+                    f["below_limit"])
     wet = max(f["rain"], f["snow_03"], f["freezing"], f["fog"])
     f["wet_low_cloud"] = round(low_cloud * wet, 3)
     if hub_av:
@@ -179,9 +192,24 @@ def patch_level(lowest_ft, low_remark, misty, cover=None, wet=False):
     return min(5, n + (1 if misty else 0))
 
 
-def _apply_airport(f, av):
-    """Official report/forecast can only add warnings, never clear model ones."""
+def _apply_airport(f, av, limit_ft=None, borrowed=False):
+    """Official report/forecast can only add warnings, never clear model ones.
+    borrowed = the report is from another airport's station (Trail uses Castlegar's)."""
     c, v, g, wx = av["ceiling_ft"], av["vis_sm"], av["gust_kt"], av["wx"]
+    fog_here = any(("BR" in w or "FG" in w) for w in wx)
+    precip = any(any(p in w for p in ("RA", "SN", "DZ", "SH", "PL")) for w in wx)
+    # fog at the borrowed station (Castlegar) with no rain/snow: often local to it - on Nov 21 Castlegar
+    # had freezing fog at 200 ft while Trail flew. Its fog signals count half for the other airport.
+    local_fog = borrowed and fog_here and not precip and ((c is not None and c < 1500) or (v is not None and v < 3))
+    before = dict(f) if local_fog else None
+    if c is not None and limit_ft:
+        # nothing 300 ft above the limit, full 700 ft below it (Trail, limit 4,000: 4,300 -> 3,300 ft)
+        b = ramp(c, limit_ft + 300, limit_ft - 700)
+        if borrowed and c < 1500 and any(("BR" in w or "FG" in w) for w in wx):
+            # very low fog at the borrowed station is local to it (Castlegar freezing fog on Nov 21 while
+            # Trail flew); the 3,000-4,000 ft deck that cancels Trail is regional
+            b = 0
+        f["below_limit"] = max(f["below_limit"], b)
     misty = any(("BR" in w or "FG" in w) for w in wx)
     wet = any(any(p in w for p in ("RA", "SN", "DZ", "SH", "PL")) for w in wx)
     f["low_patches"] = max(f["low_patches"], strength(patch_level(av.get("lowest_ft"), av.get("low_remark"), misty,
@@ -209,6 +237,10 @@ def _apply_airport(f, av):
         if "SN" in w:
             f["snow_03"] = 1
             if w.startswith("+"): f["snow_10"] = 1
+    if local_fog:
+        for k in ("low_patches", "ceil_lt_1000", "ceil_lt_3000", "ceil_lt_4000", "vis_lt_1_6", "vis_lt_4_8",
+                  "fog", "freezing", "rain"):
+            f[k] = max(before[k], round(0.5 * f[k], 3))
 
 
 def probability(feats, weights=None):

@@ -164,13 +164,13 @@ def taf_at(taf, when_utc):
 
 
 def metar_now(reports, when_utc, max_age_min=90):
-    """Latest report, if it is recent and the flight is within ~2 hours."""
+    """Latest report, if it is recent and the flight is within ~3 hours."""
     if not reports:
         return None
     m = reports[0]
     obs = datetime.fromtimestamp(m["obsTime"], timezone.utc)
     now = datetime.now(timezone.utc)
-    if (now - obs).total_seconds() > max_age_min * 60 or abs((when_utc - now).total_seconds()) > 2 * 3600:
+    if (now - obs).total_seconds() > max_age_min * 60 or abs((when_utc - now).total_seconds()) > 3 * 3600:
         return None
     return _merge([m], "airport report")
 
@@ -215,6 +215,10 @@ def conditions(reports, taf, when_utc):
     out["tempo"] = tempo
     out["obs"] = obs
     out["obs_clear"] = is_clear(obs)
+    # how much a clear report counts: none 3 h before the flight, full within 1 h (phased, so the
+    # number doesn't jump the moment the flight comes into range)
+    hours = (when_utc - datetime.now(timezone.utc)).total_seconds() / 3600
+    out["obs_weight"] = 1.0 if hours <= 1 else max(0.0, (3 - hours) / 2)
     return out
 
 

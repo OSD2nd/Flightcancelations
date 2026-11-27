@@ -74,7 +74,9 @@
       "wx_station": "CYCG",
       "note": "Trail has no official weather reports; uses Castlegar (CYCG), ~25 km away.",
       "wx_fallback": "YCG",
-      "eccc_city": "bc-71"
+      "eccc_city": "bc-71",
+      "ceiling_limit_ft": 4000,
+      "ceiling_limit_note": "Practical cloud-base limit (as reported at Castlegar). Nov 11-27, 2026: cancelled every day with a 3,300-4,000 ft deck, flew with 4,300 ft and up. Castlegar's own low fog doesn't count for Trail."
     },
     "YCG": {
       "name": "Castlegar (West Kootenay Regional)",
@@ -82,7 +84,9 @@
       "lon": -117.632,
       "airline": "Air Canada Express (Jazz)",
       "wx_station": "CYCG",
-      "eccc_city": "bc-21"
+      "eccc_city": "bc-21",
+      "ceiling_limit_ft": 3500,
+      "ceiling_limit_note": "Starting estimate (few cancellations yet): cancellations seen with 2,900-3,500 ft decks, flew once at 3,200 ft."
     }
   },
   "static_schedule_note": "Fallback schedule used only when no flight API key is set. Checked against the airport departure boards on 2026-11-10.",

@@ -261,7 +261,7 @@ def main():
         h_av = aviation.conditions(mets.get(hub_st), tafs.get(hub_st), to_utc(there)) if hub_st else None
         ec = eccc.signals(official.get(code), here, to_utc, today)
         o_rows, h_rows = weather.window(wx[code], here, 1, 1), weather.window(wx["HUB"], there, 1, 1)
-        feats = F.extract(o_rows, h_rows, o_av, h_av, ec)
+        feats = F.extract(o_rows, h_rows, o_av, h_av, ec, ap_cfg.get("ceiling_limit_ft"), bool(ap_cfg.get("wx_fallback")))
         ahead = (here - now).total_seconds() / 3600
         p = F.lead_shrink(F.probability(feats, weights), ahead, weights)
         why = F.reasons(feats, weights)
@@ -272,7 +272,7 @@ def main():
         alt_o = [r["alt"] for r in o_rows if r.get("alt")]
         if alt_o:
             alt_h = [r["alt"] for r in h_rows if r.get("alt")] or h_rows
-            feats_b = F.extract(alt_o, alt_h, o_av, h_av, ec)
+            feats_b = F.extract(alt_o, alt_h, o_av, h_av, ec, ap_cfg.get("ceiling_limit_ft"), bool(ap_cfg.get("wx_fallback")))
             p_b = F.lead_shrink(F.probability(feats_b, weights), ahead, weights)
             models = {"Environment Canada model": round(p, 3), "Other model (Open-Meteo blend)": round(p_b, 3)}
             if ahead <= 36:
