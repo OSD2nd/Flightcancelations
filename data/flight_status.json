@@ -26,11 +26,38 @@
      "hub_expected": "09:45"
     }
    ]
+  },
+  "YCG": {
+   "dep": [
+    {
+     "flight": "AC8377",
+     "time": "12:15",
+     "expected": null,
+     "status": "Expected",
+     "diverted_to": null,
+     "airline": "Air Canada",
+     "hub_sched": "13:29",
+     "hub_expected": "13:29"
+    }
+   ],
+   "arr": [
+    {
+     "flight": "AC8376",
+     "time": "11:43",
+     "expected": null,
+     "status": "Expected",
+     "diverted_to": null,
+     "airline": "Air Canada",
+     "hub_sched": "10:35",
+     "hub_expected": "10:28"
+    }
+   ]
   }
  },
- "checked": "2026-11-28T09:30",
+ "checked": "2026-11-28T11:00",
  "checked_by": {
-  "YZZ": "2026-11-28T09:30"
+  "YZZ": "2026-11-28T09:30",
+  "YCG": "2026-11-28T11:00"
  },
  "seen": {
   "YZZ": {
@@ -40,19 +67,27 @@
    "arr": {
     "8P451": "11:02"
    }
+  },
+  "YCG": {
+   "dep": {
+    "AC8377": "12:15"
+   },
+   "arr": {
+    "AC8376": "11:43"
+   }
   }
  },
  "quota": {
-  "x-ratelimit-rapid-free-plans-hard-limit-limit": "500000",
-  "x-ratelimit-rapid-free-plans-hard-limit-remaining": "499953",
-  "x-ratelimit-rapid-free-plans-hard-limit-reset": "1047050",
   "x-ratelimit-api-units-limit": "400",
-  "x-ratelimit-api-units-remaining": "180",
-  "x-ratelimit-api-units-reset": "1047050",
+  "x-ratelimit-api-units-remaining": "178",
+  "x-ratelimit-api-units-reset": "1041647",
+  "x-ratelimit-rapid-free-plans-hard-limit-limit": "500000",
+  "x-ratelimit-rapid-free-plans-hard-limit-remaining": "499952",
+  "x-ratelimit-rapid-free-plans-hard-limit-reset": "1041647",
   "x-ratelimit-requests-limit": "1600",
-  "x-ratelimit-requests-remaining": "1499",
-  "x-ratelimit-requests-reset": "1047050",
+  "x-ratelimit-requests-remaining": "1498",
+  "x-ratelimit-requests-reset": "1041647",
   "gateway": "RapidAPI",
-  "at": "2026-11-28T09:30"
+  "at": "2026-11-28T11:00"
  }
 }
