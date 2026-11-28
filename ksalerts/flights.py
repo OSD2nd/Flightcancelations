@@ -18,19 +18,36 @@ QUOTA = {}   # RapidAPI's "how much of your plan is left" headers from the lates
 
 def _adb(path, key):
     # a key from a direct AeroDataBox account (secret AERODATABOX_DIRECT_KEY) goes to their own
-    # gateway; otherwise the RapidAPI key (AERODATABOX_KEY). Same endpoints and answers either way.
+    # gateway; otherwise - or if the direct account refuses (no plan yet: 402, bad key: 401/403) -
+    # the RapidAPI key (AERODATABOX_KEY). Same endpoints and answers either way.
+    import urllib.error
     direct = (os.environ.get("AERODATABOX_DIRECT_KEY") or "").strip()
+    rapid = (os.environ.get("AERODATABOX_KEY") or "").strip() or (key if key != direct else "")
+    tries = []
     if direct:
-        req = urllib.request.Request("https://api.aerodatabox.com" + path, headers={"X-Api-Key": direct})
-    else:
-        req = urllib.request.Request(
+        tries.append(("direct", urllib.request.Request("https://api.aerodatabox.com" + path, headers={"X-Api-Key": direct})))
+    if rapid:
+        tries.append(("RapidAPI", urllib.request.Request(
             "https://aerodatabox.p.rapidapi.com" + path,
-            headers={"X-RapidAPI-Key": key, "X-RapidAPI-Host": "aerodatabox.p.rapidapi.com"})
-    with urllib.request.urlopen(req, timeout=30) as r:
-        body = r.read()
-        for k, v in r.headers.items():
-            if k.lower().startswith("x-ratelimit"):
-                QUOTA[k.lower()] = v
+            headers={"X-RapidAPI-Key": rapid, "X-RapidAPI-Host": "aerodatabox.p.rapidapi.com"})))
+    last = None
+    for name, req in tries:
+        try:
+            with urllib.request.urlopen(req, timeout=30) as r:
+                body = r.read()
+                for k, v in r.headers.items():
+                    if k.lower().startswith("x-ratelimit"):
+                        QUOTA[k.lower()] = v
+                QUOTA["gateway"] = name
+            break
+        except urllib.error.HTTPError as e:
+            last = e
+            if name == "direct" and e.code in (401, 402, 403) and len(tries) > 1:
+                print(f"[warn] direct AeroDataBox account refused ({e.code}); using RapidAPI")
+                continue
+            raise
+    else:
+        raise last or RuntimeError("no AeroDataBox key")
     if QUOTA:
         print("AeroDataBox plan: " + ", ".join(f"{k.replace('x-ratelimit-', '')}={v}" for k, v in sorted(QUOTA.items())))
     return json.loads(body) if body.strip() else {}

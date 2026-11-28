@@ -16,7 +16,7 @@ jobs:
         with: {python-version: "3.12"}
       - name: Check the key and airport coverage (free endpoints)
         env:
-          AERODATABOX_KEY: ${{ secrets.AERODATABOX_KEY }}
+          # direct account only: this check must not spend the RapidAPI allowance
           AERODATABOX_DIRECT_KEY: ${{ secrets.AERODATABOX_DIRECT_KEY }}
         run: python -m ksalerts.adb_check
       - name: Save
