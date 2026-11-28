@@ -17,9 +17,15 @@ QUOTA = {}   # RapidAPI's "how much of your plan is left" headers from the lates
 
 
 def _adb(path, key):
-    req = urllib.request.Request(
-        "https://aerodatabox.p.rapidapi.com" + path,
-        headers={"X-RapidAPI-Key": key, "X-RapidAPI-Host": "aerodatabox.p.rapidapi.com"})
+    # a key from a direct AeroDataBox account (secret AERODATABOX_DIRECT_KEY) goes to their own
+    # gateway; otherwise the RapidAPI key (AERODATABOX_KEY). Same endpoints and answers either way.
+    direct = (os.environ.get("AERODATABOX_DIRECT_KEY") or "").strip()
+    if direct:
+        req = urllib.request.Request("https://api.aerodatabox.com" + path, headers={"X-Api-Key": direct})
+    else:
+        req = urllib.request.Request(
+            "https://aerodatabox.p.rapidapi.com" + path,
+            headers={"X-RapidAPI-Key": key, "X-RapidAPI-Host": "aerodatabox.p.rapidapi.com"})
     with urllib.request.urlopen(req, timeout=30) as r:
         body = r.read()
         for k, v in r.headers.items():

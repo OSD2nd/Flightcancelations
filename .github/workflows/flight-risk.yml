@@ -43,6 +43,7 @@ jobs:
       - name: Score flights and send alerts
         env:
           AERODATABOX_KEY: ${{ secrets.AERODATABOX_KEY }}
+          AERODATABOX_DIRECT_KEY: ${{ secrets.AERODATABOX_DIRECT_KEY }}
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
           ALERT_EMAILS: ${{ secrets.ALERT_EMAILS }}

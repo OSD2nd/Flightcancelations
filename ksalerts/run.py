@@ -125,7 +125,7 @@ def main():
     # live flight status: only at config "status_checks" (free API plan is ~400 units/month)
     yesterday_status = None
     sslot = None
-    key = os.environ.get("AERODATABOX_KEY")
+    key = os.environ.get("AERODATABOX_KEY") or os.environ.get("AERODATABOX_DIRECT_KEY")
     if key and not a.demo:
         checks = cfg.get("status_checks") or [{"time": t} for t in cfg.get("status_times", ["06:30", "10:00", "16:45"])]
         sslot = due_slot(now, [c["time"] for c in checks], state["status_runs"])
